@@ -3,236 +3,205 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:padding="16dp"
     android:background="#121212">
 
-    <!-- Header Section -->
+    <!-- Input Directory Path -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <EditText
+            android:id="@+id/etDirPath"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Directory path"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#666666"
+            android:background="#1E1E1E"
+            android:padding="12dp"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btnScan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SCAN"
+            android:layout_marginStart="8dp"
+            android:background="#BB86FC"
+            android:textColor="#121212"
+            android:paddingHorizontal="16dp" />
+    </LinearLayout>
+
+    <!-- Now Playing Section -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:background="#1E1E1E"
-        android:padding="20dp"
-        android:elevation="4dp">
-
-        <!-- Directory Input with Modern Style -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="MUSIC DIRECTORY"
-            android:textSize="11sp"
-            android:textColor="#BB86FC"
-            android:letterSpacing="0.1"
-            android:paddingBottom="8dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#2C2C2C"
-            android:padding="4dp"
-            android:gravity="center_vertical">
-
-            <EditText
-                android:id="@+id/etDirPath"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:hint="/sdcard/Music"
-                android:textColorHint="#666666"
-                android:textColor="#FFFFFF"
-                android:inputType="text"
-                android:textSize="14sp"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:background="@android:color/transparent"/>
-
-            <Button
-                android:id="@+id/btnScan"
-                android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:text="SCAN"
-                android:textColor="#121212"
-                android:textStyle="bold"
-                android:background="#BB86FC"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:layout_marginStart="4dp"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- Music List Section -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="MUSICFILE"
-            android:textSize="11sp"
-            android:textColor="#BB86FC"
-            android:letterSpacing="0.1"
-            android:paddingBottom="12dp"/>
-
-        <ListView
-            android:id="@+id/lvMusicFiles"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#242424"
-            android:divider="#333333"
-            android:dividerHeight="1dp"
-            android:padding="0dp"
-            android:scrollbars="vertical"
-            android:fadeScrollbars="false"
-            android:cacheColorHint="#00000000"/>
-    </LinearLayout>
-
-    <!-- Now Playing Card -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#1E1E1E"
-        android:padding="20dp"
-        android:elevation="8dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="NOW PLAYING"
-            android:textSize="11sp"
-            android:textColor="#BB86FC"
-            android:letterSpacing="0.1"/>
+        android:padding="16dp"
+        android:layout_marginBottom="8dp">
 
         <TextView
             android:id="@+id/tvSongTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="No song selected"
-            android:textSize="18sp"
-            android:textStyle="bold"
             android:textColor="#FFFFFF"
-            android:paddingTop="8dp"
-            android:paddingBottom="4dp"
-            android:maxLines="1"
-            android:ellipsize="end"/>
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:singleLine="true"
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:id="@+id/tvStatus"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ready"
-            android:textSize="14sp"
+            android:text="Idle"
             android:textColor="#03DAC6"
-            android:paddingTop="4dp"/>
-
-        <!-- Control Buttons -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingTop="20dp"
-            android:paddingBottom="12dp">
-
-            <Button
-                android:id="@+id/btnPlayPause"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="2"
-                android:text="▶ PLAY"
-                android:textColor="#121212"
-                android:textStyle="bold"
-                android:background="#03DAC6"
-                android:enabled="false"
-                android:layout_marginEnd="12dp"/>
-
-            <Button
-                android:id="@+id/btnStop"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:layout_weight="1"
-                android:text="■ STOP"
-                android:textColor="#FFFFFF"
-                android:background="#2C2C2C"
-                android:enabled="false"/>
-        </LinearLayout>
-
-        <!-- Extra Controls -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <Button
-                android:id="@+id/btnLoop"
-                android:layout_width="wrap_content"
-                android:layout_height="36dp"
-                android:text="Loop"
-                android:textSize="12sp"
-                android:background="#333333"
-                android:textColor="#FFFFFF"
-                android:paddingStart="20dp"
-                android:paddingEnd="20dp"
-                android:enabled="false"/>
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"/>
-
-            <Button
-                android:id="@+id/btnToggleLog"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="SHOW LOG"
-                android:textSize="12sp"
-                android:textColor="#BB86FC"
-                android:background="@android:color/transparent"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"/>
-        </LinearLayout>
+            android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- Log Section (Hidden by default) -->
+    <!-- Player Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="8dp">
+
+        <!-- Previous Button -->
+        <Button
+            android:id="@+id/btnPrev"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⏮ PREV"
+            android:background="#333333"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="4dp"
+            android:enabled="false" />
+
+        <!-- Play/Pause Button -->
+        <Button
+            android:id="@+id/btnPlayPause"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="❚❚ PAUSE"
+            android:background="#FF9800"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="4dp"
+            android:enabled="false" />
+
+        <!-- Next Button -->
+        <Button
+            android:id="@+id/btnNext"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="NEXT ⏭"
+            android:background="#333333"
+            android:textColor="#FFFFFF"
+            android:enabled="false" />
+    </LinearLayout>
+
+    <!-- Stop and Loop Controls -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="■ STOP"
+            android:background="#CF6679"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="4dp"
+            android:enabled="false" />
+
+        <Button
+            android:id="@+id/btnLoop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Loop"
+            android:background="#1A1A1A"
+            android:textColor="#666666"
+            android:enabled="false" />
+    </LinearLayout>
+
+    <!-- Music List -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Music Files:"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp" />
+
+    <ListView
+        android:id="@+id/lvMusicFiles"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#1E1E1E"
+        android:divider="#333333"
+        android:dividerHeight="1dp" />
+
+    <!-- Log Toggle Button -->
+    <Button
+        android:id="@+id/btnToggleLog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Show Log"
+        android:background="#1E1E1E"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="8dp" />
+
+    <!-- Log Section -->
     <LinearLayout
         android:id="@+id/logSection"
         android:layout_width="match_parent"
-        android:layout_height="240dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:visibility="gone"
-        android:background="#0D0D0D"
-        android:padding="16dp">
+        android:layout_marginTop="8dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="DEBUG LOG"
-            android:textSize="11sp"
-            android:textColor="#BB86FC"
-            android:letterSpacing="0.1"
-            android:paddingBottom="12dp"/>
+            android:text="Log:"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
 
         <ScrollView
             android:id="@+id/logContainer"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#1A1A1A"
-            android:padding="12dp">
+            android:layout_height="150dp"
+            android:background="#1E1E1E"
+            android:padding="8dp">
 
             <TextView
                 android:id="@+id/tvLog"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="App started"
-                android:textSize="11sp"
-                android:fontFamily="monospace"
                 android:textColor="#03DAC6"
-                android:lineSpacingExtra="2dp"/>
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
         </ScrollView>
     </LinearLayout>
+
 </LinearLayout>

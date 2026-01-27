@@ -7,15 +7,15 @@ plugins {
 
 android {
     namespace "com.example.musicplayer"
-    compileSdk 33
+    compileSdk 34
     // ndkVersion "29.0.14206865"
 
     defaultConfig {
         applicationId "com.example.musicplayer"
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
 
         // ndk {
         //     abiFilters "armeabi-v7a", "arm64-v8a"
@@ -68,4 +68,5 @@ android {
 dependencies {
     implementation "androidx.appcompat:appcompat:1.6.1"
     implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    implementation "androidx.media:media:1.7.0"
 }

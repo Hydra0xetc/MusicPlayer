@@ -124,7 +124,9 @@ Java_com_example_musicplayer_PlayerController_setLoop(JNIEnv *env, jobject thiz,
 
 // Check if playing
 JNIEXPORT jboolean JNICALL
-Java_com_example_musicplayer_PlayerController_isPlaying(JNIEnv *env, jobject thiz, jlong playerPtr) {
+Java_com_example_musicplayer_PlayerController_isPlaying(
+        JNIEnv *env, jobject thiz, jlong playerPtr
+) {
     (void)env;
     (void)thiz;
     

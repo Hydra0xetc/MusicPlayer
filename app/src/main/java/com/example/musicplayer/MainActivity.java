@@ -1,8 +1,13 @@
 package com.example.musicplayer;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.view.View;
 import android.widget.*;
@@ -12,34 +17,34 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements MusicService.MusicServiceListener {
     private EditText etDirPath;
     private ListView lvMusicFiles;
     private TextView tvStatus, tvSongTitle;
     private Button btnPlayPause, btnStop, btnScan, btnToggleLog;
-    private Button btnLoop;
+    private Button btnLoop, btnPrev, btnNext;
     private boolean isLoopEnabled = false;
 
-    private PlayerController player;
+    private MusicService musicService;
+    private boolean isBound = false;
+    
     private LogHelper logger;
     private Handler mainHandler;
-    private Handler autoNextHandler;
 
     private List<MusicFile> musicFiles;
     private MusicFileAdapter adapter;
     private MusicFile currentMusic;
     private int currentMusicIndex = -1;
 
+    @Override
     public void onCreate(Bundle b) {
         super.onCreate(b);
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE); // Hilangkan title
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         setContentView(R.layout.main);
     
-        player = new PlayerController();
         mainHandler = new Handler(Looper.getMainLooper());
-        autoNextHandler = new Handler(Looper.getMainLooper());
         musicFiles = new ArrayList<MusicFile>();
 
         initViews();
@@ -50,8 +55,8 @@ public class MainActivity extends Activity {
         checkPermissions();
         etDirPath.setText("/sdcard/Download/YouTubeDownload/music1/");
         
-        // Start monitoring untuk auto-next
-        startAutoNextMonitoring();
+        // Bind ke service
+        bindMusicService();
     }
 
     private void initViews() {
@@ -65,6 +70,10 @@ public class MainActivity extends Activity {
         btnPlayPause = findViewById(R.id.btnPlayPause);
         btnStop = findViewById(R.id.btnStop);
         btnToggleLog = findViewById(R.id.btnToggleLog);
+        
+        // Tambahan tombol prev/next (jika ada di layout)
+        btnPrev = findViewById(R.id.btnPrev);
+        btnNext = findViewById(R.id.btnNext);
     }
 
     private void setupLogger() {
@@ -90,6 +99,14 @@ public class MainActivity extends Activity {
         btnStop.setOnClickListener(listener);
         btnToggleLog.setOnClickListener(listener);
         
+        if (btnPrev != null) {
+            btnPrev.setOnClickListener(listener);
+        }
+        
+        if (btnNext != null) {
+            btnNext.setOnClickListener(listener);
+        }
+        
         btnLoop.setOnClickListener(new View.OnClickListener() {
            @Override 
            public void onClick(View v) {
@@ -105,6 +122,60 @@ public class MainActivity extends Activity {
         } else {
             logger.log("Audio permission granted");
         }
+    }
+    
+    // Service binding
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+            musicService = binder.getService();
+            musicService.setListener(MainActivity.this);
+            isBound = true;
+            
+            logger.log("Connected to MusicService");
+            
+            // Update UI jika service sudah memiliki musik yang sedang diputar
+            updateUIFromService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            isBound = false;
+            logger.log("Disconnected from MusicService");
+        }
+    };
+    
+    private void bindMusicService() {
+        Intent intent = new Intent(this, MusicService.class);
+        startService(intent); // Start service terlebih dahulu
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+    
+    private void updateUIFromService() {
+        if (!isBound || musicService == null) return;
+        
+        MusicFile current = musicService.getCurrentMusic();
+        if (current != null) {
+            currentMusic = current;
+            currentMusicIndex = musicService.getCurrentIndex();
+            tvSongTitle.setText(current.getName());
+            
+            if (musicService.isPlaying()) {
+                tvStatus.setText("▶ Playing");
+                btnPlayPause.setText("▶ PLAY");
+                btnPlayPause.setBackgroundColor(0xFF03DAC6);
+            } else {
+                tvStatus.setText("❚❚ Paused");
+                btnPlayPause.setText("❚❚ PAUSE");
+                btnPlayPause.setBackgroundColor(0xFFFF9800);
+            }
+            
+            enableControls(true);
+        }
+        
+        isLoopEnabled = musicService.isLoopEnabled();
+        updateLoopButton();
     }
 
     private void scanDirectory() {
@@ -139,11 +210,26 @@ public class MainActivity extends Activity {
             btnScan, logger
         );
         MusicScanner.scanDirectoryAsync(dirPath, handler);
+        
+        // Update playlist di service setelah scan
+        if (isBound && musicService != null) {
+            mainHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    musicService.setPlaylist(musicFiles);
+                    logger.log("Playlist updated in service: " + musicFiles.size() + " songs");
+                }
+            }, 1000);
+        }
     }
 
     public void loadMusic(MusicFile musicFile) {
+        if (!isBound || musicService == null) {
+            toast("Service not ready");
+            return;
+        }
+        
         try {
-            // Cari index lagu yang dipilih
             currentMusicIndex = musicFiles.indexOf(musicFile);
             
             logger.log("Loading: " + musicFile.getName());
@@ -151,20 +237,8 @@ public class MainActivity extends Activity {
             logger.log("Size: " + musicFile.getSizeFormatted());
             logger.log("Index: " + (currentMusicIndex + 1) + "/" + musicFiles.size());
             
-            player.load(musicFile.getPath());
+            musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;
-            
-            tvSongTitle.setText(musicFile.getName());
-            tvStatus.setText("Ready");
-            
-            enableControls(true);
-            
-            if (!player.isPlaying()) {
-                tvStatus.setText("▶ Playing");
-                btnPlayPause.setText("▶ PLAY");
-                btnPlayPause.setBackgroundColor(0xFF03DAC6); // Cyan
-            }
-            player.play();
 
         } catch (Exception e) {
             logger.log("ERROR: Failed to load - " + e.getMessage());
@@ -173,40 +247,42 @@ public class MainActivity extends Activity {
     }
 
     private void playPause() {
-        if (!player.isReady()) {
+        if (!isBound || musicService == null || !musicService.isReady()) {
             logger.log("ERROR: No music loaded");
             return;
         }
         
-        if (player.isPlaying()) {
-            player.pause();
-            tvStatus.setText("Paused");
-            btnPlayPause.setText("❚❚ PAUSE");
-            btnPlayPause.setBackgroundColor(0xFFFF9800); // Orange
-            logger.log("Paused");
-        } else {
-            player.play();
-            tvStatus.setText("▶ Playing");
-            btnPlayPause.setText("▶ PLAY");
-            btnPlayPause.setBackgroundColor(0xFF03DAC6); // Cyan
-            String name = currentMusic != null ? currentMusic.getName() : "";
-            logger.log("▶ Playing: " + name);
-        }
+        musicService.togglePlayPause();
     }
 
     private void stop() {
-        if (!player.isReady()) return;
+        if (!isBound || musicService == null || !musicService.isReady()) return;
         
-        player.stop();
-        tvStatus.setText("Stopped");
-        btnPlayPause.setText("❚❚ PAUSE");
-        btnPlayPause.setBackgroundColor(0xFFFF9800); // Reset ke Orange
+        musicService.stop();
+        logger.log("Stopped");
+    }
+    
+    private void playNext() {
+        if (!isBound || musicService == null) return;
+        
+        musicService.playNext();
+        logger.log("Playing next song");
+    }
+    
+    private void playPrevious() {
+        if (!isBound || musicService == null) return;
+        
+        musicService.playPrevious();
+        logger.log("Playing previous song");
     }
     
     private void enableControls(boolean enable) {
         btnPlayPause.setEnabled(enable);
         btnStop.setEnabled(enable);
         btnLoop.setEnabled(enable);
+        
+        if (btnPrev != null) btnPrev.setEnabled(enable);
+        if (btnNext != null) btnNext.setEnabled(enable);
         
         if (!enable) {
             btnLoop.setBackgroundColor(0xFF1A1A1A);
@@ -220,13 +296,31 @@ public class MainActivity extends Activity {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-        logger.log("Releasing player and closing app...");
-        autoNextHandler.removeCallbacksAndMessages(null);
-        player.release();
+        
+        // Unbind dari service, tapi service tetap jalan
+        if (isBound) {
+            musicService.setListener(null);
+            unbindService(serviceConnection);
+            isBound = false;
+        }
+        
+        logger.log("Activity destroyed, but service continues running");
     }
     
+    @Override
+    protected void onResume() {
+        super.onResume();
+        
+        // Update UI ketika kembali ke activity
+        if (isBound && musicService != null) {
+            updateUIFromService();
+        }
+    }
+    
+    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PermissionHelper.REQ) {
@@ -234,11 +328,55 @@ public class MainActivity extends Activity {
                 grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
             
             if (granted) {
-                logger.log("Permission GRANTED by user");
+                logger.log("Permission GRANTED");
             } else {
-                logger.log("Permission DENIED by user");
+                logger.log("Permission DENIED");
             }
         }
+    }
+
+    // Callbacks dari MusicService
+    @Override
+    public void onMusicChanged(MusicFile musicFile, int index) {
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                currentMusic = musicFile;
+                currentMusicIndex = index;
+                tvSongTitle.setText(musicFile.getName());
+                tvStatus.setText("Ready");
+                enableControls(true);
+                logger.log("Now playing: " + musicFile.getName());
+            }
+        });
+    }
+    
+    @Override
+    public void onPlayStateChanged(boolean isPlaying) {
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (isPlaying) {
+                    tvStatus.setText("▶ Playing");
+                    btnPlayPause.setText("▶ PLAY");
+                    btnPlayPause.setBackgroundColor(0xFF03DAC6);
+                } else {
+                    tvStatus.setText("❚❚ Paused");
+                    btnPlayPause.setText("❚❚ PAUSE");
+                    btnPlayPause.setBackgroundColor(0xFFFF9800);
+                }
+            }
+        });
+    }
+    
+    @Override
+    public void onMusicFinished() {
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                logger.log("Music finished, auto-playing next...");
+            }
+        });
     }
 
     // Simple inner classes
@@ -249,73 +387,25 @@ public class MainActivity extends Activity {
     }
 
     private void toggleLoop() {
+        if (!isBound || musicService == null) return;
+        
         isLoopEnabled = !isLoopEnabled;
+        musicService.setLoop(isLoopEnabled);
         updateLoopButton();
         
-        if (player.isReady()) {
-            player.setLoop(isLoopEnabled);
-            logger.log("Loop: " + (isLoopEnabled ? "ON":"OFF"));
-        }
+        logger.log("Loop: " + (isLoopEnabled ? "ON":"OFF"));
     }
 
     private void updateLoopButton() {
         if (isLoopEnabled) {
             btnLoop.setText("↻ Loop");
-            btnLoop.setBackgroundColor(0xFFBB86FC); // Purple ketika aktif
-            btnLoop.setTextColor(0xFF121212); // Dark text
+            btnLoop.setBackgroundColor(0xFFBB86FC);
+            btnLoop.setTextColor(0xFF121212);
         } else {
             btnLoop.setText("Loop");
-            btnLoop.setBackgroundColor(0xFF333333); // Dark grey ketika non-aktif
-            btnLoop.setTextColor(0xFFFFFFFF); // White text
+            btnLoop.setBackgroundColor(0xFF333333);
+            btnLoop.setTextColor(0xFFFFFFFF);
         }
-    }
-    
-    private void startAutoNextMonitoring() {
-        autoNextHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                checkAndPlayNext();
-                // Cek setiap 500ms
-                autoNextHandler.postDelayed(this, 500);
-            }
-        }, 500);
-    }
-    
-    private void checkAndPlayNext() {
-        if (!player.isReady()) {
-            return;
-        }
-        
-        // Cek apakah lagu sudah selesai
-        if (player.isFinished() && !player.isPlaying()) {
-            playNextSong();
-        }
-    }
-    
-    private void playNextSong() {
-        if (musicFiles.isEmpty()) {
-            logger.log("AutoNext: No songs in playlist");
-            return;
-        }
-        
-        // Jika loop aktif, jangan auto-next
-        if (isLoopEnabled) {
-            return;
-        }
-        
-        int nextIndex = currentMusicIndex + 1;
-        
-        // Jika sudah di akhir playlist, kembali ke awal
-        if (nextIndex >= musicFiles.size()) {
-            nextIndex = 0;
-            logger.log("AutoNext: Reached end, restarting from first song");
-        }
-        
-        currentMusicIndex = nextIndex;
-        MusicFile nextSong = musicFiles.get(nextIndex);
-        
-        logger.log("AutoNext: Playing next song (" + (nextIndex + 1) + "/" + musicFiles.size() + ")");
-        loadMusic(nextSong);
     }
 
     private class ButtonClick implements View.OnClickListener {
@@ -331,8 +421,11 @@ public class MainActivity extends Activity {
             } else if (id == R.id.btnToggleLog) {
                 logger.toggle();
                 btnToggleLog.setText(logger.isVisible() ? "Hide Log" : "Show Log");
+            } else if (id == R.id.btnPrev) {
+                playPrevious();
+            } else if (id == R.id.btnNext) {
+                playNext();
             }
         }
     }
-
 }
