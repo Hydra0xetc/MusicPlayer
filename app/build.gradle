@@ -1,0 +1,71 @@
+// For now no build source c/c++
+// because cmake from sdk is not compatible with android
+// so i disable anything that requires cmake
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.example.musicplayer"
+    compileSdk 33
+    // ndkVersion "29.0.14206865"
+
+    defaultConfig {
+        applicationId "com.example.musicplayer"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        // ndk {
+        //     abiFilters "armeabi-v7a", "arm64-v8a"
+        // }
+
+        // externalNativeBuild {
+        //     cmake {
+        //         // compiler flags untuk C
+        //         cFlags "-O2 -fPIC -s"
+        //     }
+        // }
+    }
+
+    signingConfigs {
+        release {
+            // not actual key
+            storeFile file("my-release-key.keystore")
+            storePassword "android"
+            keyAlias "my-alias"
+            keyPassword "android"
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    // externalNativeBuild {
+    //     cmake {
+    //         path "src/main/c/CMakeLists.txt"
+    //     }
+    // }
+
+    sourceSets {
+        main {
+            java.srcDirs = ["src/main/java"]
+            res.srcDirs = ["src/main/res"]
+            jniLibs.srcDirs = ["src/main/jniLibs"]
+        }
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+}

@@ -1,0 +1,42 @@
+package com.example.musicplayer;
+
+import java.io.File;
+
+public class MusicFile {
+    private String name;
+    private String path;
+    private long size;
+
+    public MusicFile(String name, String path, long size) {
+        this.name = name;
+        this.path = path;
+        this.size = size;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public String getSizeFormatted() {
+        if (size < 1024) {
+            return size + " B";
+        } else if (size < 1024 * 1024) {
+            return String.format("%.1f KB", size / 1024.0);
+        } else {
+            return String.format("%.1f MB", size / (1024.0 * 1024.0));
+        }
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+}
