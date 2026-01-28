@@ -2,5 +2,7 @@ build/
 .gradle/
 *.so
 *.class
+*.keystore
 gradle.properties
-app/.cxx/*
+app/.cxx/
+local.properties

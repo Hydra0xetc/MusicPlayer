@@ -81,9 +81,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         ScrollView logContainer = findViewById(R.id.logContainer);
         TextView tvLog = findViewById(R.id.tvLog);
         
-        File logFile = new File(getExternalFilesDir(null), "log.txt");
-        logger = new LogHelper(tvLog, logContainer, logSection, logFile);
-        logger.log("Log file: " + logger.getLogFilePath());
+        logger = new LogHelper(tvLog, logContainer, logSection);
     }
 
     private void setupListView() {
@@ -161,16 +159,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             currentMusicIndex = musicService.getCurrentIndex();
             tvSongTitle.setText(current.getName());
             
-            if (musicService.isPlaying()) {
-                tvStatus.setText("▶ Playing");
-                btnPlayPause.setText("▶ PLAY");
-                btnPlayPause.setBackgroundColor(0xFF03DAC6);
-            } else {
-                tvStatus.setText("❚❚ Paused");
-                btnPlayPause.setText("❚❚ PAUSE");
-                btnPlayPause.setBackgroundColor(0xFFFF9800);
-            }
-            
             enableControls(true);
         }
         
@@ -217,7 +205,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 @Override
                 public void run() {
                     musicService.setPlaylist(musicFiles);
-                    logger.log("Playlist updated in service: " + musicFiles.size() + " songs");
+                    logger.log("Playlist updated in service: "
+                            + musicFiles.size() + " songs");
                 }
             }, 1000);
         }
@@ -358,12 +347,12 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             public void run() {
                 if (isPlaying) {
                     tvStatus.setText("▶ Playing");
-                    btnPlayPause.setText("▶ PLAY");
-                    btnPlayPause.setBackgroundColor(0xFF03DAC6);
-                } else {
-                    tvStatus.setText("❚❚ Paused");
                     btnPlayPause.setText("❚❚ PAUSE");
                     btnPlayPause.setBackgroundColor(0xFFFF9800);
+                } else {
+                    tvStatus.setText("❚❚ Paused");
+                    btnPlayPause.setText("▶ PLAY");
+                    btnPlayPause.setBackgroundColor(0xFF03DAC6);
                 }
             }
         });
@@ -374,7 +363,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
-                logger.log("Music finished, auto-playing next...");
+                logger.log("Music finished, next music...");
             }
         });
     }
@@ -402,7 +391,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             btnLoop.setBackgroundColor(0xFFBB86FC);
             btnLoop.setTextColor(0xFF121212);
         } else {
-            btnLoop.setText("Loop");
+            btnLoop.setText("↻ Loop");
             btnLoop.setBackgroundColor(0xFF333333);
             btnLoop.setTextColor(0xFFFFFFFF);
         }

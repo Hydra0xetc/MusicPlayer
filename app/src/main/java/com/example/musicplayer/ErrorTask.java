@@ -9,7 +9,12 @@ public class ErrorTask implements Runnable {
     private LogHelper logger;
     private String error;
 
-    public ErrorTask(MainActivity activity, Button btnScan, LogHelper logger, String error) {
+    public ErrorTask(
+        MainActivity activity,
+        Button btnScan,
+        LogHelper logger,
+        String error
+) {
         this.activity = activity;
         this.btnScan = btnScan;
         this.logger = logger;
@@ -18,7 +23,7 @@ public class ErrorTask implements Runnable {
 
     public void run() {
         btnScan.setEnabled(true);
-        btnScan.setText("Scan");
+        btnScan.setText("Ready");
         logger.log("ERROR: Scan failed - " + error);
         Toast.makeText(activity, "Scan failed: " + error, Toast.LENGTH_SHORT).show();
     }

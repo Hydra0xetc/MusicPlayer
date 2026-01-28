@@ -10,6 +10,6 @@ public class LogFileTask implements Runnable {
     }
 
     public void run() {
-        // logger.log("Found: " + file.getName());
+        /* Do Nothing */
     }
 }

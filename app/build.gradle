@@ -8,25 +8,25 @@ plugins {
 android {
     namespace "com.example.musicplayer"
     compileSdk 34
-    // ndkVersion "29.0.14206865"
+    ndkVersion "29.0.14206865"
 
     defaultConfig {
         applicationId "com.example.musicplayer"
         minSdk 21
         targetSdk 34
         versionCode 1
-        versionName "1.0.1"
+        versionName "1.0.3"
 
-        // ndk {
-        //     abiFilters "armeabi-v7a", "arm64-v8a"
-        // }
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a"
+        }
 
-        // externalNativeBuild {
-        //     cmake {
-        //         // compiler flags untuk C
-        //         cFlags "-O2 -fPIC -s"
-        //     }
-        // }
+        externalNativeBuild {
+            cmake {
+                // compiler flags untuk C
+                cFlags "-O2 -fPIC"
+            }
+        }
     }
 
     signingConfigs {
@@ -42,7 +42,7 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
@@ -50,11 +50,11 @@ android {
         }
     }
 
-    // externalNativeBuild {
-    //     cmake {
-    //         path "src/main/c/CMakeLists.txt"
-    //     }
-    // }
+    externalNativeBuild {
+        cmake {
+            path "src/main/c/CMakeLists.txt"
+        }
+    }
 
     sourceSets {
         main {

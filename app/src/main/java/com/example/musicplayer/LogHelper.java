@@ -16,31 +16,12 @@ public class LogHelper {
     private final ScrollView scrollView;
     private final View container;
     private boolean visible = false;
-    private File logFile;
 
-    public LogHelper(TextView tvLog, ScrollView scrollView, View container, File logFile) {
+    public LogHelper(TextView tvLog, ScrollView scrollView, View container) {
         this.tvLog = tvLog;
         this.scrollView = scrollView;
         this.container = container;
-        this.logFile = logFile;
         setVisible(false);
-        
-        // Create log file directory if needed
-        if (logFile != null) {
-            File parent = logFile.getParentFile();
-            if (parent != null && !parent.exists()) {
-                parent.mkdirs();
-            }
-            
-            // Create or clear log file
-            try {
-                if (!logFile.exists()) {
-                    logFile.createNewFile();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public void toggle() {
@@ -67,39 +48,6 @@ public class LogHelper {
         // Scroll to bottom
         scrollView.post(new ScrollToBottomRunnable(scrollView));
         
-        // Write to file
-        writeToFile(logEntry);
-    }
-
-    private void writeToFile(String logEntry) {
-        if (logFile == null) return;
-        
-        try {
-            FileWriter writer = new FileWriter(logFile, true);
-            writer.append(logEntry).append("\n");
-            writer.flush();
-            writer.close();
-        } catch (IOException e) {
-            // Can't log this error to avoid infinite loop
-            e.printStackTrace();
-        }
-    }
-    
-    public String getLogFilePath() {
-        return logFile != null ? logFile.getAbsolutePath() : "No log file";
-    }
-    
-    public void clearLogFile() {
-        if (logFile != null && logFile.exists()) {
-            try {
-                FileWriter writer = new FileWriter(logFile, false);
-                writer.write("");
-                writer.close();
-                log("Log file cleared");
-            } catch (IOException e) {
-                log("ERROR: Failed to clear log file");
-            }
-        }
     }
 
     // Named inner class instead of lambda
