@@ -1,6 +1,3 @@
-// For now no build source c/c++
-// because cmake from sdk is not compatible with android
-// so i disable anything that requires cmake
 plugins {
     id "com.android.application"
 }
@@ -23,7 +20,6 @@ android {
 
         externalNativeBuild {
             cmake {
-                // compiler flags untuk C
                 cFlags "-O2 -fPIC"
             }
         }

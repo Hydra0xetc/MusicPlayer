@@ -12,7 +12,7 @@
 
     <application
         android:label="Music Player"
-        android:icon="@android:drawable/ic_media_play"
+        android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true">
         
         <activity
