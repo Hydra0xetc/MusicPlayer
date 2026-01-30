@@ -2,6 +2,8 @@ plugins {
     id "com.android.application"
 }
 
+def env = System.getenv();
+
 android {
     namespace "com.music.player"
     compileSdk 34
@@ -27,11 +29,12 @@ android {
 
     signingConfigs {
         release {
-            // not actual key
-            storeFile file("my-release-key.keystore")
-            storePassword "android"
-            keyAlias "my-alias"
-            keyPassword "android"
+            if (env.KEYSTORE_PATH != null) {
+                storeFile file("${rootDir}/${env.KEYSTORE_PATH}")
+                storePassword env.KEYSTORE_PASSWORD
+                keyAlias env.KEY_ALIAS
+                keyPassword env.KEY_PASSWORD
+            }
         }
     }
 

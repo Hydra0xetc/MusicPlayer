@@ -6,3 +6,4 @@ build/
 gradle.properties
 app/.cxx/
 local.properties
+.env
