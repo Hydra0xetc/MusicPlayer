@@ -3,12 +3,12 @@ plugins {
 }
 
 android {
-    namespace "com.example.musicplayer"
+    namespace "com.music.player"
     compileSdk 34
     ndkVersion "29.0.14206865"
 
     defaultConfig {
-        applicationId "com.example.musicplayer"
+        applicationId "com.music.player"
         minSdk 21
         targetSdk 34
         versionCode 1

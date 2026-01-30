@@ -1,4 +1,4 @@
-package com.example.musicplayer;
+package com.music.player;
 
 public class LogFileTask implements Runnable {
     private LogHelper logger;

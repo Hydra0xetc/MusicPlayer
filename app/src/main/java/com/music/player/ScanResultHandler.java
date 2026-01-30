@@ -1,4 +1,4 @@
-package com.example.musicplayer;
+package com.music.player;
 
 import android.os.Handler;
 import android.widget.Button;

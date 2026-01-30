@@ -1,4 +1,4 @@
-package com.example.musicplayer;
+package com.music.player;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -19,11 +19,11 @@ public class MusicService extends Service {
     private static final String CHANNEL_ID = "MusicPlayerChannel";
     private static final int NOTIFICATION_ID = 1;
     
-    public static final String ACTION_PLAY = "com.example.musicplayer.PLAY";
-    public static final String ACTION_PAUSE = "com.example.musicplayer.PAUSE";
-    public static final String ACTION_NEXT = "com.example.musicplayer.NEXT";
-    public static final String ACTION_PREV = "com.example.musicplayer.PREV";
-    public static final String ACTION_STOP = "com.example.musicplayer.STOP";
+    public static final String ACTION_PLAY = "com.music.player.PLAY";
+    public static final String ACTION_PAUSE = "com.music.player.PAUSE";
+    public static final String ACTION_NEXT = "com.music.player.NEXT";
+    public static final String ACTION_PREV = "com.music.player.PREV";
+    public static final String ACTION_STOP = "com.music.player.STOP";
     
     private final IBinder binder = new MusicBinder();
     private PlayerController player;

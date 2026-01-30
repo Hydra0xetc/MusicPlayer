@@ -159,16 +159,6 @@
         android:divider="#333333"
         android:dividerHeight="1dp" />
 
-    <!-- Log Toggle Button -->
-    <Button
-        android:id="@+id/btnToggleLog"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Show Log"
-        android:background="#1E1E1E"
-        android:textColor="#FFFFFF"
-        android:layout_marginTop="8dp" />
-
     <!-- Log Section -->
     <LinearLayout
         android:id="@+id/logSection"

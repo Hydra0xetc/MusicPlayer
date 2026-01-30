@@ -1,4 +1,4 @@
-package com.example.musicplayer;
+package com.music.player;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -21,7 +21,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private EditText etDirPath;
     private ListView lvMusicFiles;
     private TextView tvStatus, tvSongTitle;
-    private Button btnPlayPause, btnStop, btnScan, btnToggleLog;
+    private Button btnPlayPause, btnStop, btnScan;
     private Button btnLoop, btnPrev, btnNext;
     private boolean isLoopEnabled = false;
 
@@ -29,6 +29,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private boolean isBound = false;
     
     private LogHelper logger;
+    private FileLogger fileLogger;
     private Handler mainHandler;
 
     private List<MusicFile> musicFiles;
@@ -47,6 +48,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         mainHandler = new Handler(Looper.getMainLooper());
         musicFiles = new ArrayList<MusicFile>();
 
+        // Inisialisasi FileLogger
+        fileLogger = FileLogger.getInstance(this);
+        fileLogger.i("MainActivity", "MainActivity.onCreate() started");
+
         initViews();
         setupLogger();
         setupListView();
@@ -60,6 +65,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
 
     private void initViews() {
+        fileLogger.d("MainActivity", "Initializing views...");
+        
         etDirPath = findViewById(R.id.etDirPath);
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
         tvStatus = findViewById(R.id.tvStatus);
@@ -69,11 +76,11 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         btnScan = findViewById(R.id.btnScan);
         btnPlayPause = findViewById(R.id.btnPlayPause);
         btnStop = findViewById(R.id.btnStop);
-        btnToggleLog = findViewById(R.id.btnToggleLog);
         
-        // Tambahan tombol prev/next (jika ada di layout)
         btnPrev = findViewById(R.id.btnPrev);
         btnNext = findViewById(R.id.btnNext);
+        
+        fileLogger.d("MainActivity", "Views initialized");
     }
 
     private void setupLogger() {
@@ -81,7 +88,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         ScrollView logContainer = findViewById(R.id.logContainer);
         TextView tvLog = findViewById(R.id.tvLog);
         
-        logger = new LogHelper(tvLog, logContainer, logSection);
+        logger = new LogHelper(this, tvLog, logContainer, logSection);
+        logger.log("Music Player started");
+        logger.log("Log file: " + fileLogger.getLogPath());
     }
 
     private void setupListView() {
@@ -95,7 +104,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         btnScan.setOnClickListener(listener);
         btnPlayPause.setOnClickListener(listener);
         btnStop.setOnClickListener(listener);
-        btnToggleLog.setOnClickListener(listener);
         
         if (btnPrev != null) {
             btnPrev.setOnClickListener(listener);
@@ -117,12 +125,13 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         if (!PermissionHelper.hasAudioPermission(this)) {
             PermissionHelper.request(this);
             logger.log("Requesting audio permission...");
+            fileLogger.w("MainActivity", "Requesting audio permission");
         } else {
             logger.log("Audio permission granted");
+            fileLogger.i("MainActivity", "Audio permission already granted");
         }
     }
     
-    // Service binding
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -132,8 +141,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             isBound = true;
             
             logger.log("Connected to MusicService");
+            fileLogger.i("MainActivity", "Connected to MusicService");
             
-            // Update UI jika service sudah memiliki musik yang sedang diputar
             updateUIFromService();
         }
 
@@ -141,13 +150,16 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         public void onServiceDisconnected(ComponentName name) {
             isBound = false;
             logger.log("Disconnected from MusicService");
+            fileLogger.w("MainActivity", "Disconnected from MusicService");
         }
     };
     
     private void bindMusicService() {
         Intent intent = new Intent(this, MusicService.class);
-        startService(intent); // Start service terlebih dahulu
+        startService(intent);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        
+        fileLogger.i("MainActivity", "Binding to MusicService...");
     }
     
     private void updateUIFromService() {
@@ -171,26 +183,27 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         if (dirPath.isEmpty()) {
             toast("Please enter directory path");
-            logger.log("ERROR: Empty directory path");
+            logger.logError("Empty directory path");
             return;
         }
         
         File dir = new File(dirPath);
         if (!dir.exists()) {
             toast("Directory not found");
-            logger.log("ERROR: Directory not found: " + dirPath);
+            logger.logError("Directory not found: " + dirPath);
             return;
         }
         
         if (!dir.isDirectory()) {
             toast("Path is not a directory");
-            logger.log("ERROR: Not a directory: " + dirPath);
+            logger.logError("Not a directory: " + dirPath);
             return;
         }
 
         btnScan.setEnabled(false);
         btnScan.setText("Scanning...");
         logger.log("Scanning directory: " + dirPath);
+        fileLogger.i("MainActivity", "Scanning directory: " + dirPath);
 
         ScanResultHandler handler = new ScanResultHandler(
             this, mainHandler,
@@ -199,14 +212,13 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         );
         MusicScanner.scanDirectoryAsync(dirPath, handler);
         
-        // Update playlist di service setelah scan
         if (isBound && musicService != null) {
             mainHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     musicService.setPlaylist(musicFiles);
-                    logger.log("Playlist updated in service: "
-                            + musicFiles.size() + " songs");
+                    logger.log("Playlist updated: " + musicFiles.size() + " songs");
+                    fileLogger.i("MainActivity", "Playlist updated: " + musicFiles.size() + " songs");
                 }
             }, 1000);
         }
@@ -215,6 +227,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     public void loadMusic(MusicFile musicFile) {
         if (!isBound || musicService == null) {
             toast("Service not ready");
+            logger.logError("Service not ready");
             return;
         }
         
@@ -223,21 +236,21 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             
             logger.log("Loading: " + musicFile.getName());
             logger.log("Path: " + musicFile.getPath());
-            logger.log("Size: " + musicFile.getSizeFormatted());
-            logger.log("Index: " + (currentMusicIndex + 1) + "/" + musicFiles.size());
+            
+            fileLogger.i("MainActivity", "Loading: " + musicFile.getName());
             
             musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;
 
         } catch (Exception e) {
-            logger.log("ERROR: Failed to load - " + e.getMessage());
+            logger.logError("Failed to load music", e);
             toast("Failed to load music");
         }
     }
 
     private void playPause() {
         if (!isBound || musicService == null || !musicService.isReady()) {
-            logger.log("ERROR: No music loaded");
+            logger.logError("No music loaded");
             return;
         }
         
@@ -249,6 +262,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         musicService.stop();
         logger.log("Stopped");
+        fileLogger.i("MainActivity", "Music stopped");
     }
     
     private void playNext() {
@@ -256,6 +270,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         musicService.playNext();
         logger.log("Playing next song");
+        fileLogger.i("MainActivity", "Playing next song");
     }
     
     private void playPrevious() {
@@ -263,6 +278,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         musicService.playPrevious();
         logger.log("Playing previous song");
+        fileLogger.i("MainActivity", "Playing previous song");
     }
     
     private void enableControls(boolean enable) {
@@ -289,42 +305,43 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     protected void onDestroy() {
         super.onDestroy();
         
-        // Unbind dari service, tapi service tetap jalan
+        fileLogger.i("MainActivity", "MainActivity.onDestroy() called");
+        
         if (isBound) {
             musicService.setListener(null);
             unbindService(serviceConnection);
             isBound = false;
         }
         
-        logger.log("Activity destroyed, but service continues running");
+        logger.log("Activity destroyed");
     }
     
     @Override
     protected void onResume() {
         super.onResume();
+        fileLogger.d("MainActivity", "onResume() called");
         
-        // Update UI ketika kembali ke activity
         if (isBound && musicService != null) {
             updateUIFromService();
         }
     }
     
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PermissionHelper.REQ) {
-            boolean granted = grantResults.length > 0 && 
-                grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
+    public void onRequestPermissionsResult(int req, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(req, perms, results);
+        if (req == PermissionHelper.REQ) {
+            boolean granted = results.length > 0 && 
+                results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
             
             if (granted) {
                 logger.log("Permission GRANTED");
+                fileLogger.i("MainActivity", "Permission GRANTED");
             } else {
-                logger.log("Permission DENIED");
+                logger.logError("Permission DENIED");
             }
         }
     }
 
-    // Callbacks dari MusicService
     @Override
     public void onMusicChanged(MusicFile musicFile, int index) {
         mainHandler.post(new Runnable() {
@@ -336,6 +353,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 tvStatus.setText("Ready");
                 enableControls(true);
                 logger.log("Now playing: " + musicFile.getName());
+                fileLogger.i("MainActivity", "Now playing: " + musicFile.getName());
             }
         });
     }
@@ -363,12 +381,12 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
-                logger.log("Music finished, next music...");
+                logger.log("Music finished");
+                fileLogger.i("MainActivity", "Music finished");
             }
         });
     }
 
-    // Simple inner classes
     private class ListItemClick implements AdapterView.OnItemClickListener {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             loadMusic(musicFiles.get(position));
@@ -383,6 +401,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         updateLoopButton();
         
         logger.log("Loop: " + (isLoopEnabled ? "ON":"OFF"));
+        fileLogger.i("MainActivity", "Loop: " + (isLoopEnabled ? "ON":"OFF"));
     }
 
     private void updateLoopButton() {
@@ -407,9 +426,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 playPause();
             } else if (id == R.id.btnStop) {
                 stop();
-            } else if (id == R.id.btnToggleLog) {
-                logger.toggle();
-                btnToggleLog.setText(logger.isVisible() ? "Hide Log" : "Show Log");
             } else if (id == R.id.btnPrev) {
                 playPrevious();
             } else if (id == R.id.btnNext) {

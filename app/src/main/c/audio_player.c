@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Untuk Android, gunakan android/log.h
 #ifdef __ANDROID__
 #include <android/log.h>
 #define LOG_TAG "AudioPlayer"

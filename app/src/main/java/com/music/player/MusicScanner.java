@@ -1,4 +1,4 @@
-package com.example.musicplayer;
+package com.music.player;
 
 import java.io.File;
 import java.util.ArrayList;
