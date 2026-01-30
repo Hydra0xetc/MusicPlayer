@@ -38,7 +38,7 @@ public class CompleteTask implements Runnable {
         
         int count = files.size();
         logger.log("Scan completed: " + count + " file(s) found");
-        // BUG: Toast triggered twice
+        // BUG: Toast triggered twice when auto_reload = true
         Toast.makeText(activity, count + " music file(s) found", Toast.LENGTH_SHORT).show();
         
         if (files.isEmpty()) {

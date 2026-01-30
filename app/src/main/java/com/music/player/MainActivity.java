@@ -92,23 +92,23 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         }
     }
 
-private void onConfigReloaded() {
-    logger.log("Config file changed, reloading...");
-    
-    // Update UI
-    updateUIBasedOnConfig();
-    
-    // Auto scan jika diaktifkan setelah config berubah
-    if (configManager.isAutoScan()) {
-        logger.log("Auto-scan triggered after config reload");
-        mainHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                scanDirectory();
-            }
-        }, 500);
+    private void onConfigReloaded() {
+        logger.log("Config file changed, reloading...");
+        
+        // Update UI
+        updateUIBasedOnConfig();
+        
+        // Auto scan jika diaktifkan setelah config berubah
+        if (configManager.isAutoScan()) {
+            logger.log("Auto-scan triggered after config reload");
+            mainHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    scanDirectory();
+                }
+            }, 500);
+        }
     }
-}
 
     @Override
     protected void onDestroy() {
