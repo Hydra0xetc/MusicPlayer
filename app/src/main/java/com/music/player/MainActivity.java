@@ -18,11 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends Activity implements MusicService.MusicServiceListener {
-    private EditText etDirPath;
     private ListView lvMusicFiles;
     private TextView tvStatus, tvSongTitle;
     private Button btnPlayPause, btnStop, btnScan;
     private Button btnLoop, btnPrev, btnNext;
+    private Button btnReloadConfig;
     private boolean isLoopEnabled = false;
 
     private MusicService musicService;
@@ -31,6 +31,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private LogHelper logger;
     private FileLogger fileLogger;
     private Handler mainHandler;
+    private ConfigManager configManager;
 
     private List<MusicFile> musicFiles;
     private MusicFileAdapter adapter;
@@ -44,13 +45,14 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         setContentView(R.layout.main);
-    
+
         mainHandler = new Handler(Looper.getMainLooper());
         musicFiles = new ArrayList<MusicFile>();
 
-        // Inisialisasi FileLogger
         fileLogger = FileLogger.getInstance(this);
         fileLogger.i("MainActivity", "MainActivity.onCreate() started");
+
+        configManager = new ConfigManager(this);
 
         initViews();
         setupLogger();
@@ -58,16 +60,74 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         setupButtons();
         
         checkPermissions();
-        etDirPath.setText("/sdcard/Download/YouTubeDownload/music1/");
+        
+        // Update UI berdasarkan config
+        updateUIBasedOnConfig();
+        
+        // Mulai watch config file jika auto_reload aktif
+        configManager.startWatching(new ConfigManager.ConfigChangeListener() {
+            @Override
+            public void onConfigChanged() {
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        onConfigReloaded();
+                    }
+                });
+            }
+        });
         
         // Bind ke service
         bindMusicService();
+        
+        // Auto scan jika diaktifkan
+        if (configManager.isAutoScan()) {
+            mainHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    logger.log("Auto-scan enabled, scanning...");
+                    scanDirectory();
+                }
+            }, 1000);
+        }
+    }
+
+private void onConfigReloaded() {
+    logger.log("Config file changed, reloading...");
+    
+    // Update UI
+    updateUIBasedOnConfig();
+    
+    // Auto scan jika diaktifkan setelah config berubah
+    if (configManager.isAutoScan()) {
+        logger.log("Auto-scan triggered after config reload");
+        mainHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                scanDirectory();
+            }
+        }, 500);
+    }
+}
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        
+        fileLogger.i("MainActivity", "MainActivity.onDestroy() called");
+        
+        if (isBound) {
+            musicService.setListener(null);
+            unbindService(serviceConnection);
+            isBound = false;
+        }
+        
+        logger.log("Activity destroyed");
     }
 
     private void initViews() {
         fileLogger.d("MainActivity", "Initializing views...");
         
-        etDirPath = findViewById(R.id.etDirPath);
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
         tvStatus = findViewById(R.id.tvStatus);
         tvSongTitle = findViewById(R.id.tvSongTitle);
@@ -79,18 +139,18 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         btnPrev = findViewById(R.id.btnPrev);
         btnNext = findViewById(R.id.btnNext);
+        btnReloadConfig = findViewById(R.id.btnReloadConfig);
         
         fileLogger.d("MainActivity", "Views initialized");
     }
 
     private void setupLogger() {
-        LinearLayout logSection = findViewById(R.id.logSection);
-        ScrollView logContainer = findViewById(R.id.logContainer);
-        TextView tvLog = findViewById(R.id.tvLog);
-        
-        logger = new LogHelper(this, tvLog, logContainer, logSection);
+        logger = new LogHelper(this);
         logger.log("Music Player started");
         logger.log("Log file: " + fileLogger.getLogPath());
+        logger.log("Config: " + configManager.getMusicDir());
+        logger.log("Auto-reload: " + configManager.isAutoReload());
+        logger.log("Auto-scan: " + configManager.isAutoScan());
     }
 
     private void setupListView() {
@@ -113,6 +173,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             btnNext.setOnClickListener(listener);
         }
         
+        if (btnReloadConfig != null) {
+            btnReloadConfig.setOnClickListener(listener);
+        }
+        
         btnLoop.setOnClickListener(new View.OnClickListener() {
            @Override 
            public void onClick(View v) {
@@ -129,6 +193,51 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         } else {
             logger.log("Audio permission granted");
             fileLogger.i("MainActivity", "Audio permission already granted");
+        }
+    }
+    
+    private void updateUIBasedOnConfig() {
+        // Sembunyikan tombol Reload jika auto_reload aktif
+        if (configManager.isAutoReload()) {
+            btnReloadConfig.setVisibility(View.GONE);
+            logger.log("Auto-reload enabled, hiding reload button");
+        } else {
+            btnReloadConfig.setVisibility(View.VISIBLE);
+        }
+        
+        // Sembunyikan tombol Scan jika auto_scan aktif
+        if (configManager.isAutoScan()) {
+            btnScan.setVisibility(View.GONE);
+            logger.log("Auto-scan enabled, hiding scan button");
+        } else {
+            btnScan.setVisibility(View.VISIBLE);
+        }
+    }
+    
+    private void reloadConfig() {
+        logger.log("Reloading config...");
+        configManager.loadConfig();
+        
+        if (configManager.isValid()) {
+            logger.log("Config loaded: " + configManager.getMusicDir());
+            toast("Config reloaded: " + configManager.getMusicDir());
+            
+            // Update UI setelah reload config
+            updateUIBasedOnConfig();
+            
+            // Auto scan jika diaktifkan setelah reload
+            if (configManager.isAutoScan()) {
+                logger.log("Auto-scan enabled after reload, scanning...");
+                mainHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        scanDirectory();
+                    }
+                }, 500);
+            }
+        } else {
+            logger.logError("Invalid config path");
+            toast("Invalid config! Check /sdcard/MusicPlayer/config.json");
         }
     }
     
@@ -179,17 +288,17 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
 
     private void scanDirectory() {
-        String dirPath = etDirPath.getText().toString().trim();
+        String dirPath = configManager.getMusicDir();
         
         if (dirPath.isEmpty()) {
-            toast("Please enter directory path");
-            logger.logError("Empty directory path");
+            toast("Config not found! Please check config.json");
+            logger.logError("Empty directory path in config");
             return;
         }
         
         File dir = new File(dirPath);
         if (!dir.exists()) {
-            toast("Directory not found");
+            toast("Directory not found: " + dirPath);
             logger.logError("Directory not found: " + dirPath);
             return;
         }
@@ -301,25 +410,18 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        
-        fileLogger.i("MainActivity", "MainActivity.onDestroy() called");
-        
-        if (isBound) {
-            musicService.setListener(null);
-            unbindService(serviceConnection);
-            isBound = false;
-        }
-        
-        logger.log("Activity destroyed");
-    }
     
     @Override
     protected void onResume() {
         super.onResume();
         fileLogger.d("MainActivity", "onResume() called");
+        
+        // Auto-reload config jika diaktifkan
+        if (configManager.isAutoReload()) {
+            logger.log("Auto-reload enabled, reloading config...");
+            configManager.loadConfig();
+            updateUIBasedOnConfig();
+        }
         
         if (isBound && musicService != null) {
             updateUIFromService();
@@ -430,6 +532,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 playPrevious();
             } else if (id == R.id.btnNext) {
                 playNext();
+            } else if (id == R.id.btnReloadConfig) {
+                reloadConfig();
             }
         }
     }

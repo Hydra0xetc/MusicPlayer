@@ -12,9 +12,14 @@ public class CompleteTask implements Runnable {
     private LogHelper logger;
     private List<MusicFile> files;
 
-    public CompleteTask(MainActivity activity, List<MusicFile> musicFiles, 
-                       MusicFileAdapter adapter, Button btnScan, 
-                       LogHelper logger, List<MusicFile> files) {
+    public CompleteTask(
+        MainActivity activity,
+        List<MusicFile> musicFiles, 
+        MusicFileAdapter adapter,
+        Button btnScan, 
+        LogHelper logger,
+        List<MusicFile> files
+) {
         this.activity = activity;
         this.musicFiles = musicFiles;
         this.adapter = adapter;
@@ -33,6 +38,7 @@ public class CompleteTask implements Runnable {
         
         int count = files.size();
         logger.log("Scan completed: " + count + " file(s) found");
+        // BUG: Toast triggered twice
         Toast.makeText(activity, count + " music file(s) found", Toast.LENGTH_SHORT).show();
         
         if (files.isEmpty()) {

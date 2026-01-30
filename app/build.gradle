@@ -13,7 +13,6 @@ android {
         applicationId "com.music.player"
         minSdk 21
         targetSdk 34
-        versionCode 1
         versionName "2.0.4"
 
         ndk {

@@ -13,17 +13,16 @@
         android:orientation="horizontal"
         android:layout_marginBottom="8dp">
 
-        <EditText
-            android:id="@+id/etDirPath"
-            android:layout_width="0dp"
+        <Button
+            android:id="@+id/btnReloadConfig"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Directory path"
+            android:text="↻"
+            android:layout_marginStart="4dp"
+            android:background="#333333"
             android:textColor="#FFFFFF"
-            android:textColorHint="#666666"
-            android:background="#1E1E1E"
-            android:padding="12dp"
-            android:textSize="14sp" />
+            android:paddingHorizontal="12dp"
+            android:textSize="18sp" />
 
         <Button
             android:id="@+id/btnScan"
@@ -158,40 +157,5 @@
         android:background="#1E1E1E"
         android:divider="#333333"
         android:dividerHeight="1dp" />
-
-    <!-- Log Section -->
-    <LinearLayout
-        android:id="@+id/logSection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone"
-        android:layout_marginTop="8dp">
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Log:"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
-
-        <ScrollView
-            android:id="@+id/logContainer"
-            android:layout_width="match_parent"
-            android:layout_height="150dp"
-            android:background="#1E1E1E"
-            android:padding="8dp">
-
-            <TextView
-                android:id="@+id/tvLog"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#03DAC6"
-                android:textSize="12sp"
-                android:fontFamily="monospace" />
-        </ScrollView>
-    </LinearLayout>
 
 </LinearLayout>
