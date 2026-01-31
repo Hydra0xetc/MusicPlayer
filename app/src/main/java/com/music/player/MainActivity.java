@@ -283,6 +283,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             currentMusic = current;
             currentMusicIndex = musicService.getCurrentIndex();
             tvSongTitle.setText(current.getName());
+            onMusicChanged(current, currentMusicIndex);
         } else {
             // No music loaded, reset UI
             tvSongTitle.setText("No song playing");
@@ -466,7 +467,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             public void run() {
                 currentMusic = musicFile;
                 currentMusicIndex = index;
-                tvSongTitle.setText(musicFile.getTitle() + " - " + musicFile.getArtist()); // Display title and artist
+                tvSongTitle.setText(musicFile.getTitle()); // Display title, artist
                 tvStatus.setText("Ready");
                 enableControls(true);
                 logger.log("Now playing: " + musicFile.getName());
