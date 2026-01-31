@@ -1,14 +1,26 @@
 package com.music.player;
 
+import android.content.Context;
+import java.io.File;
+
 public class PlayerController {
 
     static {
         try {
             System.loadLibrary("audioplayer");
-        } catch (UnsatisfiedLinkError ignored) {}
+        } catch (UnsatisfiedLinkError e) {
+            throw e; // Re-throw to crash the app and get a stack trace
+        }
     }
 
     private long playerPtr = 0;
+
+    public PlayerController(Context context) {
+        // For now, the context is not directly used here, 
+        // but it's passed to satisfy MusicService.
+        // It might be used for future native code initialization 
+        // or resource management.
+    }
 
     private native long createPlayer(String filePath);
     private native void setupPlayer(long ptr, String path);
@@ -19,7 +31,7 @@ public class PlayerController {
     private native boolean isFinished(long ptr);
     private native void setLoop(long ptr, boolean loop);
     private native void destroyPlayer(long ptr);
-
+    
     public boolean isReady() {
         return playerPtr != 0;
     }

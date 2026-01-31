@@ -2,27 +2,60 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#2C2C2C">
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="#2C2C2C"
+    android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/tvMusicName"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Song Name"
-        android:textSize="16sp"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:maxLines="1"
-        android:ellipsize="end"/>
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvMusicSize"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="3.5 MB"
-        android:textSize="12sp"
-        android:textColor="#999999"
-        android:paddingTop="4dp"/>
+        <TextView
+            android:id="@+id/tvMusicTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Song Title"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+
+        <TextView
+            android:id="@+id/tvMusicArtist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Artist Name"
+            android:textSize="12sp"
+            android:textColor="#BBBBBB"
+            android:maxLines="1"
+            android:ellipsize="end"/>
+            
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvMusicSize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3.5 MB"
+                android:textSize="12sp"
+                android:textColor="#999999"/>
+
+            <TextView
+                android:id="@+id/tvMusicDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="00:00"
+                android:textSize="12sp"
+                android:textColor="#999999"/>
+
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

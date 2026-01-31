@@ -6,6 +6,16 @@
     android:padding="16dp"
     android:background="#121212">
 
+    <!-- Main Album Art Display -->
+    <ImageView
+        android:id="@+id/ivMainAlbumArt"
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/ic_launcher"
+        android:contentDescription="Main Album Art"
+        android:layout_marginBottom="16dp" />
+
     <!-- Now Playing Section -->
     <LinearLayout
         android:layout_width="match_parent"

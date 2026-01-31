@@ -49,7 +49,7 @@ public class MusicService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        player = new PlayerController();
+        player = new PlayerController(getApplicationContext());
         autoNextHandler = new Handler(Looper.getMainLooper());
         createNotificationChannel();
         startAutoNextMonitoring();

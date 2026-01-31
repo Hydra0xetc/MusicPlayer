@@ -32,17 +32,18 @@ public class CompleteTask implements Runnable {
         musicFiles.clear();
         musicFiles.addAll(files);
         adapter.notifyDataSetChanged();
-        
+
         btnScan.setEnabled(true);
         btnScan.setText("Scan");
         
         int count = files.size();
         logger.log("Scan completed: " + count + " file(s) found");
-        // BUG: Toast triggered twice when auto_reload = true
         Toast.makeText(activity, count + " music file(s) found", Toast.LENGTH_SHORT).show();
-        
+
         if (files.isEmpty()) {
             logger.log("No audio files found in directory");
         }
+
+        activity.updatePlaylist();
     }
 }

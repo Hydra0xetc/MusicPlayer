@@ -5,6 +5,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -20,6 +22,7 @@ import java.util.List;
 public class MainActivity extends Activity implements MusicService.MusicServiceListener {
     private ListView lvMusicFiles;
     private TextView tvStatus, tvSongTitle;
+    private ImageView ivMainAlbumArt; // New ImageView for main album art
     private Button btnPlayPause, btnStop, btnScan;
     private Button btnLoop, btnPrev, btnNext;
     private Button btnReloadConfig;
@@ -131,6 +134,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
         tvStatus = findViewById(R.id.tvStatus);
         tvSongTitle = findViewById(R.id.tvSongTitle);
+        ivMainAlbumArt = findViewById(R.id.ivMainAlbumArt); // Initialize main album art ImageView
         btnLoop = findViewById(R.id.btnLoop);
         
         btnScan = findViewById(R.id.btnScan);
@@ -333,17 +337,14 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             musicFiles, adapter,
             btnScan, logger
         );
-        MusicScanner.scanDirectoryAsync(dirPath, handler);
+        MusicScanner.scanDirectoryAsync(this, dirPath, handler);
         
+    }
+
+    public void updatePlaylist() {
         if (isBound && musicService != null) {
-            mainHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    musicService.setPlaylist(musicFiles);
-                    logger.log("Playlist updated: " + musicFiles.size() + " songs");
-                    fileLogger.i("MainActivity", "Playlist updated: " + musicFiles.size() + " songs");
-                }
-            }, 1000);
+            musicService.setPlaylist(musicFiles);
+            logger.log("Playlist updated: " + musicFiles.size() + " songs");
         }
     }
 
@@ -465,11 +466,20 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             public void run() {
                 currentMusic = musicFile;
                 currentMusicIndex = index;
-                tvSongTitle.setText(musicFile.getName());
+                tvSongTitle.setText(musicFile.getTitle() + " - " + musicFile.getArtist()); // Display title and artist
                 tvStatus.setText("Ready");
                 enableControls(true);
                 logger.log("Now playing: " + musicFile.getName());
                 fileLogger.i("MainActivity", "Now playing: " + musicFile.getName());
+
+                // Update main album art
+                byte[] albumArt = musicFile.getAlbumArt();
+                if (albumArt != null) {
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
+                    ivMainAlbumArt.setImageBitmap(bitmap);
+                } else {
+                    ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher); // Default placeholder
+                }
             }
         });
     }

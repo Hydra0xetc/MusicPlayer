@@ -1,10 +1,13 @@
 package com.music.player;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
@@ -42,11 +45,15 @@ public class MusicFileAdapter extends BaseAdapter {
         
         MusicFile music = musicFiles.get(position);
         
-        TextView tvMusicName = convertView.findViewById(R.id.tvMusicName);
+        TextView tvMusicTitle = convertView.findViewById(R.id.tvMusicTitle);
+        TextView tvMusicArtist = convertView.findViewById(R.id.tvMusicArtist);
         TextView tvMusicSize = convertView.findViewById(R.id.tvMusicSize);
+        TextView tvMusicDuration = convertView.findViewById(R.id.tvMusicDuration);
         
-        tvMusicName.setText(music.getName());
+        tvMusicTitle.setText(music.getTitle());
+        tvMusicArtist.setText(music.getArtist());
         tvMusicSize.setText(music.getSizeFormatted());
+        tvMusicDuration.setText(music.getDurationFormatted());
         
         return convertView;
     }
