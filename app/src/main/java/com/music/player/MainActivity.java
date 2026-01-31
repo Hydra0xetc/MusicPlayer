@@ -220,7 +220,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         if (configManager.isValid()) {
             logger.log("Config loaded: " + configManager.getMusicDir());
-            toast("Config reloaded: " + configManager.getMusicDir());
             
             // Update UI setelah reload config
             updateUIBasedOnConfig();

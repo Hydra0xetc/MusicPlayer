@@ -6,34 +6,6 @@
     android:padding="16dp"
     android:background="#121212">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
-
-        <Button
-            android:id="@+id/btnReloadConfig"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="↻"
-            android:layout_marginStart="4dp"
-            android:background="#333333"
-            android:textColor="#FFFFFF"
-            android:paddingHorizontal="12dp"
-            android:textSize="18sp" />
-
-        <Button
-            android:id="@+id/btnScan"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SCAN"
-            android:layout_marginStart="8dp"
-            android:background="#BB86FC"
-            android:textColor="#121212"
-            android:paddingHorizontal="16dp" />
-    </LinearLayout>
-
     <!-- Now Playing Section -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -132,10 +104,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Loop"
             android:background="#1A1A1A"
             android:textColor="#666666"
-            android:enabled="false" />
+            android:enabled="false"/>
     </LinearLayout>
 
     <!-- Music List -->
@@ -156,5 +127,34 @@
         android:background="#1E1E1E"
         android:divider="#333333"
         android:dividerHeight="1dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="4dp">
+
+        <Button
+            android:id="@+id/btnReloadConfig"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="RELOAD"
+            android:background="#333333"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnScan"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="SCAN"
+            android:layout_marginEnd="4dp"
+            android:background="#BB86FC"
+            android:textColor="#121212" />
+    </LinearLayout>
+
 
 </LinearLayout>

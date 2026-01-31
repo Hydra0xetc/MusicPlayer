@@ -8,7 +8,11 @@
 
 // Create AudioPlayer
 JNIEXPORT jlong JNICALL
-Java_com_music_player_PlayerController_createPlayer(JNIEnv *env, jobject thiz, jstring filePath) {
+Java_com_music_player_PlayerController_createPlayer(
+    JNIEnv *env,
+    jobject thiz,
+    jstring filePath
+) {
     (void)thiz;
     
     const char *path = (*env)->GetStringUTFChars(env, filePath, NULL);
@@ -34,7 +38,12 @@ Java_com_music_player_PlayerController_createPlayer(JNIEnv *env, jobject thiz, j
 
 // Setup player with URI
 JNIEXPORT void JNICALL
-Java_com_music_player_PlayerController_setupPlayer(JNIEnv *env, jobject thiz, jlong playerPtr, jstring filePath) {
+Java_com_music_player_PlayerController_setupPlayer(
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr,
+    jstring filePath
+) {
     (void)thiz;
     
     AudioPlayer* player = (AudioPlayer*)playerPtr;
@@ -60,7 +69,11 @@ Java_com_music_player_PlayerController_setupPlayer(JNIEnv *env, jobject thiz, jl
 
 // Play audio
 JNIEXPORT void JNICALL
-Java_com_music_player_PlayerController_play(JNIEnv *env, jobject thiz, jlong playerPtr) {
+Java_com_music_player_PlayerController_play(
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr
+) {
     (void)env;
     (void)thiz;
     
@@ -76,7 +89,11 @@ Java_com_music_player_PlayerController_play(JNIEnv *env, jobject thiz, jlong pla
 
 // Pause audio
 JNIEXPORT void JNICALL
-Java_com_music_player_PlayerController_pause(JNIEnv *env, jobject thiz, jlong playerPtr) {
+Java_com_music_player_PlayerController_pause(
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr
+) {
     (void)env;
     (void)thiz;
     
@@ -92,7 +109,11 @@ Java_com_music_player_PlayerController_pause(JNIEnv *env, jobject thiz, jlong pl
 
 // Stop audio
 JNIEXPORT void JNICALL
-Java_com_music_player_PlayerController_stop(JNIEnv *env, jobject thiz, jlong playerPtr) {
+Java_com_music_player_PlayerController_stop(
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr
+) {
     (void)env;
     (void)thiz;
     
@@ -108,7 +129,12 @@ Java_com_music_player_PlayerController_stop(JNIEnv *env, jobject thiz, jlong pla
 
 // Set looping
 JNIEXPORT void JNICALL
-Java_com_music_player_PlayerController_setLoop(JNIEnv *env, jobject thiz, jlong playerPtr, jboolean loop) {
+Java_com_music_player_PlayerController_setLoop(
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr,
+    jboolean loop
+) {
     (void)env;
     (void)thiz;
     
@@ -125,7 +151,9 @@ Java_com_music_player_PlayerController_setLoop(JNIEnv *env, jobject thiz, jlong 
 // Check if playing
 JNIEXPORT jboolean JNICALL
 Java_com_music_player_PlayerController_isPlaying(
-        JNIEnv *env, jobject thiz, jlong playerPtr
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr
 ) {
     (void)env;
     (void)thiz;
@@ -142,7 +170,11 @@ Java_com_music_player_PlayerController_isPlaying(
 
 // Check if finished
 JNIEXPORT jboolean JNICALL
-Java_com_music_player_PlayerController_isFinished(JNIEnv *env, jobject thiz, jlong playerPtr) {
+Java_com_music_player_PlayerController_isFinished(
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr
+) {
     (void)env;
     (void)thiz;
     
@@ -158,7 +190,11 @@ Java_com_music_player_PlayerController_isFinished(JNIEnv *env, jobject thiz, jlo
 
 // Destroy player
 JNIEXPORT void JNICALL
-Java_com_music_player_PlayerController_destroyPlayer(JNIEnv *env, jobject thiz, jlong playerPtr) {
+Java_com_music_player_PlayerController_destroyPlayer(
+    JNIEnv *env,
+    jobject thiz,
+    jlong playerPtr
+) {
     (void)env;
     (void)thiz;
     

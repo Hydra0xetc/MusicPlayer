@@ -198,7 +198,11 @@ void setupUriAudioPlayer(AudioPlayer* player, const char* filePath) {
     LOGI("Audio player berhasil disiapkan untuk: %s", filePath);
 }
 
-void SLAPIENTRY playbackCallback(SLPlayItf caller, void* context, SLuint32 event) {
+void SLAPIENTRY playbackCallback(
+    SLPlayItf caller,
+    void* context,
+    SLuint32 event
+) {
     
     (void)caller;
     AudioPlayer *player = context;

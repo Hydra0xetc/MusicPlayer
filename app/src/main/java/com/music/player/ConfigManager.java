@@ -2,6 +2,7 @@ package com.music.player;
 
 import android.content.Context;
 import android.os.FileObserver;
+import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.File;
@@ -14,12 +15,13 @@ public class ConfigManager {
     private static final String CONFIG_FILE = "config.json";
     private static final String DEFAULT_MUSIC_DIR = "/sdcard/Music/";
     
-    private String musicDir;
-    private boolean autoReload;
-    private boolean autoScan;
-    private FileLogger fileLogger;
-    private ConfigFileObserver fileObserver;
+    private String               musicDir;
+    private boolean              autoReload;
+    private boolean              autoScan;
+    private FileLogger           fileLogger;
+    private ConfigFileObserver   fileObserver;
     private ConfigChangeListener changeListener;
+    private Context              context;
     
     public interface ConfigChangeListener {
         void onConfigChanged();
@@ -27,6 +29,7 @@ public class ConfigManager {
     
     public ConfigManager(Context context) {
         fileLogger = FileLogger.getInstance(context);
+        this.context = context;
         loadConfig();
     }
     
@@ -128,6 +131,11 @@ public class ConfigManager {
             
         } catch (Exception e) {
             fileLogger.e("ConfigManager", "Error loading config: " + e.getMessage());
+            Toast.makeText(
+                    context,
+                    "Error loading config: " + e.getMessage(),
+                    Toast.LENGTH_SHORT
+            ).show();
             setDefaults();
             createDefaultConfig();
         }
