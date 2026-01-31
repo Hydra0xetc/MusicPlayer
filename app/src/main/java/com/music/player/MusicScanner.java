@@ -70,7 +70,7 @@ public class MusicScanner {
 
                     String retrievedArtist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
                     if (retrievedArtist != null && !retrievedArtist.isEmpty()) {
-                        artist = retrievedArtist;
+                        artist = cleanupArtistString(retrievedArtist); // Clean up duplicated artists
                     }
 
                     String retrievedAlbum = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
@@ -131,11 +131,22 @@ public class MusicScanner {
         return false;
     }
 
-    public static String[] getSupportedExtensions() {
-        String[] copy = new String[AUDIO_EXTENSIONS.length];
-        System.arraycopy(AUDIO_EXTENSIONS, 0, copy, 0, AUDIO_EXTENSIONS.length);
-        return copy;
+    private static String cleanupArtistString(String artistString) {
+        if (artistString == null || artistString.trim().isEmpty()) {
+            return "";
+        }
+
+        String[] artists = artistString.split(",\\s*");
+        List<String> uniqueArtists = new ArrayList<>();
+        for (String artist : artists) {
+            String trimmedArtist = artist.trim();
+            if (!trimmedArtist.isEmpty() && !uniqueArtists.contains(trimmedArtist)) {
+                uniqueArtists.add(trimmedArtist);
+            }
+        }
+        return String.join(", ", uniqueArtists);
     }
+
 
     // Named inner class instead of anonymous Comparator
     private static class MusicFileComparator implements Comparator<MusicFile> {

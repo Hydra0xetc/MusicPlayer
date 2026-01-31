@@ -51,7 +51,7 @@ public class MusicFileAdapter extends BaseAdapter {
         TextView tvMusicDuration = convertView.findViewById(R.id.tvMusicDuration);
         
         tvMusicTitle.setText(music.getTitle());
-        tvMusicArtistAndAlbum.setText(music.getArtist() + "-" + music.getAlbum());
+        tvMusicArtistAndAlbum.setText(music.getArtist() + " - " + music.getAlbum());
         tvMusicSize.setText(music.getSizeFormatted());
         tvMusicDuration.setText(music.getDurationFormatted());
         
