@@ -22,7 +22,6 @@ public class MusicPlayerApp extends Application {
         logger.i(TAG, "Package: " + getPackageName());
         logger.i(TAG, "Log path: " + logger.getLogPath());
         
-        // Install CrashHandler untuk menangkap SEMUA crash
         CrashHandler.install(this);
     }
 }

@@ -273,15 +273,30 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private void updateUIFromService() {
         if (!isBound || musicService == null) return;
         
+        // Update current music info if available
         MusicFile current = musicService.getCurrentMusic();
         if (current != null) {
             currentMusic = current;
             currentMusicIndex = musicService.getCurrentIndex();
             tvSongTitle.setText(current.getName());
-            
-            enableControls(true);
+        } else {
+            // No music loaded, reset UI
+            tvSongTitle.setText("No song playing");
+            currentMusic = null;
+            currentMusicIndex = -1;
+        }
+
+        // Update play/pause button and status based on service state
+        // This will call onPlayStateChanged which handles setting text and background colors
+        if (musicService.isReady()) {
+            onPlayStateChanged(musicService.isPlaying());
+            enableControls(true); // Enable controls if service is ready
+        } else {
+            onPlayStateChanged(false); // Service not ready, show paused state
+            enableControls(false); // Disable controls if service is not ready
         }
         
+        // Update loop button state
         isLoopEnabled = musicService.isLoopEnabled();
         updateLoopButton();
     }

@@ -36,18 +36,20 @@ public class ConfigManager {
     public void startWatching(ConfigChangeListener listener) {
         this.changeListener = listener;
         
-        if (autoReload) {
-            File configDir = new File(CONFIG_DIR);
-            if (!configDir.exists()) {
-                configDir.mkdirs();
-            }
-            
-            fileObserver = new ConfigFileObserver(CONFIG_DIR);
-            fileObserver.startWatching();
-            fileLogger.i("ConfigManager", "Started watching config file for changes");
-        } else {
-            fileLogger.i("ConfigManager", "Auto-reload disabled, not watching config file");
+        // Always start the FileObserver to detect changes
+        File configDir = new File(CONFIG_DIR);
+        if (!configDir.exists()) {
+            configDir.mkdirs();
         }
+        
+        // Ensure only one observer is active
+        if (fileObserver != null) {
+            fileObserver.stopWatching();
+        }
+        
+        fileObserver = new ConfigFileObserver(CONFIG_DIR);
+        fileObserver.startWatching();
+        fileLogger.i("ConfigManager", "Started watching config file for changes");
     }
     
     public void stopWatching() {

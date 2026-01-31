@@ -27,7 +27,6 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
         Thread.setDefaultUncaughtExceptionHandler(handler);
         
         FileLogger logger = FileLogger.getInstance(context);
-        logger.i(TAG, "CrashHandler installed - semua crash akan di-log ke file");
     }
     
     @Override

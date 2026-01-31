@@ -65,6 +65,7 @@ public class FileLogger {
                 logFile.createNewFile();
             } catch (IOException e) {
                 android.util.Log.e("FileLogger", "Failed to create new log file", e);
+                logFile = null; // Set logFile to null if creation fails
             }
         }
     }
