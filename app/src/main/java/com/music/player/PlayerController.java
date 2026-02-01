@@ -15,7 +15,7 @@ public class PlayerController {
 
     private long playerPtr = 0;
 
-    public PlayerController(Context context) {
+    public PlayerController() {
         // For now, the context is not directly used here, 
         // but it's passed to satisfy MusicService.
         // It might be used for future native code initialization 

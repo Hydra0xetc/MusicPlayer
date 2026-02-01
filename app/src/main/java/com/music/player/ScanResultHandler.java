@@ -25,22 +25,60 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
     }
 
     public void onScanStarted() {
-        ClearListTask task = new ClearListTask(musicFiles, adapter);
-        handler.post(task);
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                musicFiles.clear();
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
     public void onFileFound(MusicFile file) {
-        LogFileTask task = new LogFileTask(logger, file);
-        handler.post(task);
+
     }
 
     public void onScanCompleted(List<MusicFile> files) {
-        CompleteTask task = new CompleteTask(activity, musicFiles, adapter, btnScan, logger, files);
-        handler.post(task);
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                handleScanCompletion(files);
+            }
+        });
+    }
+
+    private void handleScanCompletion(List<MusicFile> files) {
+        musicFiles.clear();
+        musicFiles.addAll(files);
+        adapter.notifyDataSetChanged();
+
+        btnScan.setEnabled(true);
+        btnScan.setText("Scan");
+
+        int count = files.size();
+        logger.log("Scan completed: " + count + " file(s) found");
+        Toast.makeText(activity, count + " music file(s) found", Toast.LENGTH_SHORT).show();
+
+        if (files.isEmpty()) {
+            logger.log("No audio files found in directory");
+        }
+
+        activity.updatePlaylist();
     }
 
     public void onScanError(String error) {
-        ErrorTask task = new ErrorTask(activity, btnScan, logger, error);
-        handler.post(task);
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                handleScanError(error);
+            }
+        });
+    }
+
+    private void handleScanError(String error) {
+        btnScan.setEnabled(true);
+        btnScan.setText("Ready");
+        logger.log("ERROR: Scan failed - " + error);
+        Toast.makeText(activity, "Scan failed: " + error, Toast.LENGTH_SHORT).show();
     }
 }
