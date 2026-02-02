@@ -3,7 +3,6 @@ build/
 *.so
 *.class
 *.keystore
-gradle.properties
 app/.cxx/
 local.properties
 .env
