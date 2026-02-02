@@ -19,6 +19,7 @@ public class MusicService extends Service {
     private static final String CHANNEL_ID = "MusicPlayerChannel";
     private static final int NOTIFICATION_ID = 1;
     
+    private static final String TAG = "MusicService";
     public static final String ACTION_PLAY = "com.music.player.PLAY";
     public static final String ACTION_PAUSE = "com.music.player.PAUSE";
     public static final String ACTION_NEXT = "com.music.player.NEXT";
@@ -29,6 +30,8 @@ public class MusicService extends Service {
     private PlayerController player;
     private Handler autoNextHandler;
     
+    private FileLogger fileLogger;
+    private LogHelper logger;
     private List<MusicFile> playlist = new ArrayList<>();
     private int currentIndex = -1;
     private boolean isLoopEnabled = false;
@@ -49,6 +52,9 @@ public class MusicService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        logger = new LogHelper(this);
+        fileLogger = FileLogger.getInstance(this);
+
         player = new PlayerController();
         autoNextHandler = new Handler(Looper.getMainLooper());
         createNotificationChannel();
@@ -60,7 +66,7 @@ public class MusicService extends Service {
         if (intent != null && intent.getAction() != null) {
             handleAction(intent.getAction());
         }
-        return START_STICKY; // Service akan restart jika di-kill oleh system
+        return START_STICKY; // The service will restart if killed by the system
     }
     
     private void handleAction(String action) {
@@ -96,7 +102,7 @@ public class MusicService extends Service {
                 NotificationManager.IMPORTANCE_LOW
             );
             channel.setDescription("Music playback controls");
-            channel.setSound(null, null); // No sound untuk notification
+            channel.setSound(null, null); // No sound for notification
             
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
@@ -109,6 +115,7 @@ public class MusicService extends Service {
         String songTitle = "No song playing";
         if (currentIndex >= 0 && currentIndex < playlist.size()) {
             songTitle = playlist.get(currentIndex).getName();
+            fileLogger.d(TAG, songTitle);
         }
         
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -155,9 +162,9 @@ public class MusicService extends Service {
             .addAction(playPauseAction)
             .addAction(nextAction)
             .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                .setShowActionsInCompactView(0, 1, 2)
-            )
-            .setOngoing(true) // Membuat notifikasi tidak bisa di-swipe
+                    .setShowActionsInCompactView(0, 1, 2)
+                    )
+            .setOngoing(true) // Makes the notification not dismissible
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build();
@@ -182,7 +189,7 @@ public class MusicService extends Service {
         }
     }
     
-    // Public methods untuk kontrol dari Activity
+    // Public methods for control from Activity
     public void setPlaylist(List<MusicFile> files) {
         this.playlist = new ArrayList<>(files);
     }
@@ -250,7 +257,7 @@ public class MusicService extends Service {
         
         int nextIndex = currentIndex + 1;
         if (nextIndex >= playlist.size()) {
-            nextIndex = 0; // Kembali ke awal
+            nextIndex = 0; // Back to start
         }
         
         loadAndPlay(nextIndex);
@@ -261,7 +268,7 @@ public class MusicService extends Service {
         
         int prevIndex = currentIndex - 1;
         if (prevIndex < 0) {
-            prevIndex = playlist.size() - 1; // Ke akhir
+            prevIndex = playlist.size() - 1; // To end
         }
         
         loadAndPlay(prevIndex);
@@ -329,7 +336,7 @@ public class MusicService extends Service {
                 listener.onMusicFinished();
             }
             
-            // Jika loop tidak aktif, play next
+            // If loop is not active, play next
             if (!isLoopEnabled) {
                 playNext();
             }

@@ -73,7 +73,7 @@ public class ConfigManager {
             if (filename != null && filename.equals(CONFIG_FILE)) {
                 fileLogger.i("ConfigManager", "Config file changed, reloading...");
                 
-                // Delay sedikit untuk pastikan file sudah selesai ditulis
+                // Delay briefly to ensure the file has finished writing
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
@@ -117,7 +117,7 @@ public class ConfigManager {
                 autoReload = config.optBoolean("auto_reload", false);
                 autoScan = config.optBoolean("auto_scan", false);
                 
-                // Validasi path
+                // Validate path
                 File dir = new File(musicDir);
                 if (!dir.exists() || !dir.isDirectory()) {
                     fileLogger.w("ConfigManager", "Invalid music dir in config: " + musicDir);

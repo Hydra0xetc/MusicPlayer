@@ -64,10 +64,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         checkPermissions();
         
-        // Update UI berdasarkan config
+        // Update UI based on config
         updateUIBasedOnConfig();
         
-        // Mulai watch config file jika auto_reload aktif
+        // Start watching config file if auto_reload is active
         configManager.startWatching(new ConfigManager.ConfigChangeListener() {
             @Override
             public void onConfigChanged() {
@@ -80,10 +80,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             }
         });
         
-        // Bind ke service
+        // Bind to service
         bindMusicService();
         
-        // Auto scan jika diaktifkan
+        // Auto scan if enabled
         if (configManager.isAutoScan()) {
             mainHandler.postDelayed(new Runnable() {
                 @Override
@@ -101,7 +101,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         // Update UI
         updateUIBasedOnConfig();
         
-        // Auto scan jika diaktifkan setelah config berubah
+        // Auto scan if enabled after config changes
         if (configManager.isAutoScan()) {
             logger.log("Auto-scan triggered after config reload");
             mainHandler.postDelayed(new Runnable() {
@@ -201,7 +201,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
     
     private void updateUIBasedOnConfig() {
-        // Sembunyikan tombol Reload jika auto_reload aktif
+        // Hide Reload button if auto_reload is active
         if (configManager.isAutoReload()) {
             btnReloadConfig.setVisibility(View.GONE);
             logger.log("Auto-reload enabled, hiding reload button");
@@ -209,7 +209,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             btnReloadConfig.setVisibility(View.VISIBLE);
         }
         
-        // Sembunyikan tombol Scan jika auto_scan aktif
+        // Hide Scan button if auto_scan is active
         if (configManager.isAutoScan()) {
             btnScan.setVisibility(View.GONE);
             logger.log("Auto-scan enabled, hiding scan button");
@@ -225,10 +225,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         if (configManager.isValid()) {
             logger.log("Config loaded: " + configManager.getMusicDir());
             
-            // Update UI setelah reload config
+            // Update UI after config reload
             updateUIBasedOnConfig();
             
-            // Auto scan jika diaktifkan setelah reload
+            // Auto scan if enabled after reload
             if (configManager.isAutoScan()) {
                 logger.log("Auto-scan enabled after reload, scanning...");
                 mainHandler.postDelayed(new Runnable() {
@@ -286,7 +286,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             onMusicChanged(current, currentMusicIndex);
         } else {
             // No music loaded, reset UI
-            tvSongTitle.setText("No song playing");
+            String no_song = "No song playing";
+            tvSongTitle.setText(no_song);
+            logger.logDebug(no_song);
             currentMusic = null;
             currentMusicIndex = -1;
         }
@@ -432,7 +434,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         super.onResume();
         fileLogger.d("MainActivity", "onResume() called");
         
-        // Auto-reload config jika diaktifkan
+        // Auto-reload config if enabled
         if (configManager.isAutoReload()) {
             logger.log("Auto-reload enabled, reloading config...");
             configManager.loadConfig();

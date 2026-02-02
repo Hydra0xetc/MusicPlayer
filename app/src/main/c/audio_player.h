@@ -5,7 +5,7 @@
 #include <SLES/OpenSLES_Android.h>
 #include <stdbool.h>
 
-// Struktur AudioPlayer
+// AudioPlayer Structure
 typedef struct {
     // OpenSL ES objects
     SLObjectItf engineObject;

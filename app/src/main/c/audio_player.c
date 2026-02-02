@@ -10,17 +10,17 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #else
-// Untuk non-Android
+// For non-Android
 #define LOGI(...) printf("[INFO] " __VA_ARGS__); printf("\n")
 #define LOGE(...) printf("[ERROR] " __VA_ARGS__); printf("\n")
 #endif
 
-// Buffer queue callback (tandai sebagai digunakan jika diperlukan)
+// Buffer queue callback (mark as used if needed)
 void SLAPIENTRY bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context) {
     (void)bq; // Mark parameter as unused
     (void)context; // Mark parameter as unused
-    // Callback untuk buffer queue (untuk streaming)
-    // Diimplementasikan sesuai kebutuhan
+    // Callback for buffer queue (for streaming)
+    // Implemented as required
     LOGI("Buffer queue callback called");
 }
 
@@ -29,76 +29,76 @@ AudioPlayer* createAudioPlayer(const char* filePath) {
     
     AudioPlayer* player = (AudioPlayer*)malloc(sizeof(AudioPlayer));
     if (!player) {
-        LOGE("Gagal mengalokasikan memori untuk AudioPlayer");
+        LOGE("Failed to allocate memory for AudioPlayer");
         return NULL;
     }
     
     memset(player, 0, sizeof(AudioPlayer));
     
-    // Inisialisasi engine OpenSL ES
+    // Initialize OpenSL ES engine
     SLresult result;
     
-    // Buat engine
+    // Create engine
     result = slCreateEngine(&player->engineObject, 0, NULL, 0, NULL, NULL);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal membuat engine: %d", result);
+        LOGE("Failed to create engine: %d", result);
         free(player);
         return NULL;
     }
     
-    // Realisasikan engine
+    // Realize engine
     result = (*player->engineObject)->Realize(player->engineObject, SL_BOOLEAN_FALSE);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal merealisasikan engine: %d", result);
+        LOGE("Failed to realize engine: %d", result);
         (*player->engineObject)->Destroy(player->engineObject);
         free(player);
         return NULL;
     }
     
-    // Dapatkan interface engine
+    // Get engine interface
     result = (*player->engineObject)->GetInterface(
         player->engineObject, SL_IID_ENGINE, &player->engineEngine);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal mendapatkan interface engine: %d", result);
+        LOGE("Failed to get engine interface: %d", result);
         (*player->engineObject)->Destroy(player->engineObject);
         free(player);
         return NULL;
     }
     
-    // Buat output mix
+    // Create output mix
     result = (*player->engineEngine)->CreateOutputMix(
         player->engineEngine, &player->outputMixObject, 0, NULL, NULL);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal membuat output mix: %d", result);
+        LOGE("Failed to create output mix: %d", result);
         (*player->engineObject)->Destroy(player->engineObject);
         free(player);
         return NULL;
     }
     
-    // Realisasikan output mix
+    // Realize output mix
     result = (*player->outputMixObject)->Realize(
         player->outputMixObject, SL_BOOLEAN_FALSE);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal merealisasikan output mix: %d", result);
+        LOGE("Failed to realize output mix: %d", result);
         (*player->outputMixObject)->Destroy(player->outputMixObject);
         (*player->engineObject)->Destroy(player->engineObject);
         free(player);
         return NULL;
     }
     
-    LOGI("Engine OpenSL ES berhasil diinisialisasi");
+    LOGI("OpenSL ES engine initialized successfully");
     return player;
 }
 
 void setupUriAudioPlayer(AudioPlayer* player, const char* filePath) {
     if (!player || !filePath) {
-        LOGE("Player atau filePath NULL");
+        LOGE("Player or filePath is NULL");
         return;
     }
     
     SLresult result;
     
-    // Konfigurasi data source untuk URI
+    // Configure data source for URI
     SLDataLocator_URI loc_uri = {
         SL_DATALOCATOR_URI,
         (SLchar*)filePath
@@ -112,7 +112,7 @@ void setupUriAudioPlayer(AudioPlayer* player, const char* filePath) {
     
     SLDataSource audioSrc = {&loc_uri, &format_mime};
     
-    // Konfigurasi data sink
+    // Configure data sink
     SLDataLocator_OutputMix loc_outmix = {
         SL_DATALOCATOR_OUTPUTMIX,
         player->outputMixObject
@@ -120,7 +120,7 @@ void setupUriAudioPlayer(AudioPlayer* player, const char* filePath) {
     
     SLDataSink audioSnk = {&loc_outmix, NULL};
     
-    // Buat audio player
+    // Create audio player
     const SLInterfaceID ids[3] = {
         SL_IID_PLAY,
         SL_IID_SEEK,
@@ -144,58 +144,58 @@ void setupUriAudioPlayer(AudioPlayer* player, const char* filePath) {
     );
     
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal membuat audio player: %d", result);
+        LOGE("Failed to create audio player: %d", result);
         return;
     }
     
-    // Realisasikan player
+    // Realize player
     result = (*player->playerObject)->Realize(
         player->playerObject, SL_BOOLEAN_FALSE);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal merealisasikan player: %d", result);
+        LOGE("Failed to realize player: %d", result);
         return;
     }
     
-    // Dapatkan interface play
+    // Get play interface
     result = (*player->playerObject)->GetInterface(
         player->playerObject, SL_IID_PLAY, &player->playerPlay);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal mendapatkan interface play: %d", result);
+        LOGE("Failed to get play interface: %d", result);
         return;
     }
     
-    // Dapatkan interface seek
+    // Get seek interface
     result = (*player->playerObject)->GetInterface(
         player->playerObject, SL_IID_SEEK, &player->playerSeek);
     if (result != SL_RESULT_SUCCESS) {
-        LOGI("Interface seek tidak tersedia, melanjutkan tanpa seek");
-        // Bukan error fatal, lanjutkan
+    // Seek interface not available, continuing without seek
+        // Not a fatal error, continue
     }
     
-    // Dapatkan interface volume
+    // Get volume interface
     result = (*player->playerObject)->GetInterface(
         player->playerObject, SL_IID_VOLUME, &player->playerVolume);
     if (result != SL_RESULT_SUCCESS) {
-        LOGI("Interface volume tidak tersedia, melanjutkan tanpa kontrol volume");
-        // Bukan error fatal, lanjutkan
+    // Volume interface not available, continuing without volume control
+        // Not a fatal error, continue
     }
     
-    // Set callback untuk events
+    // Set callback for events
     result = (*player->playerPlay)->RegisterCallback(
         player->playerPlay, playbackCallback, player);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal mendaftarkan callback: %d", result);
+        LOGE("Failed to register callback: %d", result);
     }
     
     // Enable event callback
     result = (*player->playerPlay)->SetCallbackEventsMask(
         player->playerPlay, SL_PLAYEVENT_HEADATEND);
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal mengatur event mask: %d", result);
+        LOGE("Failed to set event mask: %d", result);
     }
     
     player->isPrepared = true;
-    LOGI("Audio player berhasil disiapkan untuk: %s", filePath);
+    LOGI("Audio player successfully prepared for: %s", filePath);
 }
 
 void SLAPIENTRY playbackCallback(
@@ -210,13 +210,13 @@ void SLAPIENTRY playbackCallback(
     if (event & SL_PLAYEVENT_HEADATEND) {
         player->isPlaying = false;
         player->finished = true;
-        LOGI("Audio selesai (callback)");
+        LOGI("Audio finished (callback)");
     }
 }
 
 void playAudio(AudioPlayer* player) {
     if (!player || !player->isPrepared) {
-        LOGE("Player tidak siap");
+        LOGE("Player not ready");
         return;
     }
 
@@ -227,9 +227,9 @@ void playAudio(AudioPlayer* player) {
     
     if (result == SL_RESULT_SUCCESS) {
         player->isPlaying = true;
-        LOGI("Memulai pemutaran");
+        LOGI("Starting playback");
     } else {
-        LOGE("Gagal memulai pemutaran: %d", result);
+        LOGE("Failed to start playback: %d", result);
     }
 }
 
@@ -243,7 +243,7 @@ void pauseAudio(AudioPlayer* player) {
     
     if (result == SL_RESULT_SUCCESS) {
         player->isPlaying = false;
-        LOGI("Dijeda");
+        LOGI("Paused");
     }
 }
 
@@ -259,18 +259,18 @@ void stopAudio(AudioPlayer* player) {
         player->isPlaying = false;
         player->finished = false;
         
-        // Kembali ke awal
+        // Back to start
         if (player->playerSeek) {
             (*player->playerSeek)->SetPosition(
                 player->playerSeek, 0, SL_SEEKMODE_FAST);
         }
-        LOGI("Dihentikan");
+        LOGI("Stopped");
     }
 }
 
 void setLooping(AudioPlayer* player, bool loop) {
     if (!player || !player->playerSeek) {
-        LOGI("Seek interface tidak tersedia, tidak bisa mengatur looping");
+        LOGI("Seek interface not available, cannot set looping");
         return;
     }
     
@@ -280,9 +280,9 @@ void setLooping(AudioPlayer* player, bool loop) {
         0, SL_TIME_UNKNOWN);
     
     if (result != SL_RESULT_SUCCESS) {
-        LOGE("Gagal mengatur looping: %d", result);
+        LOGE("Failed to set looping: %d", result);
     } else {
-        LOGI("Looping diatur ke: %s", loop ? "true" : "false");
+        LOGI("Looping set to: %s", loop ? "true" : "false");
     }
 }
 
@@ -313,32 +313,32 @@ bool isAudioFinished(AudioPlayer* player) {
 void destroyAudioPlayer(AudioPlayer* player) {
     if (!player) return;
     
-    LOGI("Membersihkan audio player...");
+    LOGI("Cleaning up audio player...");
     
-    // Hentikan pemutaran
+    // Stop playback
     if (player->playerPlay) {
         (*player->playerPlay)->SetPlayState(
             player->playerPlay, SL_PLAYSTATE_STOPPED);
     }
     
-    // Hancurkan player
+    // Destroy player
     if (player->playerObject) {
         (*player->playerObject)->Destroy(player->playerObject);
         player->playerObject = NULL;
     }
     
-    // Hancurkan output mix
+    // Destroy output mix
     if (player->outputMixObject) {
         (*player->outputMixObject)->Destroy(player->outputMixObject);
         player->outputMixObject = NULL;
     }
     
-    // Hancurkan engine
+    // Destroy engine
     if (player->engineObject) {
         (*player->engineObject)->Destroy(player->engineObject);
         player->engineObject = NULL;
     }
     
     free(player);
-    LOGI("Audio player dihancurkan");
+    LOGI("Audio player destroyed");
 }

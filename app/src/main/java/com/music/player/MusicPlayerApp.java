@@ -3,8 +3,8 @@ package com.music.player;
 import android.app.Application;
 
 /**
- * Application class untuk inisialisasi global
- * Ini akan dijalankan PERTAMA sebelum Activity apapun
+ * Application class for global initialization
+ * This will be executed FIRST before any Activity
  */
 public class MusicPlayerApp extends Application {
     
@@ -14,7 +14,7 @@ public class MusicPlayerApp extends Application {
     public void onCreate() {
         super.onCreate();
         
-        // Install FileLogger dan CrashHandler PERTAMA KALI
+        // Install FileLogger and CrashHandler FIRST
         FileLogger logger = FileLogger.getInstance(this);
         
         logger.i(TAG, "Device: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL);

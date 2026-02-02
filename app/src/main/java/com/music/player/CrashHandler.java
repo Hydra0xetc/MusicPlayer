@@ -5,8 +5,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
- * Global exception handler yang menangkap semua crash
- * dan menulis stack trace lengkap ke log.txt
+ * Global exception handler that catches all crashes
+ * and writes the full stack trace to log.txt
  */
 public class CrashHandler implements Thread.UncaughtExceptionHandler {
     
@@ -20,7 +20,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     }
     
     /**
-     * Install crash handler sebagai default exception handler
+     * Install crash handler as the default exception handler
      */
     public static void install(Context context) {
         CrashHandler handler = new CrashHandler(context);
@@ -32,9 +32,9 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     @Override
     public void uncaughtException(Thread thread, Throwable throwable) {
         try {
-            // Log crash ke file dengan format yang jelas
+            // Log crash to file with clear format
             logger.e(TAG, "");
-            logger.e(TAG, "APLIKASI CRASH! ");
+            logger.e(TAG, "APPLICATION CRASH! ");
             logger.e(TAG, "Thread: " + thread.getName());
             logger.e(TAG, "Exception: " + throwable.getClass().getName());
             logger.e(TAG, "Message: " + throwable.getMessage());
@@ -42,19 +42,19 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             logger.e(TAG, "Stack Trace:");
             logger.e(TAG, "────────────────────────────────────────────────────────");
             
-            // Dapatkan full stack trace
+            // Get full stack trace
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             throwable.printStackTrace(pw);
             String stackTrace = sw.toString();
             
-            // Log setiap baris stack trace
+            // Log each line of the stack trace
             String[] lines = stackTrace.split("\n");
             for (String line : lines) {
                 logger.e(TAG, line);
             }
             
-            // Beri waktu untuk write ke file
+            // Allow time to write to file
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -62,10 +62,10 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             }
             
         } catch (Exception e) {
-            // Jika logging gagal, print ke logcat
+            // If logging fails, print to logcat
             android.util.Log.e(TAG, "Failed to log crash", e);
         } finally {
-            // Panggil default handler untuk crash app seperti biasa
+            // Call the default handler to crash the app as usual
             if (defaultHandler != null) {
                 defaultHandler.uncaughtException(thread, throwable);
             } else {

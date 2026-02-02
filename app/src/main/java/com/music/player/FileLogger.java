@@ -10,8 +10,8 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Logger yang menyimpan log ke file di getExternalFilesDir
- * Thread-safe dan otomatis rotasi file saat terlalu besar
+ * Logger that saves logs to a file in getExternalFilesDir
+ * Thread-safe and automatically rotates files when too large
  */
 public class FileLogger {
     private static FileLogger instance;
@@ -24,7 +24,7 @@ public class FileLogger {
         if (logDir != null) {
             logFile = new File(logDir, "log.txt");
             
-            // Buat file jika belum ada
+            // Create file if it doesn't exist yet
             try {
                 if (!logFile.exists()) {
                     logFile.createNewFile();
@@ -37,7 +37,7 @@ public class FileLogger {
     }
     
     /**
-     * Dapatkan instance FileLogger (Singleton)
+     * Get the FileLogger instance (Singleton)
      */
     public static synchronized FileLogger getInstance(Context context) {
         if (instance == null) {
@@ -47,7 +47,7 @@ public class FileLogger {
     }
     
     /**
-     * Rotasi log jika file terlalu besar
+     * Rotate logs if the file is too large
      */
     private void rotateLogs() {
         if (logFile == null || !logFile.exists()) {
@@ -71,14 +71,14 @@ public class FileLogger {
     }
     
     /**
-     * Tulis log ke file
+     * Write log to file
      */
     private synchronized void writeToFile(String level, String tag, String message) {
         if (logFile == null) {
             return;
         }
         
-        // Rotasi jika perlu
+        // Rotate if necessary
         rotateLogs();
         
         try (FileWriter fw = new FileWriter(logFile, true);
@@ -97,7 +97,7 @@ public class FileLogger {
     }
     
     /**
-     * Tulis log dengan stack trace
+     * Write log with stack trace
      */
     private synchronized void writeToFile(String level, String tag, String message, Throwable throwable) {
         if (logFile == null) {
@@ -115,7 +115,7 @@ public class FileLogger {
             
             pw.print(logEntry);
             
-            // Tulis stack trace
+            // Write stack trace
             if (throwable != null) {
                 throwable.printStackTrace(pw);
             }
@@ -160,7 +160,7 @@ public class FileLogger {
     }
     
     /**
-     * Log level ERROR dengan Exception
+     * Log level ERROR with Exception
      */
     public void e(String tag, String message, Throwable throwable) {
         writeToFile("ERROR", tag, message, throwable);
@@ -168,14 +168,14 @@ public class FileLogger {
     }
     
     /**
-     * Dapatkan path file log
+     * Get the log file path
      */
     public String getLogPath() {
         return logFile != null ? logFile.getAbsolutePath() : "Log file not available";
     }
     
     /**
-     * Hapus semua log
+     * Clear all logs
      */
     public void clearLogs() {
         if (logFile != null && logFile.exists()) {
@@ -189,14 +189,14 @@ public class FileLogger {
     }
     
     /**
-     * Cek apakah file log ada
+     * Check if the log file exists
      */
     public boolean exists() {
         return logFile != null && logFile.exists();
     }
     
     /**
-     * Dapatkan ukuran file log dalam bytes
+     * Get log file size in bytes
      */
     public long getSize() {
         return logFile != null && logFile.exists() ? logFile.length() : 0;
