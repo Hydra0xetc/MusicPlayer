@@ -6,6 +6,53 @@
     android:padding="16dp"
     android:background="#121212">
 
+    <!-- Header Section with Song Title, Status, and Settings Button -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:id="@+id/nowPlayingHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingEnd="56dp"
+            android:paddingStart="0dp"
+            android:layout_centerVertical="true">
+
+            <TextView
+                android:id="@+id/tvSongTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No song selected"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:singleLine="true" />
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Idle"
+                android:textColor="#03DAC6"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_settings"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="Settings" />
+    </RelativeLayout>
+
     <!-- Main Album Art Display -->
     <ImageView
         android:id="@+id/ivMainAlbumArt"
@@ -14,37 +61,6 @@
         android:scaleType="centerCrop"
         android:src="@mipmap/ic_launcher"
         android:layout_marginBottom="16dp" />
-
-    <!-- Now Playing Section -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#1E1E1E"
-        android:padding="16dp"
-        android:layout_marginBottom="8dp">
-
-        <TextView
-            android:id="@+id/tvSongTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="No song selected"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:ellipsize="marquee"
-            android:marqueeRepeatLimit="marquee_forever"
-            android:singleLine="true"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Idle"
-            android:textColor="#03DAC6"
-            android:textSize="14sp" />
-    </LinearLayout>
 
     <!-- Player Controls -->
     <LinearLayout
@@ -72,7 +88,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/prev"
+            android:text="@string/play_pause"
             android:background="#FF9800"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="4dp"
@@ -146,25 +162,12 @@
         android:layout_marginTop="4dp">
 
         <Button
-            android:id="@+id/btnReloadConfig"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/reload"
-            android:background="#333333"
-            android:textColor="#FFFFFF"
-            android:layout_marginEnd="4dp" />
-
-        <Button
             android:id="@+id/btnScan"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/scan"
-            android:layout_marginEnd="4dp"
             android:background="#BB86FC"
             android:textColor="#121212" />
     </LinearLayout>
-
 
 </LinearLayout>

@@ -7,6 +7,6 @@
     <string name="play_pause">❚❚ PAUSE</string>
     <string name="loop">↻ Loop</string>
     <string name="scan">SCAN</string>
-    <string name="music_list">MUSIC FILES</string>
+    <string name="music_list">Music Files:</string>
     <string name="reload">RELOAD</string>
 </resources>

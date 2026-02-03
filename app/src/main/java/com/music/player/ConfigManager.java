@@ -9,10 +9,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.BufferedReader;
+import java.io.IOException;
 
 public class ConfigManager {
-    private static final String CONFIG_DIR = "/sdcard/MusicPlayer/";
-    private static final String CONFIG_FILE = "config.json";
+    // Keep CONFIG_DIR as /sdcard/MusicPlayer/ as per user's request
+    private static final String CONFIG_ROOT_DIR = "/sdcard/MusicPlayer/";
+    private static final String CONFIG_FILE_NAME = "config.json";
     private static final String DEFAULT_MUSIC_DIR = "/sdcard/Music/";
     
     private String               musicDir;
@@ -22,6 +24,8 @@ public class ConfigManager {
     private ConfigFileObserver   fileObserver;
     private ConfigChangeListener changeListener;
     private Context              context;
+    private File                 configDirFile; // Resolved config directory File object
+    private File                 configFile;    // Resolved config file File object
     
     public interface ConfigChangeListener {
         void onConfigChanged();
@@ -30,16 +34,18 @@ public class ConfigManager {
     public ConfigManager(Context context) {
         fileLogger = FileLogger.getInstance(context);
         this.context = context;
+        
+        configDirFile = new File(CONFIG_ROOT_DIR);
+        configFile = new File(configDirFile, CONFIG_FILE_NAME);
+        
         loadConfig();
     }
     
     public void startWatching(ConfigChangeListener listener) {
         this.changeListener = listener;
         
-        // Always start the FileObserver to detect changes
-        File configDir = new File(CONFIG_DIR);
-        if (!configDir.exists()) {
-            configDir.mkdirs();
+        if (!configDirFile.exists()) {
+            configDirFile.mkdirs();
         }
         
         // Ensure only one observer is active
@@ -47,9 +53,16 @@ public class ConfigManager {
             fileObserver.stopWatching();
         }
         
-        fileObserver = new ConfigFileObserver(CONFIG_DIR);
-        fileObserver.startWatching();
-        fileLogger.i("ConfigManager", "Started watching config file for changes");
+        // The FileObserver path must be the directory, not the file
+        // Handle potential IOException during FileObserver creation
+        try {
+             fileObserver = new ConfigFileObserver(configDirFile.getAbsolutePath());
+             fileObserver.startWatching();
+             fileLogger.i("ConfigManager", "Started watching config file directory: " + configDirFile.getAbsolutePath());
+        } catch (IllegalArgumentException e) {
+             fileLogger.e("ConfigManager", "Failed to start file observer for " + configDirFile.getAbsolutePath() + ": " + e.getMessage());
+             Toast.makeText(context, "Cannot monitor config folder: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
     
     public void stopWatching() {
@@ -61,16 +74,13 @@ public class ConfigManager {
     }
     
     private class ConfigFileObserver extends FileObserver {
-        private String path;
-        
         public ConfigFileObserver(String path) {
             super(path, FileObserver.MODIFY | FileObserver.CLOSE_WRITE);
-            this.path = path;
         }
         
         @Override
         public void onEvent(int event, String filename) {
-            if (filename != null && filename.equals(CONFIG_FILE)) {
+            if (filename != null && filename.equals(CONFIG_FILE_NAME)) {
                 fileLogger.i("ConfigManager", "Config file changed, reloading...");
                 
                 // Delay briefly to ensure the file has finished writing
@@ -83,7 +93,14 @@ public class ConfigManager {
                 loadConfig();
                 
                 if (changeListener != null) {
-                    changeListener.onConfigChanged();
+                    // Post to main handler to avoid UI updates from a background thread
+                    // (FileObserver's onEvent can be called on a separate thread)
+                    new android.os.Handler(context.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            changeListener.onConfigChanged();
+                        }
+                    });
                 }
             }
         }
@@ -91,12 +108,10 @@ public class ConfigManager {
     
     public void loadConfig() {
         try {
-            File configFile = new File(CONFIG_DIR + CONFIG_FILE);
-            
             if (!configFile.exists()) {
-                fileLogger.w("ConfigManager", "Config file not found, using default");
+                fileLogger.w("ConfigManager", "Config file not found at " + configFile.getAbsolutePath() + ", using default.");
                 setDefaults();
-                createDefaultConfig();
+                createDefaultConfig(); // createDefaultConfig calls saveConfig() which has its own error handling
                 return;
             }
             
@@ -120,23 +135,31 @@ public class ConfigManager {
                 // Validate path
                 File dir = new File(musicDir);
                 if (!dir.exists() || !dir.isDirectory()) {
-                    fileLogger.w("ConfigManager", "Invalid music dir in config: " + musicDir);
+                    fileLogger.w("ConfigManager", "Invalid music dir in config: " + musicDir + ", defaulting to " + DEFAULT_MUSIC_DIR);
                     musicDir = DEFAULT_MUSIC_DIR;
                 }
                 
-                fileLogger.i("ConfigManager", "Config loaded: " + musicDir);
-                fileLogger.i("ConfigManager", "auto_reload: " + autoReload + ", auto_scan: " + autoScan);
+                fileLogger.i("ConfigManager", "Config loaded from: " + configFile.getAbsolutePath() + ", MusicDir: " + musicDir + ", AutoReload: " + autoReload + ", AutoScan: " + autoScan);
             } else {
                 fileLogger.w("ConfigManager", "Empty config, using default");
                 setDefaults();
             }
             
-        } catch (Exception e) {
-            fileLogger.e("ConfigManager", "Error loading config: " + e.getMessage());
+        } catch (IOException e) { // Catch IOException specifically for file operations
+            fileLogger.e("ConfigManager", "I/O error loading config from " + configFile.getAbsolutePath() + ": " + e.getMessage());
             Toast.makeText(
                     context,
-                    "Error loading config: " + e.getMessage(),
-                    Toast.LENGTH_SHORT
+                    "Error loading config from " + configFile.getAbsolutePath() + ": " + e.getMessage() + ". Check permissions.",
+                    Toast.LENGTH_LONG // Use LONG for more visibility
+            ).show();
+            setDefaults();
+            createDefaultConfig();
+        } catch (Exception e) { // General catch for JSON parsing or other errors
+            fileLogger.e("ConfigManager", "Error loading config from " + configFile.getAbsolutePath() + ": " + e.getMessage());
+            Toast.makeText(
+                    context,
+                    "Error loading config from " + configFile.getAbsolutePath() + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG // Use LONG for more visibility
             ).show();
             setDefaults();
             createDefaultConfig();
@@ -145,9 +168,11 @@ public class ConfigManager {
     
     public void saveConfig() {
         try {
-            File configDir = new File(CONFIG_DIR);
-            if (!configDir.exists()) {
-                configDir.mkdirs();
+            if (!configDirFile.exists()) {
+                configDirFile.mkdirs();
+                if (!configDirFile.exists()) { // Check again if mkdirs failed
+                    throw new IOException("Failed to create config directory: " + configDirFile.getAbsolutePath());
+                }
             }
             
             JSONArray configArray = new JSONArray();
@@ -157,21 +182,35 @@ public class ConfigManager {
             config.put("music_dir", musicDir);
             configArray.put(config);
             
-            FileWriter writer = new FileWriter(CONFIG_DIR + CONFIG_FILE);
+            FileWriter writer = new FileWriter(configFile); // Write to the resolved configFile
             writer.write(configArray.toString(2));
             writer.close();
             
-            fileLogger.i("ConfigManager", "Config saved: " + musicDir);
+            fileLogger.i("ConfigManager", "Config saved to: " + configFile.getAbsolutePath());
+            Toast.makeText(context, "Settings saved to " + configFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
             
-        } catch (Exception e) {
-            fileLogger.e("ConfigManager", "Error saving config: " + e.getMessage());
+        } catch (IOException e) { // Catch IOException specifically for file operations
+            fileLogger.e("ConfigManager", "I/O error saving config to " + configFile.getAbsolutePath() + ": " + e.getMessage());
+            Toast.makeText(
+                    context,
+                    "Error saving config to " + configFile.getAbsolutePath() + ": " + e.getMessage() + ". Check app permissions.",
+                    Toast.LENGTH_LONG // Use LONG for more visibility
+            ).show();
+        } catch (Exception e) { // General catch for other errors
+            fileLogger.e("ConfigManager", "Error saving config to " + configFile.getAbsolutePath() + ": " + e.getMessage());
+            Toast.makeText(
+                    context,
+                    "Error saving config to " + configFile.getAbsolutePath() + ": " + e.getMessage(),
+                    Toast.LENGTH_LONG // Use LONG for more visibility
+            ).show();
         }
     }
     
     private void createDefaultConfig() {
         setDefaults();
-        saveConfig();
-        fileLogger.i("ConfigManager", "Default config created");
+        // saveConfig will be called here, which includes error handling
+        saveConfig(); 
+        fileLogger.i("ConfigManager", "Default config created at " + configFile.getAbsolutePath());
     }
     
     private void setDefaults() {
@@ -191,7 +230,7 @@ public class ConfigManager {
     public boolean isAutoReload() {
         return autoReload;
     }
-    
+
     public void setAutoReload(boolean autoReload) {
         this.autoReload = autoReload;
     }
@@ -199,7 +238,7 @@ public class ConfigManager {
     public boolean isAutoScan() {
         return autoScan;
     }
-    
+
     public void setAutoScan(boolean autoScan) {
         this.autoScan = autoScan;
     }
