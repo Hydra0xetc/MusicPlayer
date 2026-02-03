@@ -6,22 +6,24 @@ import android.widget.Toast;
 import java.util.List;
 
 public class ScanResultHandler implements MusicScanner.ScanListener {
+    final static String TAG = "ScanResultHandler";
     private MainActivity activity;
     private Handler handler;
     private List<MusicFile> musicFiles;
     private MusicFileAdapter adapter;
     private Button btnScan;
-    private LogHelper logger;
+    private FileLogger fileLogger;
 
-    public ScanResultHandler(MainActivity activity, Handler handler, 
-                            List<MusicFile> musicFiles, MusicFileAdapter adapter,
-                            Button btnScan, LogHelper logger) {
+    public ScanResultHandler(
+        MainActivity activity, Handler handler, 
+        List<MusicFile> musicFiles, MusicFileAdapter adapter,
+        Button btnScan
+) {
         this.activity = activity;
         this.handler = handler;
         this.musicFiles = musicFiles;
         this.adapter = adapter;
         this.btnScan = btnScan;
-        this.logger = logger;
     }
 
     public void onScanStarted() {
@@ -34,9 +36,8 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
         });
     }
 
-    public void onFileFound(MusicFile file) {
-
-    }
+    // this may better if i can delete this
+    public void onFileFound(MusicFile file) { }
 
     public void onScanCompleted(List<MusicFile> files) {
         handler.post(new Runnable() {
@@ -56,11 +57,10 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
         btnScan.setText("Scan");
 
         int count = files.size();
-        logger.log("Scan completed: " + count + " file(s) found");
         Toast.makeText(activity, count + " music file(s) found", Toast.LENGTH_SHORT).show();
 
         if (files.isEmpty()) {
-            logger.log("No audio files found in directory");
+            fileLogger.e(TAG, "No audio files found in directory");
         }
 
         activity.updatePlaylist();
@@ -78,7 +78,7 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
     private void handleScanError(String error) {
         btnScan.setEnabled(true);
         btnScan.setText("Ready");
-        logger.log("ERROR: Scan failed - " + error);
+        fileLogger.e(TAG, "ERROR: Scan failed - " + error);
         Toast.makeText(activity, "Scan failed: " + error, Toast.LENGTH_SHORT).show();
     }
 }

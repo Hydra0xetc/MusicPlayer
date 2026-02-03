@@ -31,7 +31,6 @@ public class MusicService extends Service {
     private Handler autoNextHandler;
     
     private FileLogger fileLogger;
-    private LogHelper logger;
     private List<MusicFile> playlist = new ArrayList<>();
     private int currentIndex = -1;
     private boolean isLoopEnabled = false;
@@ -52,7 +51,6 @@ public class MusicService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        logger = new LogHelper(this);
         fileLogger = FileLogger.getInstance(this);
 
         player = new PlayerController();

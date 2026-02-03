@@ -13,7 +13,6 @@
         android:layout_height="250dp"
         android:scaleType="centerCrop"
         android:src="@mipmap/ic_launcher"
-        android:contentDescription="Main Album Art"
         android:layout_marginBottom="16dp" />
 
     <!-- Now Playing Section -->
@@ -61,7 +60,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="⏮ PREV"
+            android:text="@string/prev"
             android:background="#333333"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="4dp"
@@ -73,7 +72,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="❚❚ PAUSE"
+            android:text="@string/prev"
             android:background="#FF9800"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="4dp"
@@ -85,7 +84,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="NEXT ⏭"
+            android:text="@string/next"
             android:background="#333333"
             android:textColor="#FFFFFF"
             android:enabled="false" />
@@ -103,7 +102,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="■ STOP"
+            android:text="@string/stop"
             android:background="#CF6679"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="4dp"
@@ -113,6 +112,7 @@
             android:id="@+id/btnLoop"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:text="@string/loop"
             android:layout_weight="1"
             android:background="#1A1A1A"
             android:textColor="#666666"
@@ -123,7 +123,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Music Files:"
+        android:text="@string/music_list"
         android:textColor="#FFFFFF"
         android:textSize="14sp"
         android:textStyle="bold"
@@ -150,7 +150,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="RELOAD"
+            android:text="@string/reload"
             android:background="#333333"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="4dp" />
@@ -160,7 +160,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="SCAN"
+            android:text="@string/scan"
             android:layout_marginEnd="4dp"
             android:background="#BB86FC"
             android:textColor="#121212" />

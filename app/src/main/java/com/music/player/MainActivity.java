@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends Activity implements MusicService.MusicServiceListener {
+    final static String TAG = "MainActivity";
     private ListView lvMusicFiles;
     private TextView tvStatus, tvSongTitle;
     private ImageView ivMainAlbumArt; // New ImageView for main album art
@@ -31,7 +32,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private MusicService musicService;
     private boolean isBound = false;
     
-    private LogHelper logger;
     private FileLogger fileLogger;
     private Handler mainHandler;
     private ConfigManager configManager;
@@ -53,12 +53,11 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         musicFiles = new ArrayList<MusicFile>();
 
         fileLogger = FileLogger.getInstance(this);
-        fileLogger.i("MainActivity", "MainActivity.onCreate() started");
+        fileLogger.i(TAG, "MainActivity.onCreate() started");
 
         configManager = new ConfigManager(this);
 
         initViews();
-        setupLogger();
         setupListView();
         setupButtons();
         
@@ -88,7 +87,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             mainHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    logger.log("Auto-scan enabled, scanning...");
+                    fileLogger.i(TAG, "Auto-scan enabled, scanning...");
                     scanDirectory();
                 }
             }, 1000);
@@ -96,14 +95,14 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
 
     private void onConfigReloaded() {
-        logger.log("Config file changed, reloading...");
+        fileLogger.i(TAG, "Config file changed, reloading...");
         
         // Update UI
         updateUIBasedOnConfig();
         
         // Auto scan if enabled after config changes
         if (configManager.isAutoScan()) {
-            logger.log("Auto-scan triggered after config reload");
+            fileLogger.i(TAG, "Auto-scan triggered after config reload");
             mainHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -117,7 +116,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     protected void onDestroy() {
         super.onDestroy();
         
-        fileLogger.i("MainActivity", "MainActivity.onDestroy() called");
+        fileLogger.i(TAG, "MainActivity.onDestroy() called");
         
         if (isBound) {
             musicService.setListener(null);
@@ -125,11 +124,11 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             isBound = false;
         }
         
-        logger.log("Activity destroyed");
+        fileLogger.i(TAG, "Activity destroyed");
     }
 
     private void initViews() {
-        fileLogger.d("MainActivity", "Initializing views...");
+        fileLogger.d(TAG, "Initializing views...");
         
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
         tvStatus = findViewById(R.id.tvStatus);
@@ -145,16 +144,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         btnNext = findViewById(R.id.btnNext);
         btnReloadConfig = findViewById(R.id.btnReloadConfig);
         
-        fileLogger.d("MainActivity", "Views initialized");
-    }
-
-    private void setupLogger() {
-        logger = new LogHelper(this);
-        logger.log("Music Player started");
-        logger.log("Log file: " + fileLogger.getLogPath());
-        logger.log("Config: " + configManager.getMusicDir());
-        logger.log("Auto-reload: " + configManager.isAutoReload());
-        logger.log("Auto-scan: " + configManager.isAutoScan());
+        fileLogger.d(TAG, "Views initialized");
     }
 
     private void setupListView() {
@@ -192,11 +182,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private void checkPermissions() {
         if (!PermissionHelper.hasAudioPermission(this)) {
             PermissionHelper.request(this);
-            logger.log("Requesting audio permission...");
-            fileLogger.w("MainActivity", "Requesting audio permission");
+            fileLogger.w(TAG, "Requesting audio permission");
         } else {
-            logger.log("Audio permission granted");
-            fileLogger.i("MainActivity", "Audio permission already granted");
+            fileLogger.i(TAG, "Audio permission already granted");
         }
     }
     
@@ -204,7 +192,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         // Hide Reload button if auto_reload is active
         if (configManager.isAutoReload()) {
             btnReloadConfig.setVisibility(View.GONE);
-            logger.log("Auto-reload enabled, hiding reload button");
+            fileLogger.i(TAG, "Auto-reload enabled, hiding reload button");
         } else {
             btnReloadConfig.setVisibility(View.VISIBLE);
         }
@@ -212,25 +200,25 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         // Hide Scan button if auto_scan is active
         if (configManager.isAutoScan()) {
             btnScan.setVisibility(View.GONE);
-            logger.log("Auto-scan enabled, hiding scan button");
+            fileLogger.i(TAG, "Auto-scan enabled, hiding scan button");
         } else {
             btnScan.setVisibility(View.VISIBLE);
         }
     }
     
     private void reloadConfig() {
-        logger.log("Reloading config...");
+        fileLogger.i(TAG, "Reloading config...");
         configManager.loadConfig();
         
         if (configManager.isValid()) {
-            logger.log("Config loaded: " + configManager.getMusicDir());
+            fileLogger.i(TAG, "Config loaded: " + configManager.getMusicDir());
             
             // Update UI after config reload
             updateUIBasedOnConfig();
             
             // Auto scan if enabled after reload
             if (configManager.isAutoScan()) {
-                logger.log("Auto-scan enabled after reload, scanning...");
+                fileLogger.i(TAG, "Auto-scan enabled after reload, scanning...");
                 mainHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -239,7 +227,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 }, 500);
             }
         } else {
-            logger.logError("Invalid config path");
+            fileLogger.e(TAG, "Invalid config path");
             toast("Invalid config! Check /sdcard/MusicPlayer/config.json");
         }
     }
@@ -252,8 +240,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             musicService.setListener(MainActivity.this);
             isBound = true;
             
-            logger.log("Connected to MusicService");
-            fileLogger.i("MainActivity", "Connected to MusicService");
+            fileLogger.i(TAG, "Connected to MusicService");
             
             updateUIFromService();
         }
@@ -261,8 +248,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         @Override
         public void onServiceDisconnected(ComponentName name) {
             isBound = false;
-            logger.log("Disconnected from MusicService");
-            fileLogger.w("MainActivity", "Disconnected from MusicService");
+            fileLogger.w(TAG, "Disconnected from MusicService");
         }
     };
     
@@ -271,7 +257,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         startService(intent);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         
-        fileLogger.i("MainActivity", "Binding to MusicService...");
+        fileLogger.i(TAG, "Binding to MusicService...");
     }
     
     private void updateUIFromService() {
@@ -288,7 +274,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             // No music loaded, reset UI
             String no_song = "No song playing";
             tvSongTitle.setText(no_song);
-            logger.logDebug(no_song);
+            fileLogger.d(TAG, no_song);
             currentMusic = null;
             currentMusicIndex = -1;
         }
@@ -313,32 +299,28 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         if (dirPath.isEmpty()) {
             toast("Config not found! Please check config.json");
-            logger.logError("Empty directory path in config");
             return;
         }
         
         File dir = new File(dirPath);
         if (!dir.exists()) {
             toast("Directory not found: " + dirPath);
-            logger.logError("Directory not found: " + dirPath);
             return;
         }
         
         if (!dir.isDirectory()) {
             toast("Path is not a directory");
-            logger.logError("Not a directory: " + dirPath);
             return;
         }
 
         btnScan.setEnabled(false);
         btnScan.setText("Scanning...");
-        logger.log("Scanning directory: " + dirPath);
-        fileLogger.i("MainActivity", "Scanning directory: " + dirPath);
+        fileLogger.i(TAG, "Scanning directory: " + dirPath);
 
         ScanResultHandler handler = new ScanResultHandler(
             this, mainHandler,
             musicFiles, adapter,
-            btnScan, logger
+            btnScan
         );
         MusicScanner.scanDirectoryAsync(this, dirPath, handler);
         
@@ -347,37 +329,35 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     public void updatePlaylist() {
         if (isBound && musicService != null) {
             musicService.setPlaylist(musicFiles);
-            logger.log("Playlist updated: " + musicFiles.size() + " songs");
+            fileLogger.i(TAG, "Playlist updated: " + musicFiles.size() + " songs");
         }
     }
 
     public void loadMusic(MusicFile musicFile) {
         if (!isBound || musicService == null) {
             toast("Service not ready");
-            logger.logError("Service not ready");
+            fileLogger.e(TAG, "Service not ready");
             return;
         }
         
         try {
             currentMusicIndex = musicFiles.indexOf(musicFile);
             
-            logger.log("Loading: " + musicFile.getName());
-            logger.log("Path: " + musicFile.getPath());
-            
-            fileLogger.i("MainActivity", "Loading: " + musicFile.getName());
+            fileLogger.i(TAG, "Path: " + musicFile.getPath());
+            fileLogger.i(TAG, "Loading: " + musicFile.getName());
             
             musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;
 
         } catch (Exception e) {
-            logger.logError("Failed to load music", e);
+            fileLogger.i(TAG, "Failed to load music: " + e);
             toast("Failed to load music");
         }
     }
 
     private void playPause() {
         if (!isBound || musicService == null || !musicService.isReady()) {
-            logger.logError("No music loaded");
+            fileLogger.i(TAG, "No music loaded");
             return;
         }
         
@@ -388,24 +368,21 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         if (!isBound || musicService == null || !musicService.isReady()) return;
         
         musicService.stop();
-        logger.log("Stopped");
-        fileLogger.i("MainActivity", "Music stopped");
+        fileLogger.i(TAG, "Music stopped");
     }
     
     private void playNext() {
         if (!isBound || musicService == null) return;
         
         musicService.playNext();
-        logger.log("Playing next song");
-        fileLogger.i("MainActivity", "Playing next song");
+        fileLogger.i(TAG, "Playing next song");
     }
     
     private void playPrevious() {
         if (!isBound || musicService == null) return;
         
         musicService.playPrevious();
-        logger.log("Playing previous song");
-        fileLogger.i("MainActivity", "Playing previous song");
+        fileLogger.i(TAG, "Playing previous song");
     }
     
     private void enableControls(boolean enable) {
@@ -432,11 +409,11 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     @Override
     protected void onResume() {
         super.onResume();
-        fileLogger.d("MainActivity", "onResume() called");
+        fileLogger.d(TAG, "onResume() called");
         
         // Auto-reload config if enabled
         if (configManager.isAutoReload()) {
-            logger.log("Auto-reload enabled, reloading config...");
+            fileLogger.i(TAG, "Auto-reload enabled, reloading config...");
             configManager.loadConfig();
             updateUIBasedOnConfig();
         }
@@ -454,10 +431,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 results[0] == android.content.pm.PackageManager.PERMISSION_GRANTED;
             
             if (granted) {
-                logger.log("Permission GRANTED");
-                fileLogger.i("MainActivity", "Permission GRANTED");
+                fileLogger.i(TAG, "Permission GRANTED");
             } else {
-                logger.logError("Permission DENIED");
+                fileLogger.e(TAG, "Permission DENIED");
             }
         }
     }
@@ -472,8 +448,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 tvSongTitle.setText(musicFile.getTitle()); // Display title, artist
                 tvStatus.setText("Ready");
                 enableControls(true);
-                logger.log("Now playing: " + musicFile.getName());
-                fileLogger.i("MainActivity", "Now playing: " + musicFile.getName());
+                fileLogger.i(TAG, "Now playing: " + musicFile.getName());
 
                 // Update main album art
                 byte[] albumArt = musicFile.getAlbumArt();
@@ -510,8 +485,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
-                logger.log("Music finished");
-                fileLogger.i("MainActivity", "Music finished");
+                fileLogger.i(TAG, "Music finished");
             }
         });
     }
@@ -529,17 +503,14 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         musicService.setLoop(isLoopEnabled);
         updateLoopButton();
         
-        logger.log("Loop: " + (isLoopEnabled ? "ON":"OFF"));
-        fileLogger.i("MainActivity", "Loop: " + (isLoopEnabled ? "ON":"OFF"));
+        fileLogger.i(TAG, "Loop: " + (isLoopEnabled ? "ON":"OFF"));
     }
 
     private void updateLoopButton() {
         if (isLoopEnabled) {
-            btnLoop.setText("↻ Loop");
             btnLoop.setBackgroundColor(0xFFBB86FC);
             btnLoop.setTextColor(0xFF121212);
         } else {
-            btnLoop.setText("↻ Loop");
             btnLoop.setBackgroundColor(0xFF333333);
             btnLoop.setTextColor(0xFFFFFFFF);
         }

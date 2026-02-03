@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Music Player</string>
-    <string name="play">Play</string>
-    <string name="pause">Pause</string>
-    <string name="stop">Stop</string>
-    <string name="load">Load Audio</string>
-    <string name="loop">Loop</string>
-    <string name="check_status">Check Status</string>
+    <string name="prev">⏮ PREV</string>
+    <string name="next">NEXT ⏭</string>
+    <string name="stop">■ STOP</string>
+    <string name="play_pause">❚❚ PAUSE</string>
+    <string name="loop">↻ Loop</string>
+    <string name="scan">SCAN</string>
+    <string name="music_list">MUSIC FILES</string>
+    <string name="reload">RELOAD</string>
 </resources>
