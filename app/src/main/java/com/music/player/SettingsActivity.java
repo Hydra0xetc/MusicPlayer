@@ -7,11 +7,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.Toast;
+import android.widget.CompoundButton;
+import android.graphics.PorterDuff;
 
 public class SettingsActivity extends Activity {
 
     private EditText etMusicDir;
-    private Switch swAutoReload;
     private Switch swAutoScan;
     private Button btnSaveSettings;
     private Button btnBack;
@@ -32,11 +33,11 @@ public class SettingsActivity extends Activity {
         initViews();
         loadSettings();
         setupListeners();
+        updateAutoScanSwitchColor();
     }
 
     private void initViews() {
         etMusicDir = findViewById(R.id.etMusicDir);
-        swAutoReload = findViewById(R.id.swAutoReload);
         swAutoScan = findViewById(R.id.swAutoScan);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
         btnBack = findViewById(R.id.btnBack);
@@ -45,7 +46,6 @@ public class SettingsActivity extends Activity {
     private void loadSettings() {
         configManager.loadConfig(); // Ensure the latest config is loaded
         etMusicDir.setText(configManager.getMusicDir());
-        swAutoReload.setChecked(configManager.isAutoReload());
         swAutoScan.setChecked(configManager.isAutoScan());
         fileLogger.i(TAG, "Settings loaded and displayed.");
     }
@@ -64,19 +64,34 @@ public class SettingsActivity extends Activity {
                 finish(); // Go back to the previous activity
             }
         });
+        
+        swAutoScan.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                updateAutoScanSwitchColor();
+            }
+        });
     }
 
     private void saveSettings() {
         String newMusicDir = etMusicDir.getText().toString();
-        boolean newAutoReload = swAutoReload.isChecked();
         boolean newAutoScan = swAutoScan.isChecked();
 
         configManager.setMusicDir(newMusicDir);
-        configManager.setAutoReload(newAutoReload);
         configManager.setAutoScan(newAutoScan);
         configManager.saveConfig();
 
-        fileLogger.i(TAG, "Settings saved: MusicDir=" + newMusicDir + ", AutoReload=" + newAutoReload + ", AutoScan=" + newAutoScan);
+        fileLogger.i(TAG, "Settings saved: MusicDir=" + newMusicDir + ", AutoScan=" + newAutoScan);
         finish(); // Go back to MainActivity after saving
+    }
+
+    private void updateAutoScanSwitchColor() {
+        if (swAutoScan.isChecked()) {
+            swAutoScan.getTrackDrawable().setColorFilter(getResources().getColor(R.color.switch_on), PorterDuff.Mode.SRC_IN);
+            swAutoScan.getThumbDrawable().setColorFilter(getResources().getColor(R.color.switch_on), PorterDuff.Mode.SRC_IN);
+        } else {
+            swAutoScan.getTrackDrawable().setColorFilter(getResources().getColor(R.color.switch_off), PorterDuff.Mode.SRC_IN);
+            swAutoScan.getThumbDrawable().setColorFilter(getResources().getColor(R.color.switch_off), PorterDuff.Mode.SRC_IN);
+        }
     }
 }

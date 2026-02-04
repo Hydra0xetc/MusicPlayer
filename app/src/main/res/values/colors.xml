@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="switch_on">#FF03DAC6</color> <!-- Blue-green for 'on' state -->
+    <color name="switch_off">#FF666666</color> <!-- Grey for 'off' state -->
+</resources>

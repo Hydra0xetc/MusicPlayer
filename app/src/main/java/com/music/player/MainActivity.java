@@ -66,18 +66,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         updateUIBasedOnConfig();
         
-        configManager.startWatching(new ConfigManager.ConfigChangeListener() {
-            @Override
-            public void onConfigChanged() {
-                mainHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        onConfigReloaded();
-                    }
-                });
-            }
-        });
-        
         bindMusicService();
         
         if (configManager.isAutoScan()) {
@@ -88,22 +76,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                     scanDirectory();
                 }
             }, 1000);
-        }
-    }
-
-    private void onConfigReloaded() {
-        fileLogger.i(TAG, "Config file changed, reloading...");
-        
-        updateUIBasedOnConfig();
-        
-        if (configManager.isAutoScan()) {
-            fileLogger.i(TAG, "Auto-scan triggered after config reload");
-            mainHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    scanDirectory();
-                }
-            }, 500);
         }
     }
 
@@ -369,6 +341,18 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         configManager.loadConfig();
         updateUIBasedOnConfig();
+        
+        // Check for auto-scan here, similar to onCreate
+        if (configManager.isAutoScan()) {
+            fileLogger.i(TAG, "Auto-scan enabled, scanning on resume...");
+            // Add a slight delay to ensure UI is ready or to prevent race conditions
+            mainHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    scanDirectory();
+                }
+            }, 500); // 500ms delay
+        }
         
         if (isBound && musicService != null) {
             updateUIFromService();
