@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Logger that saves logs to a file in getExternalFilesDir
@@ -18,6 +20,16 @@ public class FileLogger {
     private File logFile;
     private final SimpleDateFormat dateFormat;
     private static final int MAX_LOG_SIZE = 5 * 1024 * 1024; // 5MB
+    
+    // Log level filtering
+    private int logLevelThreshold;
+    private static final Map<String, Integer> LOG_LEVEL_MAP = new HashMap<>();
+    static {
+        LOG_LEVEL_MAP.put("DEBUG", 0);
+        LOG_LEVEL_MAP.put("INFO", 1);
+        LOG_LEVEL_MAP.put("WARN", 2);
+        LOG_LEVEL_MAP.put("ERROR", 3);
+    }
     
     private FileLogger(Context context) {
         File logDir = context.getExternalFilesDir(null);
@@ -34,6 +46,7 @@ public class FileLogger {
             }
         }
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
+        setLogLevel("INFO");
     }
     
     /**
@@ -44,6 +57,21 @@ public class FileLogger {
             instance = new FileLogger(context.getApplicationContext());
         }
         return instance;
+    }
+    
+    /**
+     * Set the current log level threshold.
+     * Logs with a level lower than the threshold will be ignored.
+     * Valid levels: DEBUG, INFO, WARN, ERROR.
+     */
+    public synchronized void setLogLevel(String level) {
+        Integer newThreshold = LOG_LEVEL_MAP.get(level.toUpperCase());
+        if (newThreshold != null) {
+            logLevelThreshold = newThreshold;
+            android.util.Log.i("FileLogger", "File logger level set to: " + level);
+        } else {
+            android.util.Log.e("FileLogger", "Invalid log level: " + level + ". Keeping current level.");
+        }
     }
     
     /**
@@ -78,6 +106,10 @@ public class FileLogger {
             return;
         }
         
+        if (LOG_LEVEL_MAP.get(level) < logLevelThreshold) {
+            return; // Skip logging if level is below threshold
+        }
+        
         // Rotate if necessary
         rotateLogs();
         
@@ -102,6 +134,10 @@ public class FileLogger {
     private synchronized void writeToFile(String level, String tag, String message, Throwable throwable) {
         if (logFile == null) {
             return;
+        }
+        
+        if (LOG_LEVEL_MAP.get(level) < logLevelThreshold) {
+            return; // Skip logging if level is below threshold
         }
         
         rotateLogs();

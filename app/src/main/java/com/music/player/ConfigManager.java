@@ -19,10 +19,11 @@ public class ConfigManager {
     
     private String               musicDir;
     private boolean              autoScan;
+    private String               logLevel;
     private FileLogger           fileLogger;
     private Context              context;
-    private File                 configDirFile; // Resolved config directory File object
-    private File                 configFile;    // Resolved config file File object
+    private File                 configDirFile;
+    private File                 configFile;
     
     public ConfigManager(Context context) {
         fileLogger = FileLogger.getInstance(context);
@@ -67,6 +68,7 @@ public class ConfigManager {
                 
                 musicDir = config.optString("music_dir", DEFAULT_MUSIC_DIR);
                 autoScan = config.optBoolean("auto_scan", false);
+                logLevel = config.optString("log_level", "INFO"); // Default log level
                 
                 // Validate path
                 File dir = new File(musicDir);
@@ -75,7 +77,7 @@ public class ConfigManager {
                     musicDir = DEFAULT_MUSIC_DIR;
                 }
                 
-                fileLogger.i("ConfigManager", "Config loaded from: " + configFile.getAbsolutePath() + ", MusicDir: " + musicDir + ", AutoScan: " + autoScan);
+                fileLogger.i("ConfigManager", "Config loaded from: " + configFile.getAbsolutePath() + ", MusicDir: " + musicDir + ", AutoScan: " + autoScan + ", LogLevel: " + logLevel);
             } else {
                 fileLogger.w("ConfigManager", "Empty config, using default");
                 setDefaults();
@@ -115,6 +117,7 @@ public class ConfigManager {
             JSONObject config = new JSONObject();
             config.put("auto_scan", autoScan);
             config.put("music_dir", musicDir);
+            config.put("log_level", logLevel);
             configArray.put(config);
             
             FileWriter writer = new FileWriter(configFile); // Write to the resolved configFile
@@ -151,6 +154,7 @@ public class ConfigManager {
     private void setDefaults() {
         musicDir = DEFAULT_MUSIC_DIR;
         autoScan = false;
+        logLevel = "INFO";
     }
     
     public String getMusicDir() {
@@ -167,6 +171,14 @@ public class ConfigManager {
 
     public void setAutoScan(boolean autoScan) {
         this.autoScan = autoScan;
+    }
+    
+    public String getLogLevel() {
+        return logLevel;
+    }
+
+    public void setLogLevel(String logLevel) {
+        this.logLevel = logLevel;
     }
     
     public boolean isValid() {
