@@ -100,7 +100,7 @@ public class MusicService extends Service {
                 NotificationManager.IMPORTANCE_LOW
             );
             channel.setDescription("Music playback controls");
-            channel.setSound(null, null); // No sound for notification
+            channel.setSound(null, null);
             
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) {
@@ -123,7 +123,6 @@ public class MusicService extends Service {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         
-        // Action buttons
         NotificationCompat.Action prevAction = new NotificationCompat.Action(
             android.R.drawable.ic_media_previous,
             "Previous",
@@ -162,7 +161,7 @@ public class MusicService extends Service {
             .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
                     .setShowActionsInCompactView(0, 1, 2)
                     )
-            .setOngoing(true) // Makes the notification not dismissible
+            .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build();
@@ -187,7 +186,6 @@ public class MusicService extends Service {
         }
     }
     
-    // Public methods for control from Activity
     public void setPlaylist(List<MusicFile> files) {
         this.playlist = new ArrayList<>(files);
     }

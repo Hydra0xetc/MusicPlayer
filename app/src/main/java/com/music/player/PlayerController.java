@@ -15,13 +15,6 @@ public class PlayerController {
 
     private long playerPtr = 0;
 
-    public PlayerController() {
-        // For now, the context is not directly used here, 
-        // but it's passed to satisfy MusicService.
-        // It might be used for future native code initialization 
-        // or resource management.
-    }
-
     private native long createPlayer(String filePath);
     private native void setupPlayer(long ptr, String path);
     private native void play(long ptr);

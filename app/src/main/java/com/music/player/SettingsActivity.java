@@ -16,7 +16,7 @@ public class SettingsActivity extends Activity {
 
     private EditText etMusicDir;
     private Switch swAutoScan;
-    private Spinner spLogLevel; // Spinner for log level
+    private Spinner spLogLevel;
     private Button btnSaveSettings;
     private Button btnBack;
 
@@ -33,7 +33,6 @@ public class SettingsActivity extends Activity {
         fileLogger = FileLogger.getInstance(this);
         configManager = new ConfigManager(this);
         
-        // Initialize FileLogger with current log level on activity creation
         fileLogger.setLogLevel(configManager.getLogLevel());
 
         initViews();
@@ -45,14 +44,13 @@ public class SettingsActivity extends Activity {
     private void initViews() {
         etMusicDir = findViewById(R.id.etMusicDir);
         swAutoScan = findViewById(R.id.swAutoScan);
-        spLogLevel = findViewById(R.id.spLogLevel); // Initialize Spinner
+        spLogLevel = findViewById(R.id.spLogLevel);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
         btnBack = findViewById(R.id.btnBack);
         
-        // Setup Spinner adapter
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 this,
-                R.array.log_levels, // Use the string array defined in XML
+                R.array.log_levels,
                 android.R.layout.simple_spinner_item
         );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -60,11 +58,10 @@ public class SettingsActivity extends Activity {
     }
 
     private void loadSettings() {
-        configManager.loadConfig(); // Ensure the latest config is loaded
+        configManager.loadConfig();
         etMusicDir.setText(configManager.getMusicDir());
         swAutoScan.setChecked(configManager.isAutoScan());
         
-        // Set Spinner selection
         ArrayAdapter<CharSequence> adapter = (ArrayAdapter<CharSequence>) spLogLevel.getAdapter();
         if (adapter != null) {
             int spinnerPosition = adapter.getPosition(configManager.getLogLevel());

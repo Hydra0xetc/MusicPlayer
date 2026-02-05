@@ -4,10 +4,6 @@ import android.content.Context;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-/**
- * Global exception handler that catches all crashes
- * and writes the full stack trace to log.txt
- */
 public class CrashHandler implements Thread.UncaughtExceptionHandler {
     
     private static final String TAG = "CrashHandler";
@@ -19,9 +15,6 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
         this.logger = FileLogger.getInstance(context);
     }
     
-    /**
-     * Install crash handler as the default exception handler
-     */
     public static void install(Context context) {
         CrashHandler handler = new CrashHandler(context);
         Thread.setDefaultUncaughtExceptionHandler(handler);

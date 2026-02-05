@@ -90,9 +90,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             unbindService(serviceConnection);
             isBound = false;
         }
-        
-        configManager.stopWatching();
-        fileLogger.i(TAG, "Activity destroyed");
     }
 
     private void initViews() {
@@ -226,18 +223,18 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         String dirPath = configManager.getMusicDir();
         
         if (dirPath.isEmpty()) {
-            toast("Config not found! Please check config.json");
+            Toast.makeText(this, "Config not found! Please check config.json", Toast.LENGTH_SHORT).show();
             return;
         }
         
         File dir = new File(dirPath);
         if (!dir.exists()) {
-            toast("Directory not found: " + dirPath);
+            Toast.makeText(this, "Directory not found: " + dirPath, Toast.LENGTH_SHORT).show();
             return;
         }
         
         if (!dir.isDirectory()) {
-            toast("Path is not a directory");
+            Toast.makeText(this, "Path is not a directory", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -263,7 +260,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
     public void loadMusic(MusicFile musicFile) {
         if (!isBound || musicService == null) {
-            toast("Service not ready");
+            Toast.makeText(this, "Service not ready", Toast.LENGTH_SHORT).show();
             fileLogger.e(TAG, "Service not ready");
             return;
         }
@@ -279,7 +276,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
         } catch (Exception e) {
             fileLogger.i(TAG, "Failed to load music: " + e);
-            toast("Failed to load music");
+            Toast.makeText(this, "Failed to load music", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -329,11 +326,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         }
     }
 
-    private void toast(String s) {
-        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
-    }
-
-    
     @Override
     protected void onResume() {
         super.onResume();
@@ -373,7 +365,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 }
             }
             if (!allGranted) {
-                toast("Please grant all necessary permissions for the app to function properly.");
+                Toast.makeText(this, "Please grant all necessary permissions for the app to function properly.", Toast.LENGTH_SHORT).show();
             }
         }
     }

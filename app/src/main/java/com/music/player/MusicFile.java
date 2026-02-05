@@ -9,20 +9,13 @@ public class MusicFile {
     private String title;
     private String artist;
     private String album;
-    private long duration; // in milliseconds
-    private byte[] albumArt; // raw byte data for album art
+    private long duration;
+    private byte[] albumArt;
 
-    // Primary constructor with full metadata
     public MusicFile(
-        String name,
-        String path,
-        long size,
-        String title,
-        String artist,
-        String album,
-        long duration,
-        byte[] albumArt
-) {
+            String name, String path, long size, String title,
+            String artist, String album, long duration, byte[] albumArt) {
+
         this.name = name;
         this.path = path;
         this.size = size;
@@ -33,7 +26,6 @@ public class MusicFile {
         this.albumArt = albumArt;
     }
 
-    // Secondary constructor for backward compatibility or when metadata is not yet available
     public MusicFile(String name, String path, long size) {
         this(name, path, size, name, "Unknown Artist", "Unknown Album", 0, null);
     }
