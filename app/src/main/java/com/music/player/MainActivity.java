@@ -27,7 +27,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private ImageView ivMainAlbumArt;
     private ImageButton btnSettings;
     private Button btnPlayPause, btnStop, btnScan;
-    private Button btnLoop, btnPrev, btnNext;
+    private Button btnPrev, btnNext;
     private boolean isLoopEnabled = false;
 
     private MusicService musicService;
@@ -100,7 +100,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         tvSongTitle = findViewById(R.id.tvSongTitle);
         ivMainAlbumArt = findViewById(R.id.ivMainAlbumArt);
         btnSettings = findViewById(R.id.btnSettings);
-        btnLoop = findViewById(R.id.btnLoop);
         
         btnScan = findViewById(R.id.btnScan);
         btnPlayPause = findViewById(R.id.btnPlayPause);
@@ -136,12 +135,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             btnNext.setOnClickListener(listener);
         }
         
-        btnLoop.setOnClickListener(new View.OnClickListener() {
-           @Override 
-           public void onClick(View v) {
-               toggleLoop();
-           }
-        });
     }
 
     private void checkPermissions() {
@@ -216,7 +209,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         }
         
         isLoopEnabled = musicService.isLoopEnabled();
-        updateLoopButton();
     }
 
     private void scanDirectory() {
@@ -313,17 +305,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private void enableControls(boolean enable) {
         btnPlayPause.setEnabled(enable);
         btnStop.setEnabled(enable);
-        btnLoop.setEnabled(enable);
         
         if (btnPrev != null) btnPrev.setEnabled(enable);
         if (btnNext != null) btnNext.setEnabled(enable);
         
-        if (!enable) {
-            btnLoop.setBackgroundColor(0xFF1A1A1A);
-            btnLoop.setTextColor(0xFF666666);
-        } else {
-            updateLoopButton();
-        }
     }
 
     @Override
@@ -400,11 +385,11 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             public void run() {
                 if (isPlaying) {
                     tvStatus.setText("▶ Playing");
-                    btnPlayPause.setText("❚❚ PAUSE");
+                    btnPlayPause.setText("❚❚");
                     btnPlayPause.setBackgroundColor(0xFFFF9800);
                 } else {
                     tvStatus.setText("❚❚ Paused");
-                    btnPlayPause.setText("▶ PLAY");
+                    btnPlayPause.setText("▶");
                     btnPlayPause.setBackgroundColor(0xFF03DAC6);
                 }
             }
@@ -432,19 +417,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         isLoopEnabled = !isLoopEnabled;
         musicService.setLoop(isLoopEnabled);
-        updateLoopButton();
         
         fileLogger.i(TAG, "Loop: " + (isLoopEnabled ? "ON":"OFF"));
-    }
-
-    private void updateLoopButton() {
-        if (isLoopEnabled) {
-            btnLoop.setBackgroundColor(0xFFBB86FC);
-            btnLoop.setTextColor(0xFF121212);
-        } else {
-            btnLoop.setBackgroundColor(0xFF333333);
-            btnLoop.setTextColor(0xFFFFFFFF);
-        }
     }
 
     private class ButtonClick implements View.OnClickListener {

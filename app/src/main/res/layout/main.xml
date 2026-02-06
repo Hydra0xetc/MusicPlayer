@@ -1,173 +1,149 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#121212">
+    android:background="#0F0F0F">
 
-    <!-- Header Section with Song Title, Status, and Settings Button -->
+    <!-- HEADER -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp">
 
         <LinearLayout
-            android:id="@+id/nowPlayingHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingEnd="56dp"
-            android:paddingStart="0dp"
-            android:layout_centerVertical="true">
+            android:paddingEnd="56dp">
 
             <TextView
                 android:id="@+id/tvSongTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="No song selected"
+                android:text="@string/no_song_selected"
                 android:textColor="#FFFFFF"
-                android:textSize="16sp"
+                android:textSize="17sp"
                 android:textStyle="bold"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:singleLine="true" />
+                android:singleLine="true"
+                android:ellipsize="marquee"/>
 
             <TextView
                 android:id="@+id/tvStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Idle"
+                android:text="@string/idle"
                 android:textColor="#03DAC6"
-                android:textSize="14sp" />
+                android:textSize="13sp"/>
         </LinearLayout>
 
         <ImageButton
             android:id="@+id/btnSettings"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_settings"
-            android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:contentDescription="Settings" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_settings"
+            android:tint="#FFFFFF"/>
     </RelativeLayout>
 
-    <!-- Main Album Art Display -->
-    <ImageView
-        android:id="@+id/ivMainAlbumArt"
+    <!-- ALBUM ART -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:scaleType="centerCrop"
-        android:src="@mipmap/ic_launcher"
-        android:layout_marginBottom="16dp" />
+        android:layout_height="260dp"
+        android:layout_marginBottom="16dp"
+        card_view:cardCornerRadius="20dp"
+        card_view:cardElevation="6dp">
 
-    <!-- Player Controls -->
+        <ImageView
+            android:id="@+id/ivMainAlbumArt"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@mipmap/ic_launcher"/>
+    </androidx.cardview.widget.CardView>
+
+    <!-- MAIN CONTROLS -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="12dp">
 
-        <!-- Previous Button -->
         <Button
             android:id="@+id/btnPrev"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_height="48dp"
             android:text="@string/prev"
-            android:background="#333333"
-            android:textColor="#FFFFFF"
-            android:layout_marginEnd="4dp"
-            android:enabled="false" />
+            android:textSize="18sp"
+            android:background="@drawable/btn_dark_round"
+            android:textColor="#FFFFFF"/>
 
-        <!-- Play/Pause Button -->
         <Button
             android:id="@+id/btnPlayPause"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="1.5"
+            android:layout_height="56dp"
             android:text="@string/play_pause"
-            android:background="#FF9800"
-            android:textColor="#FFFFFF"
-            android:layout_marginEnd="4dp"
-            android:enabled="false" />
+            android:textSize="20sp"
+            android:layout_marginHorizontal="8dp"
+            android:background="@drawable/btn_primary_round"
+            android:textColor="#0F0F0F"/>
 
-        <!-- Next Button -->
         <Button
             android:id="@+id/btnNext"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_height="48dp"
             android:text="@string/next"
-            android:background="#333333"
-            android:textColor="#FFFFFF"
-            android:enabled="false" />
+            android:textSize="18sp"
+            android:background="@drawable/btn_dark_round"
+            android:textColor="#FFFFFF"/>
     </LinearLayout>
 
-    <!-- Stop and Loop Controls -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="12dp">
 
         <Button
             android:id="@+id/btnStop"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
             android:text="@string/stop"
-            android:background="#CF6679"
-            android:textColor="#FFFFFF"
-            android:layout_marginEnd="4dp"
-            android:enabled="false" />
-
-        <Button
-            android:id="@+id/btnLoop"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/loop"
-            android:layout_weight="1"
-            android:background="#1A1A1A"
-            android:textColor="#666666"
-            android:enabled="false"/>
+            android:background="@drawable/btn_danger_round"
+            android:textColor="#FFFFFF"/>
     </LinearLayout>
 
-    <!-- Music List -->
+    <!-- MUSIC LIST -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/music_list"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
         android:textStyle="bold"
-        android:layout_marginBottom="4dp" />
+        android:layout_marginBottom="6dp"/>
 
     <ListView
         android:id="@+id/lvMusicFiles"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#1E1E1E"
-        android:divider="#333333"
-        android:dividerHeight="1dp" />
+        android:dividerHeight="0dp"
+        android:padding="6dp"
+        android:background="#181818"/>
 
-    <LinearLayout
+    <Button
+        android:id="@+id/btnScan"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="4dp">
-
-        <Button
-            android:id="@+id/btnScan"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/scan"
-            android:background="#BB86FC"
-            android:textColor="#121212" />
-    </LinearLayout>
+        android:layout_height="48dp"
+        android:text="@string/scan"
+        android:background="@drawable/btn_primary_round"
+        android:textColor="#0F0F0F"
+        android:layout_marginTop="8dp"/>
 
 </LinearLayout>

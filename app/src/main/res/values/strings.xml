@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Music Player</string>
-    <string name="prev">⏮ PREV</string>
-    <string name="next">NEXT ⏭</string>
-    <string name="stop">■ STOP</string>
-    <string name="play_pause">❚❚ PAUSE</string>
-    <string name="loop">↻ Loop</string>
-    <string name="scan">SCAN</string>
+    <string name="prev">⏮</string>
+    <string name="next">⏭</string>
+    <string name="stop">■</string>
+    <string name="play_pause">❚❚</string>
+    <string name="loop">↻</string>
+    <string name="scan">scan</string>
     <string name="music_list">Music Files:</string>
-    <string name="reload">RELOAD</string>
+    <string name="reload">Reload</string>
+    <string name="idle">● Idle</string>
+    <string name="no_song_selected">No song selected</string>
 </resources>
