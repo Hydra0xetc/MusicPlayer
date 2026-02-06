@@ -1,5 +1,6 @@
 package com.music.player;
 
+import android.media.MediaMetadataRetriever;
 import java.io.File;
 
 public class MusicFile {
@@ -28,6 +29,18 @@ public class MusicFile {
 
     public MusicFile(String name, String path, long size) {
         this(name, path, size, name, "Unknown Artist", "Unknown Album", 0, null);
+    }
+    
+    public byte[] extractAlbumArt(String path) {
+        try {
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            mmr.setDataSource(path);
+            byte[] art = mmr.getEmbeddedPicture();
+            mmr.release();
+            return art;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public String getName() {

@@ -158,6 +158,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            CrashHandler.install(MainActivity.this);
             MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
             musicService = binder.getService();
             musicService.setListener(MainActivity.this);

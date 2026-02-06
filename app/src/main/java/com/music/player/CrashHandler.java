@@ -18,8 +18,6 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     public static void install(Context context) {
         CrashHandler handler = new CrashHandler(context);
         Thread.setDefaultUncaughtExceptionHandler(handler);
-        
-        FileLogger logger = FileLogger.getInstance(context);
     }
     
     @Override
