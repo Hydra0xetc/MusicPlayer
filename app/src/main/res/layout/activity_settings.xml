@@ -101,7 +101,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Back"
-            android:background="#333333"
+            android:background="@drawable/btn_back"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="8dp" />
 
@@ -111,7 +111,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Save"
-            android:background="#BB86FC"
+            android:background="@drawable/btn_save"
             android:textColor="#121212" />
     </LinearLayout>
 
