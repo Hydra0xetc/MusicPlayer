@@ -26,8 +26,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private TextView tvStatus, tvSongTitle;
     private ImageView ivMainAlbumArt;
     private ImageButton btnSettings;
-    private Button btnPlayPause, btnStop, btnScan;
-    private Button btnPrev, btnNext;
+    private ImageButton btnPlayPause, btnStop, btnPrev, btnNext;
+    private Button btnScan;
     private boolean isLoopEnabled = false;
 
     private MusicService musicService;
@@ -364,6 +364,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 currentMusicIndex = index;
                 tvSongTitle.setText(musicFile.getTitle()); // Display title, artist
                 tvStatus.setText("Ready");
+                tvStatus.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0); // Clear icons
                 enableControls(true);
                 fileLogger.i(TAG, "Now playing: " + musicFile.getName());
 
@@ -381,16 +382,19 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     @Override
     public void onPlayStateChanged(boolean isPlaying) {
         mainHandler.post(new Runnable() {
+
             @Override
             public void run() {
                 int color;
                 if (isPlaying) {
-                    tvStatus.setText("▶ Playing");
-                    btnPlayPause.setText("❚❚");
+                    tvStatus.setText("Playing");
+                    tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_pause_small, 0, 0, 0);
+                    btnPlayPause.setImageResource(R.drawable.ic_pause);
                     color = 0xFFFF9800; // Orange
                 } else {
-                    tvStatus.setText("❚❚ Paused");
-                    btnPlayPause.setText("▶");
+                    tvStatus.setText("Paused");
+                    tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_play_small, 0, 0, 0);
+                    btnPlayPause.setImageResource(R.drawable.ic_play);
                     color = 0xFF03DAC6; // Teal
                 }
 
@@ -405,6 +409,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             }
         });
     }
+    
     
     @Override
     public void onMusicFinished() {
