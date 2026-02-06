@@ -383,14 +383,24 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
+                int color;
                 if (isPlaying) {
                     tvStatus.setText("▶ Playing");
                     btnPlayPause.setText("❚❚");
-                    btnPlayPause.setBackgroundColor(0xFFFF9800);
+                    color = 0xFFFF9800; // Orange
                 } else {
                     tvStatus.setText("❚❚ Paused");
                     btnPlayPause.setText("▶");
-                    btnPlayPause.setBackgroundColor(0xFF03DAC6);
+                    color = 0xFF03DAC6; // Teal
+                }
+
+                android.graphics.drawable.Drawable background = btnPlayPause.getBackground();
+                if (background instanceof android.graphics.drawable.GradientDrawable) {
+                    // Cast and mutate the drawable to change its color
+                    ((android.graphics.drawable.GradientDrawable) background.mutate()).setColor(color);
+                } else {
+                    // If not a shape, fallback to the old way
+                    btnPlayPause.setBackgroundColor(color);
                 }
             }
         });
