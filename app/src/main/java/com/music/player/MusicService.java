@@ -312,6 +312,14 @@ public class MusicService extends Service {
         this.listener = listener;
     }
     
+    public long getCurrentPosition() {
+        return player.getCurrentPosition();
+    }
+
+    public void seekTo(int position) {
+        player.seekTo(position);
+    }
+
     private void startAutoNextMonitoring() {
         autoNextHandler.postDelayed(new Runnable() {
             @Override

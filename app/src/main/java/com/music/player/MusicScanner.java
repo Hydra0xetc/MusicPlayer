@@ -80,7 +80,7 @@ public class MusicScanner {
         try {
             mmr.release();
         } catch (Exception e) {
-            // just ignored
+            CrashHandler.install(context);
         }
 
         Collections.sort(musicFiles, new MusicComparator());

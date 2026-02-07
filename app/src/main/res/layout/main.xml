@@ -67,6 +67,44 @@
             android:src="@mipmap/ic_launcher"/>
     </androidx.cardview.widget.CardView>
 
+    <!-- Playback Progress -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="-8dp"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:id="@+id/tvCurrentTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"/>
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:progressTint="#BB86FC"
+            android:thumbTint="#BB86FC"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvTotalTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"/>
+    </LinearLayout>
+
     <!-- MAIN CONTROLS -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -79,17 +117,18 @@
             android:id="@+id/btnPrev"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="48dp"
+            android:layout_height="42dp"
             android:src="@drawable/ic_prev"
             android:scaleType="fitCenter"
             android:padding="8dp"
             android:background="@drawable/btn_dark_round" />
 
+        <!-- play and pause -->
         <ImageButton
             android:id="@+id/btnPlayPause"
             android:layout_width="0dp"
             android:layout_weight="1.5"
-            android:layout_height="56dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_play"
             android:scaleType="fitCenter"
             android:padding="8dp"
@@ -100,7 +139,7 @@
             android:id="@+id/btnNext"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="48dp"
+            android:layout_height="42dp"
             android:src="@drawable/ic_next"
             android:scaleType="fitCenter"
             android:padding="8dp"

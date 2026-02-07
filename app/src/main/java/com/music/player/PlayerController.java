@@ -23,6 +23,9 @@ public class PlayerController {
     private native boolean isPlaying(long ptr);
     private native boolean isFinished(long ptr);
     private native void setLoop(long ptr, boolean loop);
+    private native long getCurrentPosition(long ptr);
+    private native long getDuration(long ptr);
+    private native void seekTo(long ptr, int position);
     private native void destroyPlayer(long ptr);
     
     public boolean isReady() {
@@ -43,6 +46,10 @@ public class PlayerController {
     public boolean isPlaying() { return isPlaying(playerPtr); }
     public boolean isFinished() { return isFinished(playerPtr); }
     public void setLoop(boolean loop) { setLoop(playerPtr, loop); }
+
+    public long getCurrentPosition() { return getCurrentPosition(playerPtr); }
+    public long getDuration() { return getDuration(playerPtr); }
+    public void seekTo(int position) { seekTo(playerPtr, position); }
 
     public void release() {
         if (playerPtr != 0) {

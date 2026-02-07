@@ -23,11 +23,12 @@ import java.util.List;
 public class MainActivity extends Activity implements MusicService.MusicServiceListener {
     final static String TAG = "MainActivity";
     private ListView lvMusicFiles;
-    private TextView tvStatus, tvSongTitle;
+    private TextView tvStatus, tvSongTitle, tvCurrentTime, tvTotalTime;
     private ImageView ivMainAlbumArt;
     private ImageButton btnSettings;
     private ImageButton btnPlayPause, btnStop, btnPrev, btnNext;
     private Button btnScan;
+    private SeekBar seekBar;
     private boolean isLoopEnabled = false;
 
     private MusicService musicService;
@@ -35,6 +36,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     
     private FileLogger fileLogger;
     private Handler mainHandler;
+    private final Handler seekbarUpdateHandler = new Handler(Looper.getMainLooper());
     private ConfigManager configManager;
 
     private List<MusicFile> musicFiles;
@@ -61,6 +63,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         initViews();
         setupListView();
         setupButtons();
+        setupSeekBar();
         
         checkPermissions();
         
@@ -90,6 +93,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             unbindService(serviceConnection);
             isBound = false;
         }
+        seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
     }
 
     private void initViews() {
@@ -107,6 +111,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         btnPrev = findViewById(R.id.btnPrev);
         btnNext = findViewById(R.id.btnNext);
+
+        seekBar = findViewById(R.id.seekBar);
+        tvCurrentTime = findViewById(R.id.tvCurrentTime);
+        tvTotalTime = findViewById(R.id.tvTotalTime);
         
         fileLogger.d(TAG, "Views initialized");
     }
@@ -137,6 +145,38 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
     }
 
+    private void setupSeekBar() {
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser && isBound && musicService != null) {
+                    // Update current time display immediately
+                    tvCurrentTime.setText(formatDuration(progress));
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                // Pause updates from service while user is seeking
+                seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (isBound && musicService != null) {
+                    musicService.seekTo(seekBar.getProgress());
+                }
+                seekbarUpdateHandler.post(updateSeekBarRunnable); // Resume updating
+            }
+        });
+    }
+
+    private String formatDuration(long millis) {
+        long minutes = (millis / 1000) / 60;
+        long seconds = (millis / 1000) % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
+
     private void checkPermissions() {
         if (!PermissionHelper.hasAllNecessaryPermissions(this)) {
             fileLogger.w(TAG, "Not all necessary permissions granted. Requesting...");
@@ -158,7 +198,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            CrashHandler.install(MainActivity.this);
             MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
             musicService = binder.getService();
             musicService.setListener(MainActivity.this);
@@ -376,6 +415,13 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 } else {
                     ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
                 }
+
+                // Initialize SeekBar and total time
+                long duration = musicFile.getDuration();
+                seekBar.setMax((int) duration);
+                tvTotalTime.setText(formatDuration(duration));
+                tvCurrentTime.setText(formatDuration(0));
+                seekBar.setProgress(0);
             }
         });
     }
@@ -392,11 +438,13 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                     tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_pause_small, 0, 0, 0);
                     btnPlayPause.setImageResource(R.drawable.ic_pause);
                     color = 0xFFFF9800; // Orange
+                    seekbarUpdateHandler.post(updateSeekBarRunnable);
                 } else {
                     tvStatus.setText("Paused");
                     tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_play_small, 0, 0, 0);
                     btnPlayPause.setImageResource(R.drawable.ic_play);
                     color = 0xFF03DAC6; // Teal
+                    seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
                 }
 
                 android.graphics.drawable.Drawable background = btnPlayPause.getBackground();
@@ -418,6 +466,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             @Override
             public void run() {
                 fileLogger.i(TAG, "Music finished");
+                seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
+                seekBar.setProgress(0);
+                tvCurrentTime.setText(formatDuration(0));
             }
         });
     }
@@ -457,4 +508,16 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             }
         }
     }
+
+    private final Runnable updateSeekBarRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isBound && musicService != null && musicService.isPlaying()) {
+                long currentPosition = musicService.getCurrentPosition();
+                seekBar.setProgress((int) currentPosition);
+                tvCurrentTime.setText(formatDuration(currentPosition));
+                seekbarUpdateHandler.postDelayed(this, 1000); // Update every second
+            }
+        }
+    };
 }

@@ -286,6 +286,49 @@ void setLooping(AudioPlayer* player, bool loop) {
     }
 }
 
+SLmillisecond getCurrentPosition(AudioPlayer* player) {
+    if (!player || !player->playerPlay) {
+        LOGE("Player or playerPlay interface is NULL");
+        return 0;
+    }
+    SLmillisecond currentPos;
+    SLresult result = (*player->playerPlay)->GetPosition(player->playerPlay, &currentPos);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to get current position: %d", result);
+        return 0;
+    }
+    return currentPos;
+}
+
+SLmillisecond getDuration(AudioPlayer* player) {
+    if (!player || !player->playerPlay) {
+        LOGE("Player or playerPlay interface is NULL");
+        return 0;
+    }
+    SLmillisecond duration;
+    SLresult result = (*player->playerPlay)->GetDuration(player->playerPlay, &duration);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to get duration: %d", result);
+        return 0;
+    }
+    return duration;
+}
+
+void seekToPosition(AudioPlayer* player, SLmillisecond position) {
+    if (!player || !player->playerSeek) {
+        LOGE("Seek interface not available, cannot seek");
+        return;
+    }
+    SLresult result = (*player->playerSeek)->SetPosition(
+        player->playerSeek, position, SL_SEEKMODE_ACCURATE);
+    if (result != SL_RESULT_SUCCESS) {
+        LOGE("Failed to seek to position %lu: %d", (unsigned long)position, result);
+    } else {
+        LOGI("Seeked to position: %lu", (unsigned long)position);
+        player->finished = false; // Reset finished flag after seeking
+    }
+}
+
 bool isAudioPlaying(AudioPlayer* player) {
     if (!player) return false;
     
