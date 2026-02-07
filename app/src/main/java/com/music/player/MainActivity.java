@@ -166,7 +166,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 if (isBound && musicService != null) {
                     musicService.seekTo(seekBar.getProgress());
                 }
-                seekbarUpdateHandler.post(updateSeekBarRunnable); // Resume updating
+                seekbarUpdateHandler.post(updateSeekBarRunnable);
             }
         });
     }
@@ -241,6 +241,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         }
 
         if (musicService.isReady()) {
+            long currentPos = musicService.getCurrentPosition();
+            seekBar.setProgress((int)currentPos);
+            tvCurrentTime.setText(formatDuration(currentPos));
             onPlayStateChanged(musicService.isPlaying());
             enableControls(true);
         } else {
@@ -420,8 +423,14 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 long duration = musicFile.getDuration();
                 seekBar.setMax((int) duration);
                 tvTotalTime.setText(formatDuration(duration));
-                tvCurrentTime.setText(formatDuration(0));
-                seekBar.setProgress(0);
+                if (isBound && musicService != null && musicService.isReady()) {
+                    long currentPos = musicService.getCurrentPosition();
+                    tvCurrentTime.setText(formatDuration(currentPos));
+                    seekBar.setProgress((int)currentPos);
+                } else {
+                    tvCurrentTime.setText(formatDuration(0));
+                    seekBar.setProgress(0);
+                }
             }
         });
     }
