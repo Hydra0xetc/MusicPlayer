@@ -4,6 +4,8 @@ import android.util.LruCache;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MusicFileAdapter extends BaseAdapter {
 
@@ -19,6 +23,9 @@ public class MusicFileAdapter extends BaseAdapter {
     private List<MusicFile> musicFiles;
     private LayoutInflater inflater;
     private LruCache<String, Bitmap> bitmapCache;
+    
+    private ExecutorService executorService;
+    private Handler mainHandler;
 
     public MusicFileAdapter(Context context, List<MusicFile> musicFiles) {
         this.context = context;
@@ -29,6 +36,9 @@ public class MusicFileAdapter extends BaseAdapter {
         int cacheSize = maxMemory / 8;
 
         bitmapCache = new LruCache<>(cacheSize);
+        
+        executorService = Executors.newFixedThreadPool(2);
+        mainHandler = new Handler(Looper.getMainLooper());
     }
 
     static class ViewHolder {
@@ -36,6 +46,7 @@ public class MusicFileAdapter extends BaseAdapter {
         TextView tvMusicArtistAndAlbum;
         TextView tvMusicInfo;
         ImageView imgAlbumArt;
+        String path;
     }
 
     @Override
@@ -72,7 +83,8 @@ public class MusicFileAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        MusicFile music = musicFiles.get(position);
+        final MusicFile music = musicFiles.get(position);
+        final ViewHolder finalHolder = holder;
 
         holder.tvMusicTitle.setText(music.getTitle());
         holder.tvMusicArtistAndAlbum.setText(
@@ -83,20 +95,47 @@ public class MusicFileAdapter extends BaseAdapter {
                 music.getSizeFormatted() + " • " + music.getDurationFormatted()
         );
 
-        byte[] art = music.getAlbumArt();
-        Bitmap bmp = bitmapCache.get(music.getPath());
+        holder.path = music.getPath();
 
-        if (bmp == null && art != null) {
-            bmp = BitmapFactory.decodeByteArray(art, 0, art.length);
-            bitmapCache.put(music.getPath(), bmp);
-        }
-
-        if (bmp != null) {
-            holder.imgAlbumArt.setImageBitmap(bmp);
+        Bitmap cachedBitmap = bitmapCache.get(music.getPath());
+        
+        if (cachedBitmap != null) {
+            holder.imgAlbumArt.setImageBitmap(cachedBitmap);
         } else {
             holder.imgAlbumArt.setImageResource(R.mipmap.ic_launcher);
+            
+            final byte[] art = music.getAlbumArt();
+            if (art != null) {
+                loadAlbumArtAsync(art, music.getPath(), finalHolder);
+            }
         }
 
         return convertView;
+    }
+    
+    private void loadAlbumArtAsync(final byte[] albumArt, final String path, final ViewHolder holder) {
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
+                    
+                    if (bitmap != null) {
+                        bitmapCache.put(path, bitmap);
+                        
+                        mainHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (holder.path != null && holder.path.equals(path)) {
+                                    holder.imgAlbumArt.setImageBitmap(bitmap);
+                                }
+                            }
+                        });
+                    }
+                } catch (Exception e) {
+                    // Ignore decoding errors
+                }
+            }
+        });
     }
 }

@@ -43,6 +43,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private MusicFileAdapter adapter;
     private MusicFile currentMusic;
     private int currentMusicIndex = -1;
+    private boolean hasScannedOnce = false;
 
     @Override
     public void onCreate(Bundle b) {
@@ -77,6 +78,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 public void run() {
                     fileLogger.i(TAG, "Auto-scan enabled, scanning...");
                     scanDirectory();
+                    hasScannedOnce = true;
                 }
             }, 1000);
         }
@@ -150,14 +152,12 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && isBound && musicService != null) {
-                    // Update current time display immediately
                     tvCurrentTime.setText(formatDuration(progress));
                 }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                // Pause updates from service while user is seeking
                 seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
             }
 
@@ -362,18 +362,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         configManager.loadConfig();
         updateUIBasedOnConfig();
         
-        // Check for auto-scan here, similar to onCreate
-        if (configManager.isAutoScan()) {
-            fileLogger.i(TAG, "Auto-scan enabled, scanning on resume...");
-            // Add a slight delay to ensure UI is ready or to prevent race conditions
-            mainHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    scanDirectory();
-                }
-            }, 500); // 500ms delay
-        }
-        
         if (isBound && musicService != null) {
             updateUIFromService();
         }
@@ -405,21 +393,14 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             public void run() {
                 currentMusic = musicFile;
                 currentMusicIndex = index;
-                tvSongTitle.setText(musicFile.getTitle()); // Display title, artist
+                tvSongTitle.setText(musicFile.getTitle());
                 tvStatus.setText("Ready");
-                tvStatus.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0); // Clear icons
+                tvStatus.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
                 enableControls(true);
                 fileLogger.i(TAG, "Now playing: " + musicFile.getName());
 
-                byte[] albumArt = musicFile.getAlbumArt();
-                if (albumArt != null) {
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
-                    ivMainAlbumArt.setImageBitmap(bitmap);
-                } else {
-                    ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
-                }
+                loadAlbumArtAsync(musicFile);
 
-                // Initialize SeekBar and total time
                 long duration = musicFile.getDuration();
                 seekBar.setMax((int) duration);
                 tvTotalTime.setText(formatDuration(duration));
@@ -433,6 +414,33 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 }
             }
         });
+    }
+    
+    private void loadAlbumArtAsync(final MusicFile musicFile) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                byte[] albumArt = musicFile.getAlbumArt();
+                final Bitmap bitmap;
+                
+                if (albumArt != null) {
+                    bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
+                } else {
+                    bitmap = null;
+                }
+                
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (bitmap != null) {
+                            ivMainAlbumArt.setImageBitmap(bitmap);
+                        } else {
+                            ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
+                        }
+                    }
+                });
+            }
+        }).start();
     }
     
     @Override
@@ -458,10 +466,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
                 android.graphics.drawable.Drawable background = btnPlayPause.getBackground();
                 if (background instanceof android.graphics.drawable.GradientDrawable) {
-                    // Cast and mutate the drawable to change its color
                     ((android.graphics.drawable.GradientDrawable) background.mutate()).setColor(color);
                 } else {
-                    // If not a shape, fallback to the old way
                     btnPlayPause.setBackgroundColor(color);
                 }
             }
@@ -525,7 +531,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 long currentPosition = musicService.getCurrentPosition();
                 seekBar.setProgress((int) currentPosition);
                 tvCurrentTime.setText(formatDuration(currentPosition));
-                seekbarUpdateHandler.postDelayed(this, 1000); // Update every second
+                seekbarUpdateHandler.postDelayed(this, 1000);
             }
         }
     };

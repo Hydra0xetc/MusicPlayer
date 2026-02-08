@@ -16,6 +16,7 @@ public class MusicScanner {
             ".mp3", ".wav", ".ogg", ".m4a", ".aac",
             ".flac", ".wma", ".opus", ".3gp"
     };
+    private static final String TAG = "MusicScanner";
 
     public interface ScanListener {
         void onScanStarted();
@@ -24,8 +25,10 @@ public class MusicScanner {
         void onScanError(String error);
     }
 
-    public static List<MusicFile> scanDirectory(Context context, String dirPath) {
 
+    public static List<MusicFile> scanDirectory(Context context, String dirPath, boolean loadAlbumArt) {
+
+        FileLogger fileLogger = FileLogger.getInstance(context);
         List<MusicFile> musicFiles = new ArrayList<>();
 
         File dir = new File(dirPath);
@@ -61,7 +64,9 @@ public class MusicScanner {
                 String d = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
                 if (d != null) duration = Long.parseLong(d);
 
-                albumArt = mmr.getEmbeddedPicture();
+                if (loadAlbumArt) {
+                    albumArt = mmr.getEmbeddedPicture();
+                }
 
             } catch (Exception ignored) {}
 
@@ -80,12 +85,16 @@ public class MusicScanner {
         try {
             mmr.release();
         } catch (Exception e) {
-            CrashHandler.install(context);
+            fileLogger.e(TAG, "Unexpected error: " + e);
         }
 
         Collections.sort(musicFiles, new MusicComparator());
 
         return musicFiles;
+    }
+    
+    public static List<MusicFile> scanDirectory(Context context, String dirPath) {
+        return scanDirectory(context, dirPath, true);
     }
 
     public static void scanDirectoryAsync(
@@ -96,12 +105,36 @@ public class MusicScanner {
         new Thread(() -> {
             try {
                 if (listener != null) listener.onScanStarted();
-                List<MusicFile> files = scanDirectory(context, dirPath);
+                
+                List<MusicFile> files = scanDirectory(context, dirPath, true);
+                
                 if (listener != null) listener.onScanCompleted(files);
             } catch (Exception e) {
                 if (listener != null) listener.onScanError(e.toString());
             }
         }).start();
+    }
+    
+    public static byte[] loadAlbumArt(Context context, String filePath) {
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        byte[] albumArt = null;
+        
+        try {
+            mmr.setDataSource(context, Uri.fromFile(new File(filePath)));
+            albumArt = mmr.getEmbeddedPicture();
+        } catch (Exception e) {
+            FileLogger fileLogger = FileLogger.getInstance(context);
+            fileLogger.e(TAG, "Unexpected error: " + e);
+        } finally {
+            try {
+                mmr.release();
+            } catch (Exception e) {
+                FileLogger fileLogger = FileLogger.getInstance(context);
+                fileLogger.e(TAG, "Unexpected error: " + e);
+            }
+        }
+        
+        return albumArt;
     }
 
     private static boolean isAudioFile(String name) {
