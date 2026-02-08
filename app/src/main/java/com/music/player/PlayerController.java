@@ -1,9 +1,10 @@
 package com.music.player;
 
-import android.content.Context;
 import java.io.File;
 
 public class PlayerController {
+
+    private final static String TAG = "PlayerController";
 
     static {
         try {
@@ -40,16 +41,65 @@ public class PlayerController {
         }
     }
 
-    public void play() { play(playerPtr); }
-    public void pause() { pause(playerPtr); }
-    public void stop() { stop(playerPtr); }
-    public boolean isPlaying() { return isPlaying(playerPtr); }
-    public boolean isFinished() { return isFinished(playerPtr); }
-    public void setLoop(boolean loop) { setLoop(playerPtr, loop); }
+    // Add null pointer checks before calling native methods
+    public void play() { 
+        if (playerPtr != 0) {
+            play(playerPtr); 
+        }
+    }
+    
+    public void pause() { 
+        if (playerPtr != 0) {
+            pause(playerPtr); 
+        }
+    }
+    
+    public void stop() { 
+        if (playerPtr != 0) {
+            stop(playerPtr); 
+        }
+    }
+    
+    public boolean isPlaying() { 
+        if (playerPtr != 0) {
+            return isPlaying(playerPtr); 
+        }
+        return false;
+    }
+    
+    public boolean isFinished() { 
+        if (playerPtr != 0) {
+            return isFinished(playerPtr); 
+        }
+        return false;
+    }
+    
+    public void setLoop(boolean loop) { 
+        if (playerPtr != 0) {
+            setLoop(playerPtr, loop); 
+        }
+    }
 
-    public long getCurrentPosition() { return getCurrentPosition(playerPtr); }
-    public long getDuration() { return getDuration(playerPtr); }
-    public void seekTo(int position) { seekTo(playerPtr, position); }
+    public long getCurrentPosition() { 
+        if (playerPtr != 0) {
+            long pos = getCurrentPosition(playerPtr);
+            return (pos < 0) ? 0 : pos;
+        }
+        return 0;
+    }
+    
+    public long getDuration() { 
+        if (playerPtr != 0) {
+            return getDuration(playerPtr); 
+        }
+        return 0;
+    }
+    
+    public void seekTo(int position) { 
+        if (playerPtr != 0) {
+            seekTo(playerPtr, position); 
+        }
+    }
 
     public void release() {
         if (playerPtr != 0) {

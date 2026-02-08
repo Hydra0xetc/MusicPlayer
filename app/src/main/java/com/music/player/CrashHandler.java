@@ -31,7 +31,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             logger.e(TAG, "Message: " + throwable.getMessage());
             logger.e(TAG, "");
             logger.e(TAG, "Stack Trace:");
-            logger.e(TAG, "────────────────────────────────────────────────────────");
+            logger.e(TAG, "────────────────── Begin of crash ──────────────────────────────────");
             
             // Get full stack trace
             StringWriter sw = new StringWriter();
@@ -51,6 +51,8 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             } catch (InterruptedException e) {
                 // Ignore
             }
+
+            logger.e(TAG, "────────────────── End of crash ──────────────────────────────────");
             
         } catch (Exception e) {
             // If logging fails, print to logcat

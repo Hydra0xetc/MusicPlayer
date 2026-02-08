@@ -67,19 +67,13 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         checkPermissions();
         
-        updateUIBasedOnConfig();
+        // Hide scan button - scanning is done in MusicListActivity
+        btnScan.setVisibility(View.GONE);
         
         bindMusicService();
         
-        if (configManager.isAutoScan()) {
-            mainHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    fileLogger.i(TAG, "Auto-scan enabled, scanning...");
-                    scanDirectory();
-                }
-            }, 1000);
-        }
+        // Load playlist from intent
+        loadPlaylistFromIntent();
     }
 
     @Override
@@ -187,11 +181,68 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
     
     private void updateUIBasedOnConfig() {
-        if (configManager.isAutoScan()) {
-            btnScan.setVisibility(View.GONE);
-            fileLogger.i(TAG, "Auto-scan enabled, hiding scan button");
+        // Scan button always hidden - scanning done in MusicListActivity
+        btnScan.setVisibility(View.GONE);
+    }
+    
+    private void loadPlaylistFromIntent() {
+        Intent intent = getIntent();
+        if (intent == null) {
+            fileLogger.w(TAG, "No intent data, empty playlist");
+            return;
+        }
+        
+        // Get playlist paths
+        ArrayList<String> playlistPaths = intent.getStringArrayListExtra("PLAYLIST_PATHS");
+        if (playlistPaths != null && !playlistPaths.isEmpty()) {
+            fileLogger.i(TAG, "Loading playlist with " + playlistPaths.size() + " songs");
+            
+            // Scan and load all music files from paths
+            MusicScanner scanner = new MusicScanner(this);
+            scanner.scanPaths(playlistPaths, new ScanResultHandler() {
+                @Override
+                public void onScanComplete(final List<MusicFile> files) {
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            musicFiles.clear();
+                            musicFiles.addAll(files);
+                            adapter.notifyDataSetChanged();
+                            
+                            // Load playlist to service
+                            if (isBound && musicService != null) {
+                                musicService.setPlaylist(musicFiles);
+                            }
+                            
+                            // Auto-play the selected song
+                            int selectedIndex = getIntent().getIntExtra("SELECTED_MUSIC_INDEX", 0);
+                            if (selectedIndex >= 0 && selectedIndex < musicFiles.size()) {
+                                loadMusic(musicFiles.get(selectedIndex));
+                                
+                                // Auto-start playback after a short delay
+                                mainHandler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (isBound && musicService != null && musicService.isReady()) {
+                                            musicService.play();
+                                            fileLogger.i(TAG, "Auto-started playback");
+                                        }
+                                    }
+                                }, 500);
+                            }
+                            
+                            fileLogger.i(TAG, "Playlist loaded and ready");
+                        }
+                    });
+                }
+                
+                @Override
+                public void onScanError(String error) {
+                    fileLogger.e(TAG, "Error loading playlist: " + error);
+                }
+            });
         } else {
-            btnScan.setVisibility(View.VISIBLE);
+            fileLogger.w(TAG, "No playlist data in intent");
         }
     }
     
@@ -254,44 +305,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         isLoopEnabled = musicService.isLoopEnabled();
     }
 
-    private void scanDirectory() {
-        String dirPath = configManager.getMusicDir();
-        
-        if (dirPath.isEmpty()) {
-            Toast.makeText(this, "Config not found! Please check config.json", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        File dir = new File(dirPath);
-        if (!dir.exists()) {
-            Toast.makeText(this, "Directory not found: " + dirPath, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        if (!dir.isDirectory()) {
-            Toast.makeText(this, "Path is not a directory", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        btnScan.setEnabled(false);
-        btnScan.setText("Scanning...");
-        fileLogger.i(TAG, "Scanning directory: " + dirPath);
-
-        ScanResultHandler handler = new ScanResultHandler(
-            this, mainHandler,
-            musicFiles, adapter,
-            btnScan
-        );
-        MusicScanner.scanDirectoryAsync(this, dirPath, handler);
-        
-    }
-
-    public void updatePlaylist() {
-        if (isBound && musicService != null) {
-            musicService.setPlaylist(musicFiles);
-            fileLogger.i(TAG, "Playlist updated: " + musicFiles.size() + " songs");
-        }
-    }
 
     public void loadMusic(MusicFile musicFile) {
         if (!isBound || musicService == null) {
@@ -359,21 +372,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         super.onResume();
         fileLogger.d(TAG, "onResume() called");
         
-        configManager.loadConfig();
-        updateUIBasedOnConfig();
-        
-        // Check for auto-scan here, similar to onCreate
-        if (configManager.isAutoScan()) {
-            fileLogger.i(TAG, "Auto-scan enabled, scanning on resume...");
-            // Add a slight delay to ensure UI is ready or to prevent race conditions
-            mainHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    scanDirectory();
-                }
-            }, 500); // 500ms delay
-        }
-        
         if (isBound && musicService != null) {
             updateUIFromService();
         }
@@ -421,7 +419,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
                 // Initialize SeekBar and total time
                 long duration = musicFile.getDuration();
-                seekBar.setMax((int) duration);
+                int maxDuration = (duration > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) duration;
+                seekBar.setMax(maxDuration);
                 tvTotalTime.setText(formatDuration(duration));
                 if (isBound && musicService != null && musicService.isReady()) {
                     long currentPos = musicService.getCurrentPosition();
@@ -501,9 +500,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         public void onClick(View v) {
             int id = v.getId();
             
-            if (id == R.id.btnScan) {
-                scanDirectory();
-            } else if (id == R.id.btnPlayPause) {
+            if (id == R.id.btnPlayPause) {
                 playPause();
             } else if (id == R.id.btnStop) {
                 stop();
@@ -521,11 +518,20 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private final Runnable updateSeekBarRunnable = new Runnable() {
         @Override
         public void run() {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+            
             if (isBound && musicService != null && musicService.isPlaying()) {
-                long currentPosition = musicService.getCurrentPosition();
-                seekBar.setProgress((int) currentPosition);
-                tvCurrentTime.setText(formatDuration(currentPosition));
-                seekbarUpdateHandler.postDelayed(this, 1000); // Update every second
+                try {
+                    long currentPosition = musicService.getCurrentPosition();
+                    int progress = (currentPosition > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) currentPosition;
+                    seekBar.setProgress(progress);
+                    tvCurrentTime.setText(formatDuration(currentPosition));
+                    seekbarUpdateHandler.postDelayed(this, 1000); // Update every second
+                } catch (Exception e) {
+                    fileLogger.e(TAG, "Error updating seekbar: " + e.getMessage());
+                }
             }
         }
     };

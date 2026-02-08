@@ -289,13 +289,13 @@ void setLooping(AudioPlayer* player, bool loop) {
 SLmillisecond getCurrentPosition(AudioPlayer* player) {
     if (!player || !player->playerPlay) {
         LOGE("Player or playerPlay interface is NULL");
-        return 0;
+        return -1;
     }
     SLmillisecond currentPos;
     SLresult result = (*player->playerPlay)->GetPosition(player->playerPlay, &currentPos);
     if (result != SL_RESULT_SUCCESS) {
         LOGE("Failed to get current position: %d", result);
-        return 0;
+        return -1;
     }
     return currentPos;
 }
@@ -303,13 +303,13 @@ SLmillisecond getCurrentPosition(AudioPlayer* player) {
 SLmillisecond getDuration(AudioPlayer* player) {
     if (!player || !player->playerPlay) {
         LOGE("Player or playerPlay interface is NULL");
-        return 0;
+        return -1;  // Return -1 to indicate error instead of 0
     }
-    SLmillisecond duration;
+    SLmillisecond duration = 0;
     SLresult result = (*player->playerPlay)->GetDuration(player->playerPlay, &duration);
     if (result != SL_RESULT_SUCCESS) {
         LOGE("Failed to get duration: %d", result);
-        return 0;
+        return -1;  // Return -1 to indicate error
     }
     return duration;
 }

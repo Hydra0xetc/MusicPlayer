@@ -8,7 +8,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MusicScanner {
 
@@ -23,6 +25,39 @@ public class MusicScanner {
         void onScanCompleted(List<MusicFile> files);
         void onScanError(String error);
     }
+    
+    private Context context;
+    
+    public MusicScanner(Context context) {
+        this.context = context;
+    }
+
+    public void scanAsync(final ScanResultHandler handler) {
+        ConfigManager config = new ConfigManager(context);
+        String dirPath = config.getMusicDir();
+        
+        // Run in background thread
+        new Thread(() -> {
+            try {
+                List<MusicFile> files = scanDirectory(context, dirPath);
+                handler.onScanComplete(files);
+            } catch (Exception e) {
+                handler.onScanError(e.toString());
+            }
+        }).start();
+    }
+    
+    // Scan specific paths with callback
+    public void scanPaths(List<String> paths, ScanResultHandler handler) {
+        new Thread(() -> {
+            try {
+                List<MusicFile> files = scanPaths(context, paths);
+                handler.onScanComplete(files);
+            } catch (Exception e) {
+                handler.onScanError(e.toString());
+            }
+        }).start();
+    }
 
     public static List<MusicFile> scanDirectory(Context context, String dirPath) {
 
@@ -34,8 +69,7 @@ public class MusicScanner {
         File[] files = dir.listFiles();
         if (files == null) return musicFiles;
 
-        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-
+        // Create MediaMetadataRetriever inside loop to avoid memory leak
         for (File file : files) {
 
             if (!file.isFile() || !isAudioFile(file.getName())) continue;
@@ -46,6 +80,9 @@ public class MusicScanner {
             long duration = 0;
             byte[] albumArt = null;
 
+            // Create new instance for each file
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            
             try {
                 mmr.setDataSource(context, Uri.fromFile(file));
 
@@ -63,7 +100,17 @@ public class MusicScanner {
 
                 albumArt = mmr.getEmbeddedPicture();
 
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                // Log the error but continue processing other files
+                android.util.Log.e("MusicScanner", "Error reading metadata for " + file.getName() + ": " + e.getMessage());
+            } finally {
+                // FIX BUG #4: Always release in finally block
+                try {
+                    mmr.release();
+                } catch (Exception e) {
+                    android.util.Log.e("MusicScanner", "Error releasing MediaMetadataRetriever: " + e.getMessage());
+                }
+            }
 
             musicFiles.add(new MusicFile(
                     file.getName(),
@@ -77,22 +124,12 @@ public class MusicScanner {
             ));
         }
 
-        try {
-            mmr.release();
-        } catch (Exception e) {
-            CrashHandler.install(context);
-        }
-
         Collections.sort(musicFiles, new MusicComparator());
 
         return musicFiles;
     }
 
-    public static void scanDirectoryAsync(
-            Context context,
-            String dirPath,
-            ScanListener listener
-    ) {
+    public static void scanDirectoryAsync(Context context, String dirPath, ScanListener listener) {
         new Thread(() -> {
             try {
                 if (listener != null) listener.onScanStarted();
@@ -114,14 +151,21 @@ public class MusicScanner {
 
     private static String cleanupArtistString(String s) {
         if (s == null) return "Unknown Artist";
+        
         String[] parts = s.split(",\\s*");
+        
+        // FIX BUG #6: Use HashSet for efficient duplicate checking
+        Set<String> uniqueParts = new HashSet<>();
         StringBuilder out = new StringBuilder();
+        
         for (String p : parts) {
-            if (!out.toString().contains(p)) {
+            // Use HashSet.add() which returns false if element already exists
+            if (uniqueParts.add(p)) {
                 if (out.length() > 0) out.append(", ");
                 out.append(p);
             }
         }
+        
         return out.toString();
     }
 
@@ -130,5 +174,78 @@ public class MusicScanner {
         public int compare(MusicFile a, MusicFile b) {
             return a.getTitle().compareToIgnoreCase(b.getTitle());
         }
+    }
+    
+    // Scan specific file paths (for loading playlist)
+    public static List<MusicFile> scanPaths(Context context, List<String> paths) {
+        List<MusicFile> musicFiles = new ArrayList<>();
+        
+        for (String path : paths) {
+            File file = new File(path);
+            if (!file.exists() || !file.isFile()) continue;
+            if (!isAudioFile(file.getName())) continue;
+            
+            String title = file.getName();
+            String artist = "Unknown Artist";
+            String album = "Unknown Album";
+            long duration = 0;
+            byte[] albumArt = null;
+            
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            
+            try {
+                mmr.setDataSource(context, Uri.fromFile(file));
+                
+                String t = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+                if (t != null) title = t;
+                
+                String a = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                if (a != null) artist = cleanupArtistString(a);
+                
+                String al = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+                if (al != null) album = al;
+                
+                String d = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                if (d != null) duration = Long.parseLong(d);
+                
+                albumArt = mmr.getEmbeddedPicture();
+                
+            } catch (Exception e) {
+                android.util.Log.e("MusicScanner", "Error reading metadata for " + file.getName() + ": " + e.getMessage());
+            } finally {
+                try {
+                    mmr.release();
+                } catch (Exception e) {
+                    android.util.Log.e("MusicScanner", "Error releasing MediaMetadataRetriever: " + e.getMessage());
+                }
+            }
+            
+            musicFiles.add(new MusicFile(
+                    file.getName(),
+                    file.getAbsolutePath(),
+                    file.length(),
+                    title,
+                    artist,
+                    album,
+                    duration,
+                    albumArt
+            ));
+        }
+        
+        return musicFiles;
+    }
+    
+    // Async version of scanPaths
+    public static void scanPathsAsync(Context context, List<String> paths,
+            ScanListener listener) {
+        new Thread(() -> {
+            try {
+                if (listener != null) listener.onScanStarted();
+                List<MusicFile> files = scanPaths(context, paths);
+                if (listener != null) listener.onScanCompleted(files);
+            } catch (Exception e) {
+                if (listener != null) listener.onScanError(e.toString());
+            }
+        }).start();
     }
 }
