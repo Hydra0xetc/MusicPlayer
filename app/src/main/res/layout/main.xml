@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#0F0F0F">
+    android:background="@color/black">
 
     <!-- HEADER -->
     <RelativeLayout
@@ -24,7 +24,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/no_song_selected"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/white"
                 android:textSize="17sp"
                 android:textStyle="bold"
                 android:singleLine="true"
@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/idle"
-                android:textColor="#03DAC6"
+                android:textColor="@color/turqoise"
                 android:textSize="13sp"
                 android:drawablePadding="8dp"
                 android:gravity="center_vertical"/>
@@ -48,7 +48,7 @@
             android:layout_alignParentEnd="true"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_settings"
-            android:tint="#FFFFFF"/>
+            android:tint="@color/white"/>
     </RelativeLayout>
 
     <!-- ALBUM ART -->
@@ -81,7 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="00:00"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="12sp"
             android:layout_marginEnd="4dp"/>
 
@@ -90,8 +90,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:progressTint="#BB86FC"
-            android:thumbTint="#BB86FC"
+            android:progressTint="@color/white"
+            android:thumbTint="@color/white"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"/>
 
@@ -100,7 +100,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="00:00"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:textSize="12sp"
             android:layout_marginStart="4dp"/>
     </LinearLayout>
@@ -117,7 +117,7 @@
             android:id="@+id/btnPrev"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="42dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_prev"
             android:scaleType="fitCenter"
             android:padding="8dp"
@@ -133,13 +133,13 @@
             android:scaleType="fitCenter"
             android:padding="8dp"
             android:layout_marginHorizontal="8dp"
-            android:background="@drawable/btn_primary_round" />
+            android:background="@drawable/btn_dark_round" />
 
         <ImageButton
             android:id="@+id/btnNext"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="42dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_next"
             android:scaleType="fitCenter"
             android:padding="8dp"
@@ -159,7 +159,7 @@
             android:src="@drawable/ic_stop"
             android:scaleType="fitCenter"
             android:padding="8dp"
-            android:background="@drawable/btn_danger_round" />
+            android:background="@drawable/btn_stop_round" />
     </LinearLayout>
 
     <!-- MUSIC LIST -->
@@ -167,7 +167,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/music_list"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/white"
         android:textStyle="bold"
         android:layout_marginBottom="6dp"/>
 
@@ -178,14 +178,14 @@
         android:layout_weight="1"
         android:dividerHeight="0dp"
         android:padding="6dp"
-        android:background="#181818"/>
+        android:background="@color/black"/>
 
     <Button
         android:id="@+id/btnScan"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:background="@drawable/btn_primary_round"
-        android:textColor="#0F0F0F"
+        android:textColor="@color/black"
         android:layout_marginTop="8dp"/>
 
 </LinearLayout>
