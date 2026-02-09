@@ -23,6 +23,7 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
         this.musicFiles = musicFiles;
         this.adapter = adapter;
         this.btnScan = btnScan;
+        this.fileLogger = FileLogger.getInstance(activity);
     }
 
     public void onScanStarted() {
