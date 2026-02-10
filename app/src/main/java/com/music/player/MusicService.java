@@ -8,6 +8,9 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -17,6 +20,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +76,7 @@ public class MusicService extends Service {
         if (intent != null && intent.getAction() != null) {
             handleAction(intent.getAction());
         }
-        return START_STICKY; // The service will restart if killed by the system
+        return START_STICKY;
     }
 
     private void handleAction(String action) {
@@ -117,12 +121,68 @@ public class MusicService extends Service {
         }
     }
 
+    private Bitmap getDefaultAlbumArt() {
+        Bitmap bitmap = null;
+        
+        try {
+            Drawable drawable = ContextCompat.getDrawable(this, R.mipmap.ic_launcher);
+            if (drawable != null) {
+                bitmap = drawableToBitmap(drawable);
+                if (bitmap != null) {
+                    return bitmap;
+                }
+            }
+        } catch (Exception e) {
+            fileLogger.e(TAG, "Unexpected error: " + e);
+        }
+        
+        return null;
+    }
+    
+    // Convert Drawable to Bitmap
+    private Bitmap drawableToBitmap(Drawable drawable) {
+        if (drawable == null) {
+            return null;
+        }
+        
+        if (drawable instanceof BitmapDrawable) {
+            BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+            if (bitmapDrawable.getBitmap() != null) {
+                return bitmapDrawable.getBitmap();
+            }
+        }
+
+        Bitmap bitmap;
+        if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        } else {
+            bitmap = Bitmap.createBitmap(
+                drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888
+            );
+        }
+
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
+    }
+
     private Notification buildNotification() {
         String songTitle = "No song playing";
         MusicFile currentSong = null;
+        Bitmap albumArtBitmap = null;
+        
         if (currentIndex >= 0 && currentIndex < playlist.size()) {
             currentSong = playlist.get(currentIndex);
             songTitle = currentSong.getName();
+            
+            albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(currentSong.getPath());
+        }
+        
+        if (albumArtBitmap == null) {
+            albumArtBitmap = getDefaultAlbumArt();
         }
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -175,11 +235,9 @@ public class MusicService extends Service {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
-        if (currentSong != null) {
-            Bitmap albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(currentSong.getPath());
-            if (albumArtBitmap != null) {
-                builder.setLargeIcon(albumArtBitmap);
-            }
+        // Set large icon if exist
+        if (albumArtBitmap != null) {
+            builder.setLargeIcon(albumArtBitmap);
         }
 
         return builder.build();
@@ -247,16 +305,6 @@ public class MusicService extends Service {
         }
     }
 
-    private Bitmap cropToSquare(Bitmap bitmap) {
-        if (bitmap == null) return null;
-        int width  = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        int newDimension = Math.min(width, height);
-        int x = (width - newDimension) / 2;
-        int y = (height - newDimension) / 2;
-        return Bitmap.createBitmap(bitmap, x, y, newDimension, newDimension);
-    }
-
     private void loadMusic(MusicFile musicFile) {
         player.load(musicFile.getPath());
 
@@ -266,10 +314,13 @@ public class MusicService extends Service {
             if (albumArt != null) {
                 Bitmap decodedBitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
                 if (decodedBitmap != null) {
-                    albumArtBitmap = cropToSquare(decodedBitmap);
-                    BitmapCache.getInstance().addBitmapToMemoryCache(musicFile.getPath(), albumArtBitmap);
+                    BitmapCache.getInstance().addBitmapToMemoryCache(musicFile.getPath(), decodedBitmap);
                 }
             }
+        }
+        
+        if (albumArtBitmap == null) {
+            albumArtBitmap = getDefaultAlbumArt();
         }
         
         MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder();
@@ -333,7 +384,7 @@ public class MusicService extends Service {
 
         int nextIndex = currentIndex + 1;
         if (nextIndex >= playlist.size()) {
-            nextIndex = 0; // Back to start
+            nextIndex = 0;
         }
 
         loadAndPlay(nextIndex);
@@ -344,7 +395,7 @@ public class MusicService extends Service {
 
         int prevIndex = currentIndex - 1;
         if (prevIndex < 0) {
-            prevIndex = playlist.size() - 1; // To end
+            prevIndex = playlist.size() - 1;
         }
 
         loadAndPlay(prevIndex);
@@ -420,7 +471,6 @@ public class MusicService extends Service {
                 listener.onMusicFinished();
             }
 
-            // If loop is not active, play next
             if (!isLoopEnabled) {
                 playNext();
             }
