@@ -1,6 +1,6 @@
 package com.music.player;
 
-import android.util.LruCache;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -22,7 +22,7 @@ public class MusicFileAdapter extends BaseAdapter {
     private Context context;
     private List<MusicFile> musicFiles;
     private LayoutInflater inflater;
-    private LruCache<String, Bitmap> bitmapCache;
+    private BitmapCache bitmapCache;
     
     private ExecutorService executorService;
     private Handler mainHandler;
@@ -31,11 +31,7 @@ public class MusicFileAdapter extends BaseAdapter {
         this.context = context;
         this.musicFiles = musicFiles;
         this.inflater = LayoutInflater.from(context);
-
-        int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-        int cacheSize = maxMemory / 8;
-
-        bitmapCache = new LruCache<>(cacheSize);
+        this.bitmapCache = BitmapCache.getInstance();
         
         executorService = Executors.newFixedThreadPool(2);
         mainHandler = new Handler(Looper.getMainLooper());
@@ -97,7 +93,7 @@ public class MusicFileAdapter extends BaseAdapter {
 
         holder.path = music.getPath();
 
-        Bitmap cachedBitmap = bitmapCache.get(music.getPath());
+        Bitmap cachedBitmap = bitmapCache.getBitmapFromMemCache(music.getPath());
         
         if (cachedBitmap != null) {
             holder.imgAlbumArt.setImageBitmap(cachedBitmap);
@@ -121,7 +117,7 @@ public class MusicFileAdapter extends BaseAdapter {
                     final Bitmap bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
                     
                     if (bitmap != null) {
-                        bitmapCache.put(path, bitmap);
+                        bitmapCache.addBitmapToMemoryCache(path, bitmap);
                         
                         mainHandler.post(new Runnable() {
                             @Override
