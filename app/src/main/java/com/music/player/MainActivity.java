@@ -449,27 +449,18 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
             @Override
             public void run() {
-                int color;
                 if (isPlaying) {
                     tvStatus.setText("Playing");
                     tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_pause_small, 0, 0, 0);
                     btnPlayPause.setImageResource(R.drawable.ic_pause);
-                    color = 0xFFFF9800; // Orange
                     seekbarUpdateHandler.post(updateSeekBarRunnable);
                 } else {
                     tvStatus.setText("Paused");
                     tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_play_small, 0, 0, 0);
                     btnPlayPause.setImageResource(R.drawable.ic_play);
-                    color = 0xFF03DAC6; // Teal
                     seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
                 }
 
-                android.graphics.drawable.Drawable background = btnPlayPause.getBackground();
-                if (background instanceof android.graphics.drawable.GradientDrawable) {
-                    ((android.graphics.drawable.GradientDrawable) background.mutate()).setColor(color);
-                } else {
-                    btnPlayPause.setBackgroundColor(color);
-                }
             }
         });
     }

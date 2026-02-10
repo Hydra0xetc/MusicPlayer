@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="switch_on">#FF03DAC6</color> <!-- Blue-green for 'on' state -->
-    <color name="switch_off">#FF666666</color> <!-- Grey for 'off' state -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#0F0F0F</color>
+    <color name="soft_black">#2C2C2C</color>
+    <color name="grey">#444444</color>
+    <color name="soft_grey">#BBBBBB</color>
+
+    <color name="soft_red">#CF6679</color>
+    <color name="light_purple">#BB86FC</color>
+    <color name="turqoise">#03DAC6</color>
+
+    <color name="switch_on">#FF03DAC6</color>
+    <color name="switch_off">#FF666666</color>
 </resources>

@@ -4,13 +4,13 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#121212">
+    android:background="@color/black">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Settings"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/white"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginBottom="24dp"
@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Music Directory"
-        android:textColor="#BBBBBB"
+        android:textColor="@color/black"
         android:textSize="16sp"
         android:layout_marginBottom="8dp"/>
 
@@ -30,7 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="/sdcard/Music/"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/white"
         android:textColorHint="#666666"
         android:background="@drawable/edittext_background"
         android:padding="12dp"
@@ -52,7 +52,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Auto Scan Music on Startup/Config Change"
-            android:textColor="#BBBBBB"
+            android:textColor="@color/soft_grey"
             android:textSize="16sp"/>
 
         <Switch
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Log Level"
-            android:textColor="#BBBBBB"
+            android:textColor="@color/soft_grey"
             android:textSize="16sp"/>
 
         <Spinner
@@ -85,7 +85,7 @@
             android:layout_height="wrap_content"
             android:entries="@array/log_levels"
             android:spinnerMode="dropdown"
-            android:backgroundTint="#BBBBBB"/>
+            android:backgroundTint="@color/soft_grey"/>
     </LinearLayout>
 
     <!-- Buttons -->
@@ -102,7 +102,7 @@
             android:layout_weight="1"
             android:text="Back"
             android:background="@drawable/btn_back"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/white"
             android:layout_marginEnd="8dp" />
 
         <Button
@@ -112,7 +112,7 @@
             android:layout_weight="1"
             android:text="Save"
             android:background="@drawable/btn_save"
-            android:textColor="#121212" />
+            android:textColor="@color/black" />
     </LinearLayout>
 
 </LinearLayout>
