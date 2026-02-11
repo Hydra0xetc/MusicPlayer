@@ -221,7 +221,7 @@ public class MusicService extends Service {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentText(songTitle)
+            .setContentTitle(songTitle)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pendingIntent)
             .addAction(prevAction)
