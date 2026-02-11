@@ -46,6 +46,7 @@ public class MusicService extends Service {
     private boolean isLoopEnabled = false;
     private MusicServiceListener listener;
     private MediaSessionCompat mediaSession;
+    private final float ZOOM = 1.4f;
 
     public interface MusicServiceListener {
         void onMusicChanged(MusicFile musicFile, int index);
@@ -220,7 +221,6 @@ public class MusicService extends Service {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Music Player")
             .setContentText(songTitle)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pendingIntent)
@@ -237,7 +237,7 @@ public class MusicService extends Service {
 
         // Set large icon if exist
         if (albumArtBitmap != null) {
-            builder.setLargeIcon(albumArtBitmap);
+            builder.setLargeIcon(zoomIn(albumArtBitmap, ZOOM));
         }
 
         return builder.build();
@@ -308,13 +308,18 @@ public class MusicService extends Service {
     private void loadMusic(MusicFile musicFile) {
         player.load(musicFile.getPath());
 
-        Bitmap albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(musicFile.getPath());
+        Bitmap albumArtBitmap = BitmapCache.getInstance()
+            .getBitmapFromMemCache(musicFile.getPath());
+        // TODO: scale the image
         if (albumArtBitmap == null) {
             byte[] albumArt = musicFile.getAlbumArt();
             if (albumArt != null) {
                 Bitmap decodedBitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
                 if (decodedBitmap != null) {
-                    BitmapCache.getInstance().addBitmapToMemoryCache(musicFile.getPath(), decodedBitmap);
+
+                    BitmapCache.getInstance()
+                        .addBitmapToMemoryCache(musicFile.getPath(), decodedBitmap);
+
                 }
             }
         }
@@ -322,7 +327,7 @@ public class MusicService extends Service {
         if (albumArtBitmap == null) {
             albumArtBitmap = getDefaultAlbumArt();
         }
-        
+
         MediaMetadataCompat.Builder metadataBuilder = new MediaMetadataCompat.Builder();
         metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_TITLE, musicFile.getTitle());
         metadataBuilder.putString(MediaMetadataCompat.METADATA_KEY_ARTIST, musicFile.getArtist());
@@ -338,6 +343,21 @@ public class MusicService extends Service {
         if (listener != null) {
             listener.onMusicChanged(musicFile, currentIndex);
         }
+    }
+
+    private Bitmap zoomIn(Bitmap src, float zoom) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+
+        int cropW = (int) (w / zoom);
+        int cropH = (int) (h / zoom);
+
+        int x = (w - cropW) / 2;
+        int y = (h - cropH) / 2;
+
+        Bitmap cropped = Bitmap.createBitmap(src, x, y, cropW, cropH);
+
+        return Bitmap.createScaledBitmap(cropped, w, h, true);
     }
 
     public void play() {
