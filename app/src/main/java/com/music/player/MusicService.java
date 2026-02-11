@@ -35,10 +35,13 @@ public class MusicService extends Service {
     public static final String ACTION_NEXT = "com.music.player.NEXT";
     public static final String ACTION_PREV = "com.music.player.PREV";
     public static final String ACTION_STOP = "com.music.player.STOP";
+    public static final String ACTION_SEEK = "com.music.player.SEEK";
+    public static final String EXTRA_SEEK_POSITION = "seek_position";
 
     private final IBinder binder = new MusicBinder();
     private PlayerController player;
     private Handler autoNextHandler;
+    private Handler notificationUpdateHandler;
 
     private FileLogger fileLogger;
     private List<MusicFile> playlist = new ArrayList<>();
@@ -67,20 +70,26 @@ public class MusicService extends Service {
 
         player = new PlayerController();
         autoNextHandler = new Handler(Looper.getMainLooper());
+        notificationUpdateHandler = new Handler(Looper.getMainLooper());
+        
+        // Initialize MediaSession with callback for seek
         mediaSession = new MediaSessionCompat(this, TAG);
+        mediaSession.setCallback(new MediaSessionCallback());
+        
         createNotificationChannel();
         startAutoNextMonitoring();
+        startNotificationUpdater();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.getAction() != null) {
-            handleAction(intent.getAction());
+            handleAction(intent.getAction(), intent);
         }
         return START_STICKY;
     }
 
-    private void handleAction(String action) {
+    private void handleAction(String action, Intent intent) {
         switch (action) {
             case ACTION_PLAY:
                 play();
@@ -96,6 +105,12 @@ public class MusicService extends Service {
                 break;
             case ACTION_STOP:
                 stop();
+                break;
+            case ACTION_SEEK:
+                if (intent.hasExtra(EXTRA_SEEK_POSITION)) {
+                    int position = intent.getIntExtra(EXTRA_SEEK_POSITION, 0);
+                    seekTo(position);
+                }
                 break;
         }
     }
@@ -172,12 +187,14 @@ public class MusicService extends Service {
 
     private Notification buildNotification() {
         String songTitle = "No song playing";
+        String songArtist = "";
         MusicFile currentSong = null;
         Bitmap albumArtBitmap = null;
         
         if (currentIndex >= 0 && currentIndex < playlist.size()) {
             currentSong = playlist.get(currentIndex);
-            songTitle = currentSong.getName();
+            songTitle = currentSong.getTitle();
+            songArtist = currentSong.getArtist();
             
             albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(currentSong.getPath());
         }
@@ -222,6 +239,7 @@ public class MusicService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(songTitle)
+            .setContentText(songArtist)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pendingIntent)
             .addAction(prevAction)
@@ -268,7 +286,8 @@ public class MusicService extends Service {
                PlaybackStateCompat.ACTION_PLAY_PAUSE |
                PlaybackStateCompat.ACTION_STOP |
                PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-               PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
+               PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+               PlaybackStateCompat.ACTION_SEEK_TO;  // Enable seek
     }
 
     private void updatePlaybackState() {
@@ -276,13 +295,62 @@ public class MusicService extends Service {
             return;
         }
 
-        int state = player.isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
+        int state = player.isPlaying() ? 
+            PlaybackStateCompat.STATE_PLAYING : 
+            PlaybackStateCompat.STATE_PAUSED;
 
         PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
             .setActions(getAvailableActions())
             .setState(state, player.getCurrentPosition(), 1.0f);
 
         mediaSession.setPlaybackState(stateBuilder.build());
+    }
+    
+    // MediaSession Callback for handeling seek from lock screen
+    private class MediaSessionCallback extends MediaSessionCompat.Callback {
+        @Override
+        public void onPlay() {
+            play();
+        }
+
+        @Override
+        public void onPause() {
+            pause();
+        }
+
+        @Override
+        public void onSkipToNext() {
+            playNext();
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            playPrevious();
+        }
+
+        @Override
+        public void onStop() {
+            stop();
+        }
+
+        @Override
+        public void onSeekTo(long pos) {
+            seekTo((int)pos);
+            updatePlaybackState();
+        }
+    }
+    
+    private void startNotificationUpdater() {
+        notificationUpdateHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (player.isPlaying()) {
+                    updatePlaybackState();
+                    updateNotification();
+                }
+                notificationUpdateHandler.postDelayed(this, 1000); // Update setiap detik
+            }
+        }, 1000);
     }
     
     public void setPlaylist(List<MusicFile> files) {
@@ -376,7 +444,6 @@ public class MusicService extends Service {
     public void pause() {
         if (player.isReady()) {
             player.pause();
-            mediaSession.setActive(false);
             updatePlaybackState();
             updateNotification();
 
@@ -469,6 +536,8 @@ public class MusicService extends Service {
 
     public void seekTo(int position) {
         player.seekTo(position);
+        updatePlaybackState();
+        updateNotification();
     }
 
     private void startAutoNextMonitoring() {
@@ -501,6 +570,7 @@ public class MusicService extends Service {
     public void onDestroy() {
         super.onDestroy();
         autoNextHandler.removeCallbacksAndMessages(null);
+        notificationUpdateHandler.removeCallbacksAndMessages(null);
         player.release();
         mediaSession.release();
         stopForeground(true);
