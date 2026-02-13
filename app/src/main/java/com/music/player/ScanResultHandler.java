@@ -14,9 +14,7 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
     private Button btnScan;
     private FileLogger fileLogger;
 
-    public ScanResultHandler(
-        MainActivity activity, Handler handler, List<MusicFile> musicFiles,
-        MusicFileAdapter adapter, Button btnScan) {
+    public ScanResultHandler(MainActivity activity, Handler handler, List<MusicFile> musicFiles, MusicFileAdapter adapter, Button btnScan) {
 
         this.activity = activity;
         this.handler = handler;

@@ -24,7 +24,6 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     public void uncaughtException(Thread thread, Throwable throwable) {
         try {
             // Log crash to file with clear format
-            logger.e(TAG, "");
             logger.e(TAG, "APPLICATION CRASH! ");
             logger.e(TAG, "Thread: " + thread.getName());
             logger.e(TAG, "Exception: " + throwable.getClass().getName());

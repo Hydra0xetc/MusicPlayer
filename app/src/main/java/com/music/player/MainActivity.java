@@ -102,11 +102,13 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
 
     private void initViews() {
-        fileLogger.d(TAG, "Initializing views...");
+        // fileLogger.d(TAG, "Initializing views...");
         
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
         tvStatus = findViewById(R.id.tvStatus);
         tvSongTitle = findViewById(R.id.tvSongTitle);
+        tvSongTitle.setSelected(true);
+
         ivMainAlbumArt = findViewById(R.id.ivMainAlbumArt);
         btnSettings = findViewById(R.id.btnSettings);
         
@@ -123,7 +125,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink);
         
-        fileLogger.d(TAG, "Views initialized");
+        // fileLogger.d(TAG, "Views initialized");
     }
 
     private void setupListView() {
@@ -238,9 +240,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             tvSongTitle.setText(current.getName());
             onMusicChanged(current, currentMusicIndex);
         } else {
-            String no_song = "No song playing";
-            tvSongTitle.setText(no_song);
-            fileLogger.d(TAG, no_song);
+            tvSongTitle.setText(Constant.NO_SONG);
+            fileLogger.d(TAG, Constant.NO_SONG);
             currentMusic = null;
             currentMusicIndex = -1;
         }
@@ -308,8 +309,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         try {
             currentMusicIndex = musicFiles.indexOf(musicFile);
             
-            fileLogger.i(TAG, "Path: " + musicFile.getPath());
-            fileLogger.i(TAG, "Loading: " + musicFile.getName());
+            // fileLogger.i(TAG, "Path: " + musicFile.getPath());
+            // fileLogger.i(TAG, "Loading: " + musicFile.getName());
             
             musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;

@@ -15,8 +15,6 @@ public class FileLogger {
     private static FileLogger instance;
     private File logFile;
     private final SimpleDateFormat dateFormat;
-    private static final int MAX_LOG_SIZE = 5 * 1024 * 1024; 
-    
     
     private int logLevelThreshold;
     private static final Map<String, Integer> LOG_LEVEL_MAP = new HashMap<>();
@@ -67,7 +65,7 @@ public class FileLogger {
             return;
         }
         
-        if (logFile.length() > MAX_LOG_SIZE) {
+        if (logFile.length() > Constant.MAX_LOG_SIZE) {
             File oldLog = new File(logFile.getParent(), "log.old.txt");
             if (oldLog.exists()) {
                 oldLog.delete();

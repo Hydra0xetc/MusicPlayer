@@ -49,7 +49,6 @@ public class MusicService extends Service {
     private boolean isLoopEnabled = false;
     private MusicServiceListener listener;
     private MediaSessionCompat mediaSession;
-    private final float ZOOM = 1.38f;
 
     public interface MusicServiceListener {
         void onMusicChanged(MusicFile musicFile, int index);
@@ -186,8 +185,8 @@ public class MusicService extends Service {
     }
 
     private Notification buildNotification() {
-        String songTitle = "No song playing";
-        String songArtist = "";
+        String songTitle = Constant.NO_SONG;
+        String songArtist = Constant.EMPTY_STRING;
         MusicFile currentSong = null;
         Bitmap albumArtBitmap = null;
         
@@ -265,7 +264,7 @@ public class MusicService extends Service {
 
         // Set large icon if exist
         if (albumArtBitmap != null) {
-            builder.setLargeIcon(zoomIn(albumArtBitmap, ZOOM));
+            builder.setLargeIcon(zoomIn(albumArtBitmap, Constant.NOTIFICATION_IMG_ZOOM));
         }
 
         return builder.build();

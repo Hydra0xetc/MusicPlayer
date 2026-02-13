@@ -28,6 +28,7 @@
                 android:textSize="17sp"
                 android:textStyle="bold"
                 android:singleLine="true"
+                android:marqueeRepeatLimit="marquee_forever"
                 android:ellipsize="marquee"/>
 
             <TextView

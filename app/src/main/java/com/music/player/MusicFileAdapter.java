@@ -1,6 +1,5 @@
 package com.music.player;
 
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -26,6 +25,8 @@ public class MusicFileAdapter extends BaseAdapter {
     
     private ExecutorService executorService;
     private Handler mainHandler;
+    private FileLogger fileLogger;
+    private final String TAG = "MusicFileAdapter";
 
     public MusicFileAdapter(Context context, List<MusicFile> musicFiles) {
         this.context = context;
@@ -35,6 +36,7 @@ public class MusicFileAdapter extends BaseAdapter {
         
         executorService = Executors.newFixedThreadPool(2);
         mainHandler = new Handler(Looper.getMainLooper());
+        fileLogger = FileLogger.getInstance(context);
     }
 
     static class ViewHolder {
@@ -129,7 +131,7 @@ public class MusicFileAdapter extends BaseAdapter {
                         });
                     }
                 } catch (Exception e) {
-                    // Ignore decoding errors
+                    fileLogger.e(TAG, "Unexpected error: " + e);
                 }
             }
         });

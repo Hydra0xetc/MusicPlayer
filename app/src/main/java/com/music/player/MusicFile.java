@@ -13,9 +13,7 @@ public class MusicFile {
     private long duration;
     private byte[] albumArt;
 
-    public MusicFile(
-            String name, String path, long size, String title,
-            String artist, String album, long duration, byte[] albumArt) {
+    public MusicFile(String name, String path, long size, String title, String artist, String album, long duration, byte[] albumArt) {
 
         this.name = name;
         this.path = path;
@@ -28,7 +26,7 @@ public class MusicFile {
     }
 
     public MusicFile(String name, String path, long size) {
-        this(name, path, size, name, "Unknown Artist", "Unknown Album", 0, null);
+        this(name, path, size, name, null, null, 0, null);
     }
     
     public byte[] extractAlbumArt(String path) {
@@ -56,12 +54,12 @@ public class MusicFile {
     }
 
     public String getSizeFormatted() {
-        if (size < 1024) {
+        if (size < Constant.ONE_KB) {
             return size + " B";
-        } else if (size < 1024 * 1024) {
-            return String.format("%.1f KB", size / 1024.0);
+        } else if (size < Constant.ONE_MB) {
+            return String.format("%.1f KB", size / Constant.ONE_KB);
         } else {
-            return String.format("%.1f MB", size / (1024.0 * 1024.0));
+            return String.format("%.1f MB", size / Constant.ONE_MB);
         }
     }
 
@@ -93,7 +91,7 @@ public class MusicFile {
 
     @Override
     public String toString() {
-        return (artist != null && !artist.isEmpty() ? artist + " - " : "") +
+        return (artist != null && !artist.isEmpty() ? artist + " - " : Constant.EMPTY_STRING) +
                (title != null && !title.isEmpty() ? title : name);
     }
 }

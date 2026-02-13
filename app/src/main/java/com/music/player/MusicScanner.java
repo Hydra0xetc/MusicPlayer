@@ -12,7 +12,7 @@ import java.util.List;
 
 public class MusicScanner {
 
-    private static final String[] AUDIO_EXTENSIONS = {
+    public static final String[] AUDIO_EXTENSIONS = {
             ".mp3", ".wav", ".ogg", ".m4a", ".aac",
             ".flac", ".wma", ".opus", ".3gp"
     };
@@ -24,7 +24,6 @@ public class MusicScanner {
         void onScanCompleted(List<MusicFile> files);
         void onScanError(String error);
     }
-
 
     public static List<MusicFile> scanDirectory(Context context, String dirPath, boolean loadAlbumArt) {
 

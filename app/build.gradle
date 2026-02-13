@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId "com.music.player"
-        minSdk 21
+        minSdk 23
         targetSdk 34
         versionName "2.2.7"
 
@@ -24,6 +24,7 @@ android {
                 cFlags "-O2 -fPIC"
             }
         }
+        resConfig "en"
     }
 
     signingConfigs {
