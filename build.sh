@@ -33,8 +33,7 @@ if $IS_RELEASE; then
             -alias "$KEY_ALIAS" \
             -keyalg RSA \
             -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android,O=Android,C=ID"
+            -validity 10000
 
         echo "[+] Keystore created at $KEYSTORE_PATH"
     else
@@ -43,3 +42,10 @@ if $IS_RELEASE; then
 fi
 
 ./gradlew "$@"
+
+if $IS_RELEASE; then
+    xdg-open ./app/build/outputs/apk/release/app-release.apk
+    exit 0
+fi
+
+xdg-open app/build/outputs/apk/debug/app-debug.apk

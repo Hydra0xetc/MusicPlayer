@@ -49,7 +49,7 @@ public class MusicService extends Service {
     private boolean isLoopEnabled = false;
     private MusicServiceListener listener;
     private MediaSessionCompat mediaSession;
-    private final float ZOOM = 1.4f;
+    private final float ZOOM = 1.38f;
 
     public interface MusicServiceListener {
         void onMusicChanged(MusicFile musicFile, int index);
@@ -197,6 +197,16 @@ public class MusicService extends Service {
             songArtist = currentSong.getArtist();
             
             albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(currentSong.getPath());
+            if (albumArtBitmap == null) {
+                byte[] albumArt = currentSong.getAlbumArt();
+                if (albumArt != null) {
+                    Bitmap decodedBitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
+                    if (decodedBitmap != null) {
+                        BitmapCache.getInstance()
+                            .addBitmapToMemoryCache(currentSong.getPath(), decodedBitmap);
+                    }
+                }
+            }
         }
         
         if (albumArtBitmap == null) {
@@ -378,7 +388,6 @@ public class MusicService extends Service {
 
         Bitmap albumArtBitmap = BitmapCache.getInstance()
             .getBitmapFromMemCache(musicFile.getPath());
-        // TODO: scale the image
         if (albumArtBitmap == null) {
             byte[] albumArt = musicFile.getAlbumArt();
             if (albumArt != null) {

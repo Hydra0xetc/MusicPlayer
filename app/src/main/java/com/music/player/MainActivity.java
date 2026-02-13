@@ -15,7 +15,8 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.*;
 import android.view.Window;
-
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,13 +46,15 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private int currentMusicIndex = -1;
     private boolean hasScannedOnce = false;
 
+    private Animation blinkAnimation;
+
     @Override
     public void onCreate(Bundle b) {
         super.onCreate(b);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        setContentView(R.layout.main);
+        setContentView(R.layout.activity_main);
 
         mainHandler = new Handler(Looper.getMainLooper());
         musicFiles = new ArrayList<MusicFile>();
@@ -117,6 +120,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         seekBar = findViewById(R.id.seekBar);
         tvCurrentTime = findViewById(R.id.tvCurrentTime);
         tvTotalTime = findViewById(R.id.tvTotalTime);
+        
+        blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink);
         
         fileLogger.d(TAG, "Views initialized");
     }
@@ -397,7 +402,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 tvStatus.setText("Ready");
                 tvStatus.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
                 enableControls(true);
-                fileLogger.i(TAG, "Now playing: " + musicFile.getName());
+                // fileLogger.i(TAG, "Now playing: " + musicFile.getName());
 
                 loadAlbumArtAsync(musicFile);
 
@@ -495,8 +500,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
 
     private class ButtonClick implements View.OnClickListener {
-        public void onClick(View v) {
-            int id = v.getId();
+        public void onClick(View view) {
+            int id = view.getId();
+            view.startAnimation(blinkAnimation);
             
             if (id == R.id.btnScan) {
                 scanDirectory();

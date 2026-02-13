@@ -11,6 +11,8 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.Toast;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 public class SettingsActivity extends Activity {
 
@@ -22,6 +24,7 @@ public class SettingsActivity extends Activity {
 
     private ConfigManager configManager;
     private FileLogger fileLogger;
+    private Animation blinkAnimation;
 
     private static final String TAG = "SettingsActivity";
 
@@ -47,6 +50,7 @@ public class SettingsActivity extends Activity {
         spLogLevel = findViewById(R.id.spLogLevel);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
         btnBack = findViewById(R.id.btnBack);
+        blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink);
         
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
                 this,
@@ -74,14 +78,16 @@ public class SettingsActivity extends Activity {
     private void setupListeners() {
         btnSaveSettings.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
+                view.startAnimation(blinkAnimation);
                 saveSettings();
             }
         });
 
         btnBack.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
+                view.startAnimation(blinkAnimation);
                 finish(); // Go back to the previous activity
             }
         });
