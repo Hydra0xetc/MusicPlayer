@@ -23,6 +23,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MusicService extends Service {
@@ -38,6 +39,13 @@ public class MusicService extends Service {
     public static final String ACTION_SEEK = "com.music.player.SEEK";
     public static final String EXTRA_SEEK_POSITION = "seek_position";
 
+    // Repeat modes
+    public enum RepeatMode {
+        OFF,    // No repeat
+        ALL,    // Repeat all songs
+        ONE     // Repeat current song
+    }
+
     private final IBinder binder = new MusicBinder();
     private PlayerController player;
     private Handler autoNextHandler;
@@ -45,8 +53,12 @@ public class MusicService extends Service {
 
     private FileLogger fileLogger;
     private List<MusicFile> playlist = new ArrayList<>();
+    private List<MusicFile> originalPlaylist = new ArrayList<>();
     private int currentIndex = -1;
+    private MusicFile currentPlayingMusic = null;  // Track actual playing song
     private boolean isLoopEnabled = false;
+    private boolean isShuffleEnabled = false;
+    private RepeatMode repeatMode = RepeatMode.OFF;
     private MusicServiceListener listener;
     private MediaSessionCompat mediaSession;
 
@@ -187,22 +199,22 @@ public class MusicService extends Service {
     private Notification buildNotification() {
         String songTitle = Constant.NO_SONG;
         String songArtist = Constant.EMPTY_STRING;
-        MusicFile currentSong = null;
         Bitmap albumArtBitmap = null;
         
-        if (currentIndex >= 0 && currentIndex < playlist.size()) {
-            currentSong = playlist.get(currentIndex);
-            songTitle = currentSong.getTitle();
-            songArtist = currentSong.getArtist();
+        // Use currentPlayingMusic instead of playlist.get(currentIndex)
+        // This prevents bug when shuffle changes the playlist order
+        if (currentPlayingMusic != null) {
+            songTitle = currentPlayingMusic.getTitle();
+            songArtist = currentPlayingMusic.getArtist();
             
-            albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(currentSong.getPath());
+            albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(currentPlayingMusic.getPath());
             if (albumArtBitmap == null) {
-                byte[] albumArt = currentSong.getAlbumArt();
+                byte[] albumArt = currentPlayingMusic.getAlbumArt();
                 if (albumArt != null) {
                     Bitmap decodedBitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
                     if (decodedBitmap != null) {
                         BitmapCache.getInstance()
-                            .addBitmapToMemoryCache(currentSong.getPath(), decodedBitmap);
+                            .addBitmapToMemoryCache(currentPlayingMusic.getPath(), decodedBitmap);
                     }
                 }
             }
@@ -357,13 +369,19 @@ public class MusicService extends Service {
                     updatePlaybackState();
                     updateNotification();
                 }
-                notificationUpdateHandler.postDelayed(this, 1000); // Update setiap detik
+                notificationUpdateHandler.postDelayed(this, 1000); // Update every second
             }
         }, 1000);
     }
     
     public void setPlaylist(List<MusicFile> files) {
+        this.originalPlaylist = new ArrayList<>(files);
         this.playlist = new ArrayList<>(files);
+        
+        // If shuffle is enabled, shuffle the new playlist
+        if (isShuffleEnabled) {
+            Collections.shuffle(this.playlist);
+        }
     }
 
     public void loadAndPlay(MusicFile musicFile) {
@@ -383,6 +401,9 @@ public class MusicService extends Service {
     }
 
     private void loadMusic(MusicFile musicFile) {
+        // Save reference to currently playing music
+        currentPlayingMusic = musicFile;
+        
         player.load(musicFile.getPath());
 
         Bitmap albumArtBitmap = BitmapCache.getInstance()
@@ -479,7 +500,13 @@ public class MusicService extends Service {
 
         int nextIndex = currentIndex + 1;
         if (nextIndex >= playlist.size()) {
-            nextIndex = 0;
+            // If at the end of playlist
+            if (repeatMode == RepeatMode.ALL) {
+                nextIndex = 0; // Loop to beginning
+            } else {
+                // Don't play anything if repeat is off
+                return;
+            }
         }
 
         loadAndPlay(nextIndex);
@@ -490,7 +517,13 @@ public class MusicService extends Service {
 
         int prevIndex = currentIndex - 1;
         if (prevIndex < 0) {
-            prevIndex = playlist.size() - 1;
+            // If at the beginning of playlist
+            if (repeatMode == RepeatMode.ALL) {
+                prevIndex = playlist.size() - 1; // Loop to end
+            } else {
+                // Don't play anything if repeat is off
+                return;
+            }
         }
 
         loadAndPlay(prevIndex);
@@ -514,6 +547,61 @@ public class MusicService extends Service {
     public boolean isLoopEnabled() {
         return isLoopEnabled;
     }
+    
+    // Shuffle controls
+    public void toggleShuffle() {
+        isShuffleEnabled = !isShuffleEnabled;
+        
+        if (isShuffleEnabled) {
+            // Shuffle the playlist
+            playlist = new ArrayList<>(originalPlaylist);
+            Collections.shuffle(playlist);
+            
+            // Update current index to match the current playing song in shuffled list
+            if (currentPlayingMusic != null) {
+                currentIndex = playlist.indexOf(currentPlayingMusic);
+            }
+            
+            fileLogger.i(TAG, "Shuffle enabled - current index updated to: " + currentIndex);
+        } else {
+            // Restore original order
+            playlist = new ArrayList<>(originalPlaylist);
+            
+            // Update current index to match the current playing song in original list
+            if (currentPlayingMusic != null) {
+                currentIndex = playlist.indexOf(currentPlayingMusic);
+            }
+            
+            fileLogger.i(TAG, "Shuffle disabled - current index updated to: " + currentIndex);
+        }
+        
+    }
+    
+    public boolean isShuffleEnabled() {
+        return isShuffleEnabled;
+    }
+    
+    // Repeat mode controls
+    public void cycleRepeatMode() {
+        switch (repeatMode) {
+            case OFF:
+                repeatMode = RepeatMode.ALL;
+                fileLogger.i(TAG, "Repeat mode: ALL");
+                break;
+            case ALL:
+                repeatMode = RepeatMode.ONE;
+                fileLogger.i(TAG, "Repeat mode: ONE");
+                break;
+            case ONE:
+                repeatMode = RepeatMode.OFF;
+                fileLogger.i(TAG, "Repeat mode: OFF");
+                break;
+        }
+    }
+    
+    public RepeatMode getRepeatMode() {
+        return repeatMode;
+    }
 
     public boolean isPlaying() {
         return player.isPlaying();
@@ -524,10 +612,9 @@ public class MusicService extends Service {
     }
 
     public MusicFile getCurrentMusic() {
-        if (currentIndex >= 0 && currentIndex < playlist.size()) {
-            return playlist.get(currentIndex);
-        }
-        return null;
+        // Return the actual playing music, not based on index
+        // This prevents bugs when shuffle changes playlist order
+        return currentPlayingMusic;
     }
 
     public int getCurrentIndex() {
@@ -568,7 +655,13 @@ public class MusicService extends Service {
                 listener.onMusicFinished();
             }
 
-            if (!isLoopEnabled) {
+            // Handle repeat modes
+            if (repeatMode == RepeatMode.ONE) {
+                // Replay current song
+                player.seekTo(0);
+                play();
+            } else if (!isLoopEnabled) {
+                // isLoopEnabled is for backward compatibility
                 playNext();
             }
         }

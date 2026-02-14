@@ -28,6 +28,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private ImageView ivMainAlbumArt;
     private ImageButton btnSettings;
     private ImageButton btnPlayPause, btnStop, btnPrev, btnNext;
+    private ImageButton btnShuffle, btnRepeat;
     private Button btnScan;
     private SeekBar seekBar;
     private boolean isLoopEnabled = false;
@@ -118,6 +119,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         btnPrev = findViewById(R.id.btnPrev);
         btnNext = findViewById(R.id.btnNext);
+        
+        btnShuffle = findViewById(R.id.btnShuffle);
+        btnRepeat = findViewById(R.id.btnRepeat);
 
         seekBar = findViewById(R.id.seekBar);
         tvCurrentTime = findViewById(R.id.tvCurrentTime);
@@ -150,6 +154,14 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         if (btnNext != null) {
             btnNext.setOnClickListener(listener);
+        }
+        
+        if (btnShuffle != null) {
+            btnShuffle.setOnClickListener(listener);
+        }
+        
+        if (btnRepeat != null) {
+            btnRepeat.setOnClickListener(listener);
         }
         
     }
@@ -258,6 +270,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         }
         
         isLoopEnabled = musicService.isLoopEnabled();
+        
+        // Update shuffle and repeat button states
+        updateShuffleButton();
+        updateRepeatButton();
     }
 
     private void scanDirectory() {
@@ -497,7 +513,71 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         isLoopEnabled = !isLoopEnabled;
         musicService.setLoop(isLoopEnabled);
         
-        fileLogger.i(TAG, "Loop: " + (isLoopEnabled ? "ON":"OFF"));
+        // fileLogger.i(TAG, "Loop: " + (isLoopEnabled ? "ON":"OFF"));
+    }
+    
+    private void toggleShuffle() {
+        if (!isBound || musicService == null) return;
+        
+        musicService.toggleShuffle();
+        updateShuffleButton();
+        
+        // Toast.makeText(this, 
+        //     musicService.isShuffleEnabled() ? "Shuffle ON" : "Shuffle OFF", 
+        //     Toast.LENGTH_SHORT).show();
+    }
+    
+    private void toggleRepeat() {
+        if (!isBound || musicService == null) return;
+        
+        musicService.cycleRepeatMode();
+        updateRepeatButton();
+        
+        String mode;
+        switch (musicService.getRepeatMode()) {
+            case OFF:
+                mode = "Repeat OFF";
+                break;
+            case ALL:
+                mode = "Repeat ALL";
+                break;
+            case ONE:
+                mode = "Repeat ONE";
+                break;
+            default:
+                mode = "Repeat OFF";
+        }
+        
+        // Toast.makeText(this, mode, Toast.LENGTH_SHORT).show();
+    }
+    
+    private void updateShuffleButton() {
+        if (!isBound || musicService == null || btnShuffle == null) return;
+        
+        if (musicService.isShuffleEnabled()) {
+            btnShuffle.setAlpha(1.0f);
+        } else {
+            btnShuffle.setAlpha(0.4f);
+        }
+    }
+    
+    private void updateRepeatButton() {
+        if (!isBound || musicService == null || btnRepeat == null) return;
+        
+        switch (musicService.getRepeatMode()) {
+            case OFF:
+                btnRepeat.setImageResource(R.drawable.ic_repeat);
+                btnRepeat.setAlpha(0.4f);
+                break;
+            case ALL:
+                btnRepeat.setImageResource(R.drawable.ic_repeat);
+                btnRepeat.setAlpha(1.0f);
+                break;
+            case ONE:
+                btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+                btnRepeat.setAlpha(1.0f);
+                break;
+        }
     }
 
     private class ButtonClick implements View.OnClickListener {
@@ -515,6 +595,10 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 playPrevious();
             } else if (id == R.id.btnNext) {
                 playNext();
+            } else if (id == R.id.btnShuffle) {
+                toggleShuffle();
+            } else if (id == R.id.btnRepeat) {
+                toggleRepeat();
             } else if (id == R.id.btnSettings) {
                 Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
                 startActivity(intent);
