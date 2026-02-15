@@ -405,6 +405,15 @@ public class MusicService extends Service {
         currentPlayingMusic = musicFile;
         
         player.load(musicFile.getPath());
+        
+        // Sync native player loop with current repeat mode
+        if (repeatMode == RepeatMode.ONE) {
+            // NOTE: maybe is good if all this, like shuffle, repeat all, repeat one is natively in c not in the java
+            // i wanna focussed logic of the ui is in java but logic musicplayer is in the c
+            player.setLoop(true);  // Native player handles RepeatOne
+        } else {
+            player.setLoop(false); // Java code handles RepeatAll/Off
+        }
 
         Bitmap albumArtBitmap = BitmapCache.getInstance()
             .getBitmapFromMemCache(musicFile.getPath());
@@ -586,14 +595,26 @@ public class MusicService extends Service {
         switch (repeatMode) {
             case OFF:
                 repeatMode = RepeatMode.ALL;
+                // Disable native loop for RepeatAll (we handle it in Java)
+                if (player.isReady()) {
+                    player.setLoop(false);
+                }
                 fileLogger.i(TAG, "Repeat mode: ALL");
                 break;
             case ALL:
                 repeatMode = RepeatMode.ONE;
+                // Enable native loop for RepeatOne
+                if (player.isReady()) {
+                    player.setLoop(true);
+                }
                 fileLogger.i(TAG, "Repeat mode: ONE");
                 break;
             case ONE:
                 repeatMode = RepeatMode.OFF;
+                // Disable native loop
+                if (player.isReady()) {
+                    player.setLoop(false);
+                }
                 fileLogger.i(TAG, "Repeat mode: OFF");
                 break;
         }
@@ -655,15 +676,14 @@ public class MusicService extends Service {
                 listener.onMusicFinished();
             }
 
-            // Handle repeat modes
-            if (repeatMode == RepeatMode.ONE) {
-                // Replay current song
-                player.seekTo(0);
-                play();
-            } else if (!isLoopEnabled) {
-                // isLoopEnabled is for backward compatibility
+            // RepeatOne is handled by native player loop (setLoop(true))
+            // So if we reach here, it means RepeatOne is NOT active
+            
+            // Handle RepeatAll and RepeatOff
+            if (repeatMode == RepeatMode.ALL) {
                 playNext();
             }
+            // If RepeatMode.OFF, do nothing (stop playback)
         }
     }
 
