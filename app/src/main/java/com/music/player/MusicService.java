@@ -21,9 +21,6 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class MusicService extends Service {
@@ -39,26 +36,14 @@ public class MusicService extends Service {
     public static final String ACTION_SEEK = "com.music.player.SEEK";
     public static final String EXTRA_SEEK_POSITION = "seek_position";
 
-    // Repeat modes
-    public enum RepeatMode {
-        OFF,    // No repeat
-        ALL,    // Repeat all songs
-        ONE     // Repeat current song
-    }
-
     private final IBinder binder = new MusicBinder();
     private PlayerController player;
     private Handler autoNextHandler;
     private Handler notificationUpdateHandler;
 
     private FileLogger fileLogger;
-    private List<MusicFile> playlist = new ArrayList<>();
-    private List<MusicFile> originalPlaylist = new ArrayList<>();
-    private int currentIndex = -1;
+    private PlaylistManager playlistManager;
     private MusicFile currentPlayingMusic = null;  // Track actual playing song
-    private boolean isLoopEnabled = false;
-    private boolean isShuffleEnabled = false;
-    private RepeatMode repeatMode = RepeatMode.OFF;
     private MusicServiceListener listener;
     private MediaSessionCompat mediaSession;
 
@@ -80,6 +65,7 @@ public class MusicService extends Service {
         fileLogger = FileLogger.getInstance(this);
 
         player = new PlayerController();
+        playlistManager = new PlaylistManager();
         autoNextHandler = new Handler(Looper.getMainLooper());
         notificationUpdateHandler = new Handler(Looper.getMainLooper());
         
@@ -375,27 +361,21 @@ public class MusicService extends Service {
     }
     
     public void setPlaylist(List<MusicFile> files) {
-        this.originalPlaylist = new ArrayList<>(files);
-        this.playlist = new ArrayList<>(files);
-        
-        // If shuffle is enabled, shuffle the new playlist
-        if (isShuffleEnabled) {
-            Collections.shuffle(this.playlist);
-        }
+        playlistManager.setPlaylist(files);
     }
 
     public void loadAndPlay(MusicFile musicFile) {
-        currentIndex = playlist.indexOf(musicFile);
-        if (currentIndex != -1) {
+        playlistManager.setCurrentMusic(musicFile);
+        if (playlistManager.getCurrentIndex() != -1) {
             loadMusic(musicFile);
             play();
         }
     }
 
     public void loadAndPlay(int index) {
-        if (index >= 0 && index < playlist.size()) {
-            currentIndex = index;
-            loadMusic(playlist.get(index));
+        MusicFile musicFile = playlistManager.getMusicAt(index);
+        if (musicFile != null) {
+            loadMusic(musicFile);
             play();
         }
     }
@@ -406,14 +386,7 @@ public class MusicService extends Service {
         
         player.load(musicFile.getPath());
         
-        // Sync native player loop with current repeat mode
-        if (repeatMode == RepeatMode.ONE) {
-            // NOTE: maybe is good if all this, like shuffle, repeat all, repeat one is natively in c not in the java
-            // i wanna focussed logic of the ui is in java but logic musicplayer is in the c
-            player.setLoop(true);  // Native player handles RepeatOne
-        } else {
-            player.setLoop(false); // Java code handles RepeatAll/Off
-        }
+        syncPlayerLoopMode();
 
         Bitmap albumArtBitmap = BitmapCache.getInstance()
             .getBitmapFromMemCache(musicFile.getPath());
@@ -447,7 +420,7 @@ public class MusicService extends Service {
         startForeground(NOTIFICATION_ID, buildNotification());
 
         if (listener != null) {
-            listener.onMusicChanged(musicFile, currentIndex);
+            listener.onMusicChanged(musicFile, playlistManager.getCurrentIndex());
         }
     }
 
@@ -505,37 +478,17 @@ public class MusicService extends Service {
     }
 
     public void playNext() {
-        if (playlist.isEmpty()) return;
-
-        int nextIndex = currentIndex + 1;
-        if (nextIndex >= playlist.size()) {
-            // If at the end of playlist
-            if (repeatMode == RepeatMode.ALL) {
-                nextIndex = 0; // Loop to beginning
-            } else {
-                // Don't play anything if repeat is off
-                return;
-            }
+        MusicFile nextMusic = playlistManager.getNextMusic();
+        if (nextMusic != null) {
+            loadAndPlay(nextMusic);
         }
-
-        loadAndPlay(nextIndex);
     }
 
     public void playPrevious() {
-        if (playlist.isEmpty()) return;
-
-        int prevIndex = currentIndex - 1;
-        if (prevIndex < 0) {
-            // If at the beginning of playlist
-            if (repeatMode == RepeatMode.ALL) {
-                prevIndex = playlist.size() - 1; // Loop to end
-            } else {
-                // Don't play anything if repeat is off
-                return;
-            }
+        MusicFile prevMusic = playlistManager.getPreviousMusic();
+        if (prevMusic != null) {
+            loadAndPlay(prevMusic);
         }
-
-        loadAndPlay(prevIndex);
     }
 
     public void togglePlayPause() {
@@ -546,82 +499,36 @@ public class MusicService extends Service {
         }
     }
 
-    public void setLoop(boolean enabled) {
-        isLoopEnabled = enabled;
+    private void syncPlayerLoopMode() {
         if (player.isReady()) {
-            player.setLoop(enabled);
+            boolean loop = playlistManager.getRepeatMode() == PlaylistManager.RepeatMode.ONE;
+            player.setLoop(loop);
         }
-    }
-
-    public boolean isLoopEnabled() {
-        return isLoopEnabled;
     }
     
     // Shuffle controls
     public void toggleShuffle() {
-        isShuffleEnabled = !isShuffleEnabled;
-        
-        if (isShuffleEnabled) {
-            // Shuffle the playlist
-            playlist = new ArrayList<>(originalPlaylist);
-            Collections.shuffle(playlist);
-            
-            // Update current index to match the current playing song in shuffled list
-            if (currentPlayingMusic != null) {
-                currentIndex = playlist.indexOf(currentPlayingMusic);
-            }
-            
-            fileLogger.i(TAG, "Shuffle enabled - current index updated to: " + currentIndex);
-        } else {
-            // Restore original order
-            playlist = new ArrayList<>(originalPlaylist);
-            
-            // Update current index to match the current playing song in original list
-            if (currentPlayingMusic != null) {
-                currentIndex = playlist.indexOf(currentPlayingMusic);
-            }
-            
-            fileLogger.i(TAG, "Shuffle disabled - current index updated to: " + currentIndex);
+        playlistManager.toggleShuffle();
+        // Update current playing music to maintain playback
+        if (currentPlayingMusic != null) {
+            playlistManager.setCurrentMusic(currentPlayingMusic);
         }
-        
+        fileLogger.i(TAG, "Shuffle toggled. Enabled: " + playlistManager.isShuffleEnabled());
     }
     
     public boolean isShuffleEnabled() {
-        return isShuffleEnabled;
+        return playlistManager.isShuffleEnabled();
     }
     
     // Repeat mode controls
     public void cycleRepeatMode() {
-        switch (repeatMode) {
-            case OFF:
-                repeatMode = RepeatMode.ALL;
-                // Disable native loop for RepeatAll (we handle it in Java)
-                if (player.isReady()) {
-                    player.setLoop(false);
-                }
-                fileLogger.i(TAG, "Repeat mode: ALL");
-                break;
-            case ALL:
-                repeatMode = RepeatMode.ONE;
-                // Enable native loop for RepeatOne
-                if (player.isReady()) {
-                    player.setLoop(true);
-                }
-                fileLogger.i(TAG, "Repeat mode: ONE");
-                break;
-            case ONE:
-                repeatMode = RepeatMode.OFF;
-                // Disable native loop
-                if (player.isReady()) {
-                    player.setLoop(false);
-                }
-                fileLogger.i(TAG, "Repeat mode: OFF");
-                break;
-        }
+        playlistManager.cycleRepeatMode();
+        syncPlayerLoopMode();
+        fileLogger.i(TAG, "Repeat mode cycled to: " + playlistManager.getRepeatMode());
     }
     
-    public RepeatMode getRepeatMode() {
-        return repeatMode;
+    public PlaylistManager.RepeatMode getRepeatMode() {
+        return playlistManager.getRepeatMode();
     }
 
     public boolean isPlaying() {
@@ -633,13 +540,11 @@ public class MusicService extends Service {
     }
 
     public MusicFile getCurrentMusic() {
-        // Return the actual playing music, not based on index
-        // This prevents bugs when shuffle changes playlist order
         return currentPlayingMusic;
     }
 
     public int getCurrentIndex() {
-        return currentIndex;
+        return playlistManager.getCurrentIndex();
     }
 
     public void setListener(MusicServiceListener listener) {
@@ -667,24 +572,20 @@ public class MusicService extends Service {
     }
 
     private void checkAndPlayNext() {
-        if (!player.isReady()) {
+        if (!player.isReady() || player.isPlaying() || !player.isFinished()) {
             return;
         }
 
-        if (player.isFinished() && !player.isPlaying()) {
-            if (listener != null) {
-                listener.onMusicFinished();
-            }
-
-            // RepeatOne is handled by native player loop (setLoop(true))
-            // So if we reach here, it means RepeatOne is NOT active
-            
-            // Handle RepeatAll and RepeatOff
-            if (repeatMode == RepeatMode.ALL) {
-                playNext();
-            }
-            // If RepeatMode.OFF, do nothing (stop playback)
+        if (listener != null) {
+            listener.onMusicFinished();
         }
+
+        // RepeatOne is handled by the native player's loop.
+        // If we reach here, it means the track finished and RepeatOne is not active.
+        if (playlistManager.getRepeatMode() == PlaylistManager.RepeatMode.ALL) {
+            playNext();
+        }
+        // If RepeatMode is OFF, playback stops.
     }
 
     @Override

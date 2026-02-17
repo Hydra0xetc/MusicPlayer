@@ -26,50 +26,76 @@ public class MusicScanner {
     }
 
     public static List<MusicFile> scanDirectory(Context context, String dirPath, boolean loadAlbumArt) {
-
         FileLogger fileLogger = FileLogger.getInstance(context);
         List<MusicFile> musicFiles = new ArrayList<>();
 
         File dir = new File(dirPath);
-        if (!dir.exists() || !dir.isDirectory()) return musicFiles;
+        if (!dir.exists() || !dir.isDirectory()) {
+            fileLogger.w(TAG, "Directory not found or not a directory: " + dirPath);
+            return musicFiles;
+        }
 
         File[] files = dir.listFiles();
-        if (files == null) return musicFiles;
+        if (files == null) {
+            fileLogger.w(TAG, "Could not list files in directory: " + dirPath);
+            return musicFiles;
+        }
 
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-
         for (File file : files) {
-
-            if (!file.isFile() || !isAudioFile(file.getName())) continue;
-
-            String title = file.getName();
-            String artist = "Unknown Artist";
-            String album = "Unknown Album";
-            long duration = 0;
-            byte[] albumArt = null;
-
-            try {
-                mmr.setDataSource(context, Uri.fromFile(file));
-
-                String t = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-                if (t != null) title = t;
-
-                String a = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-                if (a != null) artist = cleanupArtistString(a);
-
-                String al = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-                if (al != null) album = al;
-
-                String d = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                if (d != null) duration = Long.parseLong(d);
-
-                if (loadAlbumArt) {
-                    albumArt = mmr.getEmbeddedPicture();
+            if (file.isFile() && isAudioFile(file.getName())) {
+                MusicFile musicFile = extractMetadataFromFile(context, mmr, file, loadAlbumArt);
+                if (musicFile != null) {
+                    musicFiles.add(musicFile);
                 }
+            }
+        }
 
-            } catch (Exception ignored) {}
+        try {
+            mmr.release();
+        } catch (Exception e) {
+            fileLogger.e(TAG, "Unexpected error on MMR release: " + e);
+        }
 
-            musicFiles.add(new MusicFile(
+        Collections.sort(musicFiles, new MusicComparator());
+        return musicFiles;
+    }
+
+    private static MusicFile extractMetadataFromFile(Context context, MediaMetadataRetriever mmr, File file, boolean loadAlbumArt) {
+        String title = file.getName();
+        String artist = "Unknown Artist";
+        String album = "Unknown Album";
+        long duration = 0;
+        byte[] albumArtBytes = null;
+
+        try {
+            mmr.setDataSource(context, Uri.fromFile(file));
+
+            String extractedTitle = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+            if (extractedTitle != null && !extractedTitle.isEmpty()) {
+                title = extractedTitle;
+            }
+
+            String extractedArtist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            if (extractedArtist != null && !extractedArtist.isEmpty()) {
+                artist = cleanupArtistString(extractedArtist);
+            }
+
+            String extractedAlbum = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+            if (extractedAlbum != null && !extractedAlbum.isEmpty()) {
+                album = extractedAlbum;
+            }
+
+            String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (durationStr != null) {
+                duration = Long.parseLong(durationStr);
+            }
+
+            if (loadAlbumArt) {
+                albumArtBytes = mmr.getEmbeddedPicture();
+            }
+
+            return new MusicFile(
                     file.getName(),
                     file.getAbsolutePath(),
                     file.length(),
@@ -77,19 +103,13 @@ public class MusicScanner {
                     artist,
                     album,
                     duration,
-                    albumArt
-            ));
-        }
+                    albumArtBytes
+            );
 
-        try {
-            mmr.release();
         } catch (Exception e) {
-            fileLogger.e(TAG, "Unexpected error: " + e);
+            FileLogger.getInstance(context).e(TAG, "Failed to extract metadata for " + file.getName() + ": " + e.getMessage());
+            return null;
         }
-
-        Collections.sort(musicFiles, new MusicComparator());
-
-        return musicFiles;
     }
     
     public static List<MusicFile> scanDirectory(Context context, String dirPath) {

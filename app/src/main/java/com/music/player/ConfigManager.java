@@ -18,6 +18,11 @@ public class ConfigManager {
     private static final String DEFAULT_MUSIC_DIR = "/sdcard/Music/";
     private static final String TAG = "ConfigManager";
     
+    // JSON Keys
+    private static final String KEY_MUSIC_DIR = "music_dir";
+    private static final String KEY_AUTO_SCAN = "auto_scan";
+    private static final String KEY_LOG_LEVEL = "log_level";
+    
     private String               musicDir;
     private boolean              autoScan;
     private String               logLevel;
@@ -59,9 +64,9 @@ public class ConfigManager {
             if (configArray.length() > 0) {
                 JSONObject config = configArray.getJSONObject(0);
                 
-                musicDir = config.optString("music_dir", DEFAULT_MUSIC_DIR);
-                autoScan = config.optBoolean("auto_scan", false);
-                logLevel = config.optString("log_level", "INFO"); 
+                musicDir = config.optString(KEY_MUSIC_DIR, DEFAULT_MUSIC_DIR);
+                autoScan = config.optBoolean(KEY_AUTO_SCAN, false);
+                logLevel = config.optString(KEY_LOG_LEVEL, "INFO"); 
                 
                 File dir = new File(musicDir);
                 if (!dir.exists() || !dir.isDirectory()) {
@@ -97,9 +102,9 @@ public class ConfigManager {
             
             JSONArray configArray = new JSONArray();
             JSONObject config = new JSONObject();
-            config.put("auto_scan", autoScan);
-            config.put("music_dir", musicDir);
-            config.put("log_level", logLevel);
+            config.put(KEY_AUTO_SCAN, autoScan);
+            config.put(KEY_MUSIC_DIR, musicDir);
+            config.put(KEY_LOG_LEVEL, logLevel);
             configArray.put(config);
             
             FileWriter writer = new FileWriter(configFile); 

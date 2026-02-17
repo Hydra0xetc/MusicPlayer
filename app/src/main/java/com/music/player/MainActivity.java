@@ -31,7 +31,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private ImageButton btnShuffle, btnRepeat;
     private Button btnScan;
     private SeekBar seekBar;
-    private boolean isLoopEnabled = false;
 
     private MusicService musicService;
     private boolean isBound = false;
@@ -139,31 +138,39 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     }
 
     private void setupButtons() {
-        ButtonClick listener = new ButtonClick();
-        btnScan.setOnClickListener(listener);
-        btnPlayPause.setOnClickListener(listener);
-        btnStop.setOnClickListener(listener);
-
-        if (btnSettings != null) {
-            btnSettings.setOnClickListener(listener);
-        }
-        
-        if (btnPrev != null) {
-            btnPrev.setOnClickListener(listener);
-        }
-        
-        if (btnNext != null) {
-            btnNext.setOnClickListener(listener);
-        }
-        
-        if (btnShuffle != null) {
-            btnShuffle.setOnClickListener(listener);
-        }
-        
-        if (btnRepeat != null) {
-            btnRepeat.setOnClickListener(listener);
-        }
-        
+        btnScan.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            scanDirectory();
+        });
+        btnPlayPause.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            playPause();
+        });
+        btnStop.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            stop();
+        });
+        btnPrev.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            playPrevious();
+        });
+        btnNext.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            playNext();
+        });
+        btnShuffle.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            toggleShuffle();
+        });
+        btnRepeat.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            toggleRepeat();
+        });
+        btnSettings.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void setupSeekBar() {
@@ -268,8 +275,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             onPlayStateChanged(false);
             enableControls(false);
         }
-        
-        isLoopEnabled = musicService.isLoopEnabled();
         
         // Update shuffle and repeat button states
         updateShuffleButton();
@@ -507,21 +512,12 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         }
     }
 
-    private void toggleLoop() {
-        if (!isBound || musicService == null) return;
-        
-        isLoopEnabled = !isLoopEnabled;
-        musicService.setLoop(isLoopEnabled);
-        
-        // fileLogger.i(TAG, "Loop: " + (isLoopEnabled ? "ON":"OFF"));
-    }
-    
     private void toggleShuffle() {
         if (!isBound || musicService == null) return;
         
         musicService.toggleShuffle();
-        updateShuffleButton();
-        
+        updateShuffleButton(); 
+
         // Toast.makeText(this, 
         //     musicService.isShuffleEnabled() ? "Shuffle ON" : "Shuffle OFF", 
         //     Toast.LENGTH_SHORT).show();
@@ -532,23 +528,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         musicService.cycleRepeatMode();
         updateRepeatButton();
-        
-        String mode;
-        switch (musicService.getRepeatMode()) {
-            case OFF:
-                mode = "Repeat OFF";
-                break;
-            case ALL:
-                mode = "Repeat ALL";
-                break;
-            case ONE:
-                mode = "Repeat ONE";
-                break;
-            default:
-                mode = "Repeat OFF";
-        }
-        
-        // Toast.makeText(this, mode, Toast.LENGTH_SHORT).show();
     }
     
     private void updateShuffleButton() {
@@ -577,32 +556,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 btnRepeat.setImageResource(R.drawable.ic_repeat_one);
                 btnRepeat.setAlpha(1.0f);
                 break;
-        }
-    }
-
-    private class ButtonClick implements View.OnClickListener {
-        public void onClick(View view) {
-            int id = view.getId();
-            view.startAnimation(blinkAnimation);
-            
-            if (id == R.id.btnScan) {
-                scanDirectory();
-            } else if (id == R.id.btnPlayPause) {
-                playPause();
-            } else if (id == R.id.btnStop) {
-                stop();
-            } else if (id == R.id.btnPrev) {
-                playPrevious();
-            } else if (id == R.id.btnNext) {
-                playNext();
-            } else if (id == R.id.btnShuffle) {
-                toggleShuffle();
-            } else if (id == R.id.btnRepeat) {
-                toggleRepeat();
-            } else if (id == R.id.btnSettings) {
-                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-                startActivity(intent);
-            }
         }
     }
 
