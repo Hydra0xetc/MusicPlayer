@@ -17,72 +17,58 @@ import android.widget.*;
 import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.MotionEvent;
+import android.animation.ValueAnimator;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity implements MusicService.MusicServiceListener {
+public class MainActivity extends Activity implements MusicService.MusicServiceListener, PlaybackUIController.MusicServiceWrapper {
     final static String TAG = "MainActivity";
     private ListView lvMusicFiles;
-    private TextView tvStatus, tvSongTitle, tvCurrentTime, tvTotalTime;
-    private ImageView ivMainAlbumArt;
-    private ImageButton btnSettings;
-    private ImageButton btnPlayPause, btnStop, btnPrev, btnNext;
-    private ImageButton btnShuffle, btnRepeat;
     private Button btnScan;
-    private SeekBar seekBar;
 
     private MusicService musicService;
     private boolean isBound = false;
     
     private FileLogger fileLogger;
     private Handler mainHandler;
-    private final Handler seekbarUpdateHandler = new Handler(Looper.getMainLooper());
     private ConfigManager configManager;
 
     private List<MusicFile> musicFiles;
     private MusicFileAdapter adapter;
     private MusicFile currentMusic;
     private int currentMusicIndex = -1;
-    private boolean hasScannedOnce = false;
-
+    
+    private PlaybackUIController uiController;
     private Animation blinkAnimation;
+
+    @Override
+    public MusicService getService() { return musicService; }
+    @Override
+    public boolean isBound() { return isBound; }
 
     @Override
     public void onCreate(Bundle b) {
         super.onCreate(b);
-
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-
         setContentView(R.layout.activity_main);
 
         mainHandler = new Handler(Looper.getMainLooper());
         musicFiles = new ArrayList<MusicFile>();
-
         fileLogger = FileLogger.getInstance(this);
-        fileLogger.i(TAG, "MainActivity.onCreate() started");
-
         configManager = new ConfigManager(this);
 
+        uiController = new PlaybackUIController(this, this);
         initViews();
         setupListView();
-        setupButtons();
-        setupSeekBar();
-        
         checkPermissions();
-        
         updateUIBasedOnConfig();
-        
         bindMusicService();
         
         if (configManager.isAutoScan()) {
-            mainHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    fileLogger.i(TAG, "Auto-scan enabled, scanning...");
-                    scanDirectory();
-                    hasScannedOnce = true;
-                }
+            mainHandler.postDelayed(() -> {
+                scanDirectory();
             }, 1000);
         }
     }
@@ -90,154 +76,53 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        
-        fileLogger.i(TAG, "MainActivity.onDestroy() called");
-        
         if (isBound) {
             musicService.setListener(null);
             unbindService(serviceConnection);
             isBound = false;
         }
-        seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
     }
 
     private void initViews() {
-        // fileLogger.d(TAG, "Initializing views...");
-        
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
-        tvStatus = findViewById(R.id.tvStatus);
-        tvSongTitle = findViewById(R.id.tvSongTitle);
-        tvSongTitle.setSelected(true);
-
-        ivMainAlbumArt = findViewById(R.id.ivMainAlbumArt);
-        btnSettings = findViewById(R.id.btnSettings);
-        
         btnScan = findViewById(R.id.btnScan);
-        btnPlayPause = findViewById(R.id.btnPlayPause);
-        btnStop = findViewById(R.id.btnStop);
-        
-        btnPrev = findViewById(R.id.btnPrev);
-        btnNext = findViewById(R.id.btnNext);
-        
-        btnShuffle = findViewById(R.id.btnShuffle);
-        btnRepeat = findViewById(R.id.btnRepeat);
-
-        seekBar = findViewById(R.id.seekBar);
-        tvCurrentTime = findViewById(R.id.tvCurrentTime);
-        tvTotalTime = findViewById(R.id.tvTotalTime);
-        
         blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink);
-        
-        // fileLogger.d(TAG, "Views initialized");
+        btnScan.setOnClickListener(v -> {
+            v.startAnimation(blinkAnimation);
+            scanDirectory();
+        });
     }
 
     private void setupListView() {
         adapter = new MusicFileAdapter(this, musicFiles);
         lvMusicFiles.setAdapter(adapter);
-        lvMusicFiles.setOnItemClickListener(new ListItemClick());
-    }
-
-    private void setupButtons() {
-        btnScan.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            scanDirectory();
+        lvMusicFiles.setOnItemClickListener((parent, view, position, id) -> {
+            loadMusic(musicFiles.get(position));
         });
-        btnPlayPause.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            playPause();
-        });
-        btnStop.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            stop();
-        });
-        btnPrev.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            playPrevious();
-        });
-        btnNext.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            playNext();
-        });
-        btnShuffle.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            toggleShuffle();
-        });
-        btnRepeat.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            toggleRepeat();
-        });
-        btnSettings.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-            startActivity(intent);
-        });
-    }
-
-    private void setupSeekBar() {
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser && isBound && musicService != null) {
-                    tvCurrentTime.setText(formatDuration(progress));
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                if (isBound && musicService != null) {
-                    musicService.seekTo(seekBar.getProgress());
-                }
-                seekbarUpdateHandler.post(updateSeekBarRunnable);
-            }
-        });
-    }
-
-    private String formatDuration(long millis) {
-        long minutes = (millis / 1000) / 60;
-        long seconds = (millis / 1000) % 60;
-        return String.format("%02d:%02d", minutes, seconds);
     }
 
     private void checkPermissions() {
         if (!PermissionHelper.hasAllNecessaryPermissions(this)) {
-            fileLogger.w(TAG, "Not all necessary permissions granted. Requesting...");
             PermissionHelper.request(this);
-        } else {
-            fileLogger.i(TAG, "All necessary permissions already granted");
         }
     }
     
     private void updateUIBasedOnConfig() {
-        if (configManager.isAutoScan()) {
-            btnScan.setVisibility(View.GONE);
-            fileLogger.i(TAG, "Auto-scan enabled, hiding scan button");
-        } else {
-            btnScan.setVisibility(View.VISIBLE);
-        }
+        btnScan.setVisibility(configManager.isAutoScan() ? View.GONE : View.VISIBLE);
     }
     
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
-            musicService = binder.getService();
+            musicService = ((MusicService.MusicBinder) service).getService();
             musicService.setListener(MainActivity.this);
             isBound = true;
-            
-            fileLogger.i(TAG, "Connected to MusicService");
-            
             updateUIFromService();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             isBound = false;
-            fileLogger.w(TAG, "Disconnected from MusicService");
         }
     };
     
@@ -245,329 +130,76 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         Intent intent = new Intent(this, MusicService.class);
         startService(intent);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-        
-        fileLogger.i(TAG, "Binding to MusicService...");
     }
     
     private void updateUIFromService() {
         if (!isBound || musicService == null) return;
-        
-        MusicFile current = musicService.getCurrentMusic();
-        if (current != null) {
-            currentMusic = current;
-            currentMusicIndex = musicService.getCurrentIndex();
-            tvSongTitle.setText(current.getName());
-            onMusicChanged(current, currentMusicIndex);
-        } else {
-            tvSongTitle.setText(Constant.NO_SONG);
-            fileLogger.d(TAG, Constant.NO_SONG);
-            currentMusic = null;
-            currentMusicIndex = -1;
-        }
-
-        if (musicService.isReady()) {
-            long currentPos = musicService.getCurrentPosition();
-            seekBar.setProgress((int)currentPos);
-            tvCurrentTime.setText(formatDuration(currentPos));
-            onPlayStateChanged(musicService.isPlaying());
-            enableControls(true);
-        } else {
-            onPlayStateChanged(false);
-            enableControls(false);
-        }
-        
-        // Update shuffle and repeat button states
-        updateShuffleButton();
-        updateRepeatButton();
+        currentMusic = musicService.getCurrentMusic();
+        uiController.updateUI(currentMusic, musicService.isPlaying());
     }
 
     private void scanDirectory() {
         String dirPath = configManager.getMusicDir();
+        if (dirPath.isEmpty()) return;
         
-        if (dirPath.isEmpty()) {
-            Toast.makeText(this, "Config not found! Please check config.json", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        File dir = new File(dirPath);
-        if (!dir.exists()) {
-            Toast.makeText(this, "Directory not found: " + dirPath, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        if (!dir.isDirectory()) {
-            Toast.makeText(this, "Path is not a directory", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         btnScan.setEnabled(false);
         btnScan.setText("Scanning...");
-        fileLogger.i(TAG, "Scanning directory: " + dirPath);
-
-        ScanResultHandler handler = new ScanResultHandler(
-            this, mainHandler,
-            musicFiles, adapter,
-            btnScan
-        );
+        ScanResultHandler handler = new ScanResultHandler(this, mainHandler, musicFiles, adapter, btnScan);
         MusicScanner.scanDirectoryAsync(this, dirPath, handler);
-        
     }
 
     public void updatePlaylist() {
-        if (isBound && musicService != null) {
-            musicService.setPlaylist(musicFiles);
-            fileLogger.i(TAG, "Playlist updated: " + musicFiles.size() + " songs");
-        }
+        if (isBound) musicService.setPlaylist(musicFiles);
     }
 
     public void loadMusic(MusicFile musicFile) {
-        if (!isBound || musicService == null) {
-            Toast.makeText(this, "Service not ready", Toast.LENGTH_SHORT).show();
-            fileLogger.e(TAG, "Service not ready");
-            return;
-        }
-        
+        if (!isBound) return;
         try {
             currentMusicIndex = musicFiles.indexOf(musicFile);
-            
-            // fileLogger.i(TAG, "Path: " + musicFile.getPath());
-            // fileLogger.i(TAG, "Loading: " + musicFile.getName());
-            
             musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;
-
         } catch (Exception e) {
-            fileLogger.i(TAG, "Failed to load music: " + e);
             Toast.makeText(this, "Failed to load music", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void playPause() {
-        if (!isBound || musicService == null || !musicService.isReady()) {
-            fileLogger.i(TAG, "No music loaded");
-            return;
-        }
-        
-        musicService.togglePlayPause();
-    }
-
-    private void stop() {
-        if (!isBound || musicService == null || !musicService.isReady()) return;
-        
-        musicService.stop();
-        fileLogger.i(TAG, "Music stopped");
-    }
-    
-    private void playNext() {
-        if (!isBound || musicService == null) return;
-        
-        musicService.playNext();
-        fileLogger.i(TAG, "Playing next song");
-    }
-    
-    private void playPrevious() {
-        if (!isBound || musicService == null) return;
-        
-        musicService.playPrevious();
-        fileLogger.i(TAG, "Playing previous song");
-    }
-    
-    private void enableControls(boolean enable) {
-        btnPlayPause.setEnabled(enable);
-        btnStop.setEnabled(enable);
-        
-        if (btnPrev != null) btnPrev.setEnabled(enable);
-        if (btnNext != null) btnNext.setEnabled(enable);
-        
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        fileLogger.d(TAG, "onResume() called");
-        
         configManager.loadConfig();
         updateUIBasedOnConfig();
-        
-        if (isBound && musicService != null) {
-            updateUIFromService();
-        }
+        if (isBound) updateUIFromService();
     }
     
     @Override
     public void onRequestPermissionsResult(int req, String[] perms, int[] results) {
         super.onRequestPermissionsResult(req, perms, results);
         if (req == PermissionHelper.REQ) {
-            boolean allGranted = true;
-            for (int i = 0; i < perms.length; i++) {
-                if (results[i] == PackageManager.PERMISSION_GRANTED) {
-                    fileLogger.i(TAG, "Permission GRANTED: " + perms[i]);
-                } else {
-                    fileLogger.e(TAG, "Permission DENIED: " + perms[i]);
-                    allGranted = false;
+            for (int res : results) {
+                if (res != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Permissions required", Toast.LENGTH_SHORT).show();
+                    return;
                 }
-            }
-            if (!allGranted) {
-                Toast.makeText(this, "Please grant all necessary permissions for the app to function properly.", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     @Override
     public void onMusicChanged(MusicFile musicFile, int index) {
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                currentMusic = musicFile;
-                currentMusicIndex = index;
-                tvSongTitle.setText(musicFile.getTitle());
-                tvStatus.setText("Ready");
-                tvStatus.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-                enableControls(true);
-                // fileLogger.i(TAG, "Now playing: " + musicFile.getName());
-
-                loadAlbumArtAsync(musicFile);
-
-                long duration = musicFile.getDuration();
-                seekBar.setMax((int) duration);
-                tvTotalTime.setText(formatDuration(duration));
-                if (isBound && musicService != null && musicService.isReady()) {
-                    long currentPos = musicService.getCurrentPosition();
-                    tvCurrentTime.setText(formatDuration(currentPos));
-                    seekBar.setProgress((int)currentPos);
-                } else {
-                    tvCurrentTime.setText(formatDuration(0));
-                    seekBar.setProgress(0);
-                }
-            }
+        mainHandler.post(() -> {
+            currentMusic = musicFile;
+            currentMusicIndex = index;
+            uiController.updateUI(musicFile, true);
         });
-    }
-    
-    private void loadAlbumArtAsync(final MusicFile musicFile) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                byte[] albumArt = musicFile.getAlbumArt();
-                final Bitmap bitmap;
-                
-                if (albumArt != null) {
-                    bitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
-                } else {
-                    bitmap = null;
-                }
-                
-                mainHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (bitmap != null) {
-                            ivMainAlbumArt.setImageBitmap(bitmap);
-                        } else {
-                            ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
-                        }
-                    }
-                });
-            }
-        }).start();
     }
     
     @Override
     public void onPlayStateChanged(boolean isPlaying) {
-        mainHandler.post(new Runnable() {
-
-            @Override
-            public void run() {
-                if (isPlaying) {
-                    tvStatus.setText("Playing");
-                    tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_pause_small, 0, 0, 0);
-                    btnPlayPause.setImageResource(R.drawable.ic_pause);
-                    seekbarUpdateHandler.post(updateSeekBarRunnable);
-                } else {
-                    tvStatus.setText("Paused");
-                    tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_play_small, 0, 0, 0);
-                    btnPlayPause.setImageResource(R.drawable.ic_play);
-                    seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
-                }
-
-            }
-        });
+        mainHandler.post(() -> uiController.updatePlayState(isPlaying));
     }
-    
     
     @Override
     public void onMusicFinished() {
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                fileLogger.i(TAG, "Music finished");
-                seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
-                seekBar.setProgress(0);
-                tvCurrentTime.setText(formatDuration(0));
-            }
-        });
+        mainHandler.post(() -> uiController.onMusicFinished());
     }
-
-    private class ListItemClick implements AdapterView.OnItemClickListener {
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            loadMusic(musicFiles.get(position));
-        }
-    }
-
-    private void toggleShuffle() {
-        if (!isBound || musicService == null) return;
-        
-        musicService.toggleShuffle();
-        updateShuffleButton(); 
-
-        // Toast.makeText(this, 
-        //     musicService.isShuffleEnabled() ? "Shuffle ON" : "Shuffle OFF", 
-        //     Toast.LENGTH_SHORT).show();
-    }
-    
-    private void toggleRepeat() {
-        if (!isBound || musicService == null) return;
-        
-        musicService.cycleRepeatMode();
-        updateRepeatButton();
-    }
-    
-    private void updateShuffleButton() {
-        if (!isBound || musicService == null || btnShuffle == null) return;
-        
-        if (musicService.isShuffleEnabled()) {
-            btnShuffle.setAlpha(1.0f);
-        } else {
-            btnShuffle.setAlpha(0.4f);
-        }
-    }
-    
-    private void updateRepeatButton() {
-        if (!isBound || musicService == null || btnRepeat == null) return;
-        
-        switch (musicService.getRepeatMode()) {
-            case OFF:
-                btnRepeat.setImageResource(R.drawable.ic_repeat);
-                btnRepeat.setAlpha(0.4f);
-                break;
-            case ALL:
-                btnRepeat.setImageResource(R.drawable.ic_repeat);
-                btnRepeat.setAlpha(1.0f);
-                break;
-            case ONE:
-                btnRepeat.setImageResource(R.drawable.ic_repeat_one);
-                btnRepeat.setAlpha(1.0f);
-                break;
-        }
-    }
-
-    private final Runnable updateSeekBarRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isBound && musicService != null && musicService.isPlaying()) {
-                long currentPosition = musicService.getCurrentPosition();
-                seekBar.setProgress((int) currentPosition);
-                tvCurrentTime.setText(formatDuration(currentPosition));
-                seekbarUpdateHandler.postDelayed(this, 1000);
-            }
-        }
-    };
 }

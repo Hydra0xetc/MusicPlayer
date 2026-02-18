@@ -362,6 +362,10 @@ public class MusicService extends Service {
     
     public void setPlaylist(List<MusicFile> files) {
         playlistManager.setPlaylist(files);
+        // Sync index if music is playing
+        if (currentPlayingMusic != null) {
+            playlistManager.setCurrentMusic(currentPlayingMusic);
+        }
     }
 
     public void loadAndPlay(MusicFile musicFile) {
