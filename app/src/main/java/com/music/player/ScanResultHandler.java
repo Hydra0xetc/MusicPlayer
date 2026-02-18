@@ -3,6 +3,7 @@ package com.music.player;
 import android.os.Handler;
 import android.widget.Button;
 import android.widget.Toast;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import java.util.List;
 
 public class ScanResultHandler implements MusicScanner.ScanListener {
@@ -11,39 +12,32 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
     private Handler handler;
     private List<MusicFile> musicFiles;
     private MusicFileAdapter adapter;
-    private Button btnScan;
+    private SwipeRefreshLayout swipeRefresh;
     private FileLogger fileLogger;
 
-    public ScanResultHandler(MainActivity activity, Handler handler, List<MusicFile> musicFiles, MusicFileAdapter adapter, Button btnScan) {
-
+    public ScanResultHandler(MainActivity activity, Handler handler, List<MusicFile> musicFiles, MusicFileAdapter adapter, SwipeRefreshLayout swipeRefresh) {
         this.activity = activity;
         this.handler = handler;
         this.musicFiles = musicFiles;
         this.adapter = adapter;
-        this.btnScan = btnScan;
+        this.swipeRefresh = swipeRefresh;
         this.fileLogger = FileLogger.getInstance(activity);
     }
 
     public void onScanStarted() {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                musicFiles.clear();
-                adapter.notifyDataSetChanged();
+        handler.post(() -> {
+            musicFiles.clear();
+            adapter.notifyDataSetChanged();
+            if (!swipeRefresh.isRefreshing()) {
+                swipeRefresh.setRefreshing(true);
             }
         });
     }
 
-    // this may better if i can delete this
     public void onFileFound(MusicFile file) { }
 
     public void onScanCompleted(List<MusicFile> files) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                handleScanCompletion(files);
-            }
-        });
+        handler.post(() -> handleScanCompletion(files));
     }
 
     private void handleScanCompletion(List<MusicFile> files) {
@@ -51,8 +45,7 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
         musicFiles.addAll(files);
         adapter.notifyDataSetChanged();
 
-        btnScan.setEnabled(true);
-        btnScan.setText("Scan");
+        swipeRefresh.setRefreshing(false);
 
         int count = files.size();
         Toast.makeText(activity, count + " music file(s) found", Toast.LENGTH_SHORT).show();
@@ -65,17 +58,11 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
     }
 
     public void onScanError(String error) {
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                handleScanError(error);
-            }
-        });
+        handler.post(() -> handleScanError(error));
     }
 
     private void handleScanError(String error) {
-        btnScan.setEnabled(true);
-        btnScan.setText("Ready");
+        swipeRefresh.setRefreshing(false);
         fileLogger.e(TAG, "ERROR: Scan failed - " + error);
         Toast.makeText(activity, "Scan failed: " + error, Toast.LENGTH_SHORT).show();
     }

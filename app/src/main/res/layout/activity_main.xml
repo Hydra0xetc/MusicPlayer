@@ -225,20 +225,18 @@
             android:textColor="@color/white"
             android:textStyle="bold"
             android:layout_marginBottom="6dp"/>
-        <ListView
-            android:id="@+id/lvMusicFiles"
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:dividerHeight="0dp"
-            android:background="@color/black"/>
-        <Button
-            android:id="@+id/btnScan"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/btn_primary_round"
-            android:textColor="@color/black"
-            android:layout_marginTop="8dp"/>
+            android:layout_weight="1">
+            <ListView
+                android:id="@+id/lvMusicFiles"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:dividerHeight="0dp"
+                android:background="@color/black"/>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </LinearLayout>
 
 </LinearLayout>

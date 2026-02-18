@@ -19,6 +19,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.MotionEvent;
 import android.animation.ValueAnimator;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.List;
 public class MainActivity extends Activity implements MusicService.MusicServiceListener, PlaybackUIController.MusicServiceWrapper {
     final static String TAG = "MainActivity";
     private ListView lvMusicFiles;
-    private Button btnScan;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     private MusicService musicService;
     private boolean isBound = false;
@@ -41,7 +42,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private int currentMusicIndex = -1;
     
     private PlaybackUIController uiController;
-    private Animation blinkAnimation;
 
     @Override
     public MusicService getService() { return musicService; }
@@ -63,7 +63,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         initViews();
         setupListView();
         checkPermissions();
-        updateUIBasedOnConfig();
         bindMusicService();
         
         if (configManager.isAutoScan()) {
@@ -85,10 +84,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
     private void initViews() {
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
-        btnScan = findViewById(R.id.btnScan);
-        blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink);
-        btnScan.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
             scanDirectory();
         });
     }
@@ -105,10 +102,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         if (!PermissionHelper.hasAllNecessaryPermissions(this)) {
             PermissionHelper.request(this);
         }
-    }
-    
-    private void updateUIBasedOnConfig() {
-        btnScan.setVisibility(configManager.isAutoScan() ? View.GONE : View.VISIBLE);
     }
     
     private ServiceConnection serviceConnection = new ServiceConnection() {
@@ -140,11 +133,12 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
     private void scanDirectory() {
         String dirPath = configManager.getMusicDir();
-        if (dirPath.isEmpty()) return;
+        if (dirPath.isEmpty()) {
+            swipeRefreshLayout.setRefreshing(false);
+            return;
+        }
         
-        btnScan.setEnabled(false);
-        btnScan.setText("Scanning...");
-        ScanResultHandler handler = new ScanResultHandler(this, mainHandler, musicFiles, adapter, btnScan);
+        ScanResultHandler handler = new ScanResultHandler(this, mainHandler, musicFiles, adapter, swipeRefreshLayout);
         MusicScanner.scanDirectoryAsync(this, dirPath, handler);
     }
 
@@ -167,7 +161,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     protected void onResume() {
         super.onResume();
         configManager.loadConfig();
-        updateUIBasedOnConfig();
         if (isBound) updateUIFromService();
     }
     
