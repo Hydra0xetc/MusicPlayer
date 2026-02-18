@@ -14,6 +14,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.view.View;
 import android.widget.*;
+import android.widget.AbsListView;
 import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -42,6 +43,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private int currentMusicIndex = -1;
     
     private PlaybackUIController uiController;
+    private int scrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
 
     @Override
     public MusicService getService() { return musicService; }
@@ -93,8 +95,22 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private void setupListView() {
         adapter = new MusicFileAdapter(this, musicFiles);
         lvMusicFiles.setAdapter(adapter);
+        
+        lvMusicFiles.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int state) {
+                scrollState = state;
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+            }
+        });
+
         lvMusicFiles.setOnItemClickListener((parent, view, position, id) -> {
-            loadMusic(musicFiles.get(position));
+            if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
+                loadMusic(musicFiles.get(position));
+            }
         });
     }
 
@@ -128,6 +144,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private void updateUIFromService() {
         if (!isBound || musicService == null) return;
         currentMusic = musicService.getCurrentMusic();
+        if (currentMusic != null) {
+            adapter.setPlayingPath(currentMusic.getPath());
+        }
         uiController.updateUI(currentMusic, musicService.isPlaying());
     }
 
@@ -152,6 +171,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             currentMusicIndex = musicFiles.indexOf(musicFile);
             musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;
+            adapter.setPlayingPath(musicFile.getPath());
         } catch (Exception e) {
             Toast.makeText(this, "Failed to load music", Toast.LENGTH_SHORT).show();
         }
@@ -182,6 +202,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         mainHandler.post(() -> {
             currentMusic = musicFile;
             currentMusicIndex = index;
+            adapter.setPlayingPath(musicFile.getPath());
             uiController.updateUI(musicFile, true);
         });
     }

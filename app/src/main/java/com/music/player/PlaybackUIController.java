@@ -21,12 +21,12 @@ public class PlaybackUIController {
 
     private TextView tvStatus, tvSongTitle, tvCurrentTime, tvTotalTime;
     private ImageView ivMainAlbumArt;
-    private ImageButton btnPlayPause, btnStop, btnPrev, btnNext, btnShuffle, btnRepeat, btnSettings;
+    private ImageButton btnPlayPause, btnPrev, btnNext, btnShuffle, btnRepeat, btnSettings;
     private SeekBar seekBar;
 
     private LinearLayout topPane, bottomPane;
     private View dragHandle;
-    private LinearLayout mainControlsLayout1, mainControlsLayout2;
+    private LinearLayout mainControlsLayout;
 
     private Animation blinkAnimation;
     private float initialTouchY, initialTopPaneWeight, initialBottomPaneWeight;
@@ -59,7 +59,6 @@ public class PlaybackUIController {
         ivMainAlbumArt = activity.findViewById(R.id.ivMainAlbumArt);
         btnSettings = activity.findViewById(R.id.btnSettings);
         btnPlayPause = activity.findViewById(R.id.btnPlayPause);
-        btnStop = activity.findViewById(R.id.btnStop);
         btnPrev = activity.findViewById(R.id.btnPrev);
         btnNext = activity.findViewById(R.id.btnNext);
         btnShuffle = activity.findViewById(R.id.btnShuffle);
@@ -72,18 +71,13 @@ public class PlaybackUIController {
         topPane = activity.findViewById(R.id.top_pane);
         bottomPane = activity.findViewById(R.id.bottom_pane);
         dragHandle = activity.findViewById(R.id.drag_handle);
-        mainControlsLayout1 = activity.findViewById(R.id.main_controls_layout_1);
-        mainControlsLayout2 = activity.findViewById(R.id.main_controls_layout_2);
+        mainControlsLayout = activity.findViewById(R.id.main_controls_layout);
     }
 
     private void setupButtons() {
         btnPlayPause.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
             if (serviceWrapper.isBound()) serviceWrapper.getService().togglePlayPause();
-        });
-        btnStop.setOnClickListener(v -> {
-            v.startAnimation(blinkAnimation);
-            if (serviceWrapper.isBound()) serviceWrapper.getService().stop();
         });
         btnPrev.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
@@ -166,7 +160,6 @@ public class PlaybackUIController {
 
     public void enableControls(boolean enable) {
         btnPlayPause.setEnabled(enable);
-        btnStop.setEnabled(enable);
         if (btnPrev != null) btnPrev.setEnabled(enable);
         if (btnNext != null) btnNext.setEnabled(enable);
     }
@@ -282,18 +275,21 @@ public class PlaybackUIController {
 
     private void snapToTarget(LinearLayout.LayoutParams topParams, LinearLayout.LayoutParams bottomParams, float totalWeight) {
         float currentTopWeight = topParams.weight;
-        float closestTargetWeight = -1f;
-        float minDifference = Float.MAX_VALUE;
-        for (float target : SNAP_TARGET_TOP_WEIGHTS) {
+        float closestTargetWeight = SNAP_TARGET_TOP_WEIGHTS[0];
+        float minDifference = Math.abs(currentTopWeight - closestTargetWeight);
+
+        for (int i = 1; i < SNAP_TARGET_TOP_WEIGHTS.length; i++) {
+            float target = SNAP_TARGET_TOP_WEIGHTS[i];
             float diff = Math.abs(currentTopWeight - target);
             if (diff < minDifference) {
                 minDifference = diff;
                 closestTargetWeight = target;
             }
         }
-        final float targetWeightToSnap = (closestTargetWeight != -1f && minDifference < SNAP_THRESHOLD_WEIGHT) ? closestTargetWeight : currentTopWeight;
-        ValueAnimator animator = ValueAnimator.ofFloat(currentTopWeight, targetWeightToSnap);
+
+        ValueAnimator animator = ValueAnimator.ofFloat(currentTopWeight, closestTargetWeight);
         animator.setDuration(SNAP_ANIMATION_DURATION);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
         animator.addUpdateListener(animation -> {
             float animatedWeight = (float) animation.getAnimatedValue();
             topParams.weight = animatedWeight;
@@ -308,8 +304,9 @@ public class PlaybackUIController {
     private void updateTopPaneContentVisibility(float currentTopWeight) {
         int visibility = (currentTopWeight <= 20f) ? View.GONE : View.VISIBLE;
         ivMainAlbumArt.setVisibility(visibility);
-        mainControlsLayout1.setVisibility(visibility);
-        mainControlsLayout2.setVisibility(visibility);
+        if (mainControlsLayout != null) {
+            mainControlsLayout.setVisibility(visibility);
+        }
     }
 
     public void onMusicFinished() {
