@@ -7,4 +7,6 @@ public class Constant {
     public final static float ONE_KB = 1024f;
     public final static float ONE_MB = ONE_KB * 1024f;
     public final static String EMPTY_STRING = "";
+    public final static String CONFIG_FILE_NAME = "config.json";
+    public final static String DEFAULT_MUSIC_DIR = "/storage/emulated/0/Music/";
 }

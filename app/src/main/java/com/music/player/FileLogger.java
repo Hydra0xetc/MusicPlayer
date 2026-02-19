@@ -29,8 +29,7 @@ public class FileLogger {
         File logDir = context.getExternalFilesDir(null);
         if (logDir != null) {
             logFile = new File(logDir, "log.txt");
-            
-            
+ 
             try {
                 if (!logFile.exists()) {
                     logFile.createNewFile();

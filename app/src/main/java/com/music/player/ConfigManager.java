@@ -13,16 +13,13 @@ import java.io.IOException;
 
 public class ConfigManager {
     
-    private static final String CONFIG_ROOT_DIR = "/sdcard/MusicPlayer/";
-    private static final String CONFIG_FILE_NAME = "config.json";
-    private static final String DEFAULT_MUSIC_DIR = "/sdcard/Music/";
     private static final String TAG = "ConfigManager";
-    
+
     // JSON Keys
     private static final String KEY_MUSIC_DIR = "music_dir";
     private static final String KEY_AUTO_SCAN = "auto_scan";
     private static final String KEY_LOG_LEVEL = "log_level";
-    
+
     private String               musicDir;
     private boolean              autoScan;
     private String               logLevel;
@@ -30,13 +27,16 @@ public class ConfigManager {
     private Context              context;
     private File                 configDirFile;
     private File                 configFile;
-    
+
     public ConfigManager(Context context) {
         fileLogger = FileLogger.getInstance(context);
         this.context = context;
         
-        configDirFile = new File(CONFIG_ROOT_DIR);
-        configFile = new File(configDirFile, CONFIG_FILE_NAME);
+        configDirFile = context.getExternalFilesDir(null);
+        if (configDirFile == null) {
+            configDirFile = context.getFilesDir();
+        }
+        configFile = new File(configDirFile, Constant.CONFIG_FILE_NAME);
         
         loadConfig();
     }
@@ -64,14 +64,14 @@ public class ConfigManager {
             if (configArray.length() > 0) {
                 JSONObject config = configArray.getJSONObject(0);
                 
-                musicDir = config.optString(KEY_MUSIC_DIR, DEFAULT_MUSIC_DIR);
+                musicDir = config.optString(KEY_MUSIC_DIR, Constant.DEFAULT_MUSIC_DIR);
                 autoScan = config.optBoolean(KEY_AUTO_SCAN, false);
                 logLevel = config.optString(KEY_LOG_LEVEL, "INFO"); 
                 
                 File dir = new File(musicDir);
                 if (!dir.exists() || !dir.isDirectory()) {
-                    fileLogger.w(TAG, "Invalid music dir in config: " + musicDir + ", defaulting to " + DEFAULT_MUSIC_DIR);
-                    musicDir = DEFAULT_MUSIC_DIR;
+                    fileLogger.w(TAG, "Invalid music dir in config: " + musicDir + ", defaulting to " + Constant.DEFAULT_MUSIC_DIR);
+                    musicDir = Constant.DEFAULT_MUSIC_DIR;
                 }
                 
                 fileLogger.i(TAG, "Config loaded from: " + configFile.getAbsolutePath() + ", MusicDir: " + musicDir + ", AutoScan: " + autoScan + ", LogLevel: " + logLevel);
@@ -128,7 +128,7 @@ public class ConfigManager {
     }
     
     private void setDefaults() {
-        musicDir = DEFAULT_MUSIC_DIR;
+        musicDir = Constant.DEFAULT_MUSIC_DIR;
         autoScan = false;
         logLevel = "INFO";
     }

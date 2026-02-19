@@ -96,16 +96,16 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         adapter = new MusicFileAdapter(this, musicFiles);
         lvMusicFiles.setAdapter(adapter);
         
-        lvMusicFiles.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int state) {
-                scrollState = state;
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-            }
-        });
+        // lvMusicFiles.setOnScrollListener(new AbsListView.OnScrollListener() {
+        //     @Override
+        //     public void onScrollStateChanged(AbsListView view, int state) {
+        //         scrollState = state;
+        //     }
+        //
+        //     @Override
+        //     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+        //     }
+        // });
 
         lvMusicFiles.setOnItemClickListener((parent, view, position, id) -> {
             if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {

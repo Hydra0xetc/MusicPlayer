@@ -27,7 +27,7 @@ public class MusicFileAdapter extends BaseAdapter {
     private Handler mainHandler;
     private FileLogger fileLogger;
     private final String TAG = "MusicFileAdapter";
-    private String playingPath = "";
+    private String playingPath = Constant.EMPTY_STRING;
 
     public MusicFileAdapter(Context context, List<MusicFile> musicFiles) {
         this.context = context;
@@ -41,7 +41,7 @@ public class MusicFileAdapter extends BaseAdapter {
     }
 
     public void setPlayingPath(String path) {
-        this.playingPath = path != null ? path : "";
+        this.playingPath = path != null ? path : Constant.EMPTY_STRING;
         notifyDataSetChanged();
     }
 
