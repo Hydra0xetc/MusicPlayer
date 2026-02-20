@@ -47,6 +47,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
     @Override
     public MusicService getService() { return musicService; }
+
     @Override
     public boolean isBound() { return isBound; }
 

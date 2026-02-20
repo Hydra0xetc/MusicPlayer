@@ -70,11 +70,13 @@ public class ConfigManager {
                 
                 File dir = new File(musicDir);
                 if (!dir.exists() || !dir.isDirectory()) {
-                    fileLogger.w(TAG, "Invalid music dir in config: " + musicDir + ", defaulting to " + Constant.DEFAULT_MUSIC_DIR);
-                    musicDir = Constant.DEFAULT_MUSIC_DIR;
+                    Toast.makeText(context, "Folder not found: " + musicDir, Toast.LENGTH_SHORT).show();
+                    // fileLogger.w(TAG, "Invalid music dir in config: " + musicDir + ", defaulting to " + Constant.DEFAULT_MUSIC_DIR);
+                    // musicDir = Constant.DEFAULT_MUSIC_DIR;
                 }
                 
                 fileLogger.i(TAG, "Config loaded from: " + configFile.getAbsolutePath() + ", MusicDir: " + musicDir + ", AutoScan: " + autoScan + ", LogLevel: " + logLevel);
+                CrashHandler.install(context);
             } else {
                 fileLogger.w(TAG, "Empty config, using default");
                 setDefaults();
@@ -112,7 +114,7 @@ public class ConfigManager {
             writer.close();
             
             fileLogger.i(TAG, "Config saved to: " + configFile.getAbsolutePath());
-            Toast.makeText(context, "Settings saved to " + configFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+            // Toast.makeText(context, "Settings saved to " + configFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
             
         } catch (IOException e) { 
             fileLogger.e(TAG, "I/O error saving config to " + configFile.getAbsolutePath() + ": " + e.getMessage());

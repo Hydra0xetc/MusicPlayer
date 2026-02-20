@@ -6,3 +6,4 @@ build/
 app/.cxx/
 local.properties
 .env
+lint-baseline.xml

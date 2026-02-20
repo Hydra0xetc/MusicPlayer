@@ -29,7 +29,6 @@
         android:id="@+id/etMusicDir"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="/sdcard/Music/"
         android:textColor="@color/white"
         android:textColorHint="#666666"
         android:background="@drawable/edittext_background"
@@ -51,7 +50,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Auto Scan Music on Startup/Config Change"
+            android:text="Auto Scan Music on Startup Change"
             android:textColor="@color/soft_grey"
             android:textSize="16sp"/>
 
@@ -61,6 +60,7 @@
             android:layout_height="wrap_content"
             android:thumbTint="@color/switch_on"
             android:trackTint="@color/switch_off"/>
+
     </LinearLayout>
 
     <!-- Log Level Setting -->
@@ -90,12 +90,14 @@
 
     <!-- Buttons -->
     <LinearLayout
+        style="?android:attr/buttonBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_horizontal">
 
         <Button
+            style="?android:attr/buttonBarButtonStyle"
             android:id="@+id/btnBack"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -107,6 +109,7 @@
 
         <Button
             android:id="@+id/btnSaveSettings"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

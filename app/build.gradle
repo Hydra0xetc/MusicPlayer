@@ -5,6 +5,10 @@ plugins {
 def env = System.getenv();
 
 android {
+    lint {
+      baseline = file("lint-baseline.xml")
+    }
+
     namespace "com.music.player"
     compileSdk 34
     ndkVersion "29.0.14206865"
@@ -13,7 +17,7 @@ android {
         applicationId "com.music.player"
         minSdk 23
         targetSdk 34
-        versionName "2.4.7"
+        versionName "2.4.8"
 
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"

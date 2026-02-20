@@ -6,11 +6,15 @@ if [ -f ".env" ]; then
     source ./.env
     set +a
 fi
-
+IS_DEBUG=false
 IS_RELEASE=false
 for arg in "$@"; do
     if [[ "$arg" == *"Release"* ]]; then
         IS_RELEASE=true
+        break
+    fi
+    if [[ "$arg" == *"Debug"* ]]; then
+        IS_DEBUG=true
         break
     fi
 done
@@ -46,6 +50,9 @@ fi
 if $IS_RELEASE; then
     xdg-open ./app/build/outputs/apk/release/app-release.apk
     exit 0
+elif [[ $IS_DEBUG ]]; then
+    xdg-open app/build/outputs/apk/debug/app-debug.apk
+    exit 0
+else
+    exit 0
 fi
-
-xdg-open app/build/outputs/apk/debug/app-debug.apk

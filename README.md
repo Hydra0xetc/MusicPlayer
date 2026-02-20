@@ -62,7 +62,6 @@ A native Android music player application with a simple interface and high perfo
 - **CMake**: 3.10.2 or newer
 - **Permissions**:
   - READ_EXTERNAL_STORAGE
-  - WRITE_EXTERNAL_STORAGE
   - READ_MEDIA_AUDIO (Android 13+)
   - FOREGROUND_SERVICE
   - FOREGROUND_SERVICE_MEDIA_PLAYBACK
