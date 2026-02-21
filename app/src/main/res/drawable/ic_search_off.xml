@@ -4,16 +4,16 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Clean, modern outline search icon -->
+    <!-- Minimalist placeholder icon (no slash line) -->
     <path
-        android:strokeColor="@color/white"
-        android:strokeWidth="1.5"
+        android:strokeColor="@color/grey"
+        android:strokeWidth="1.2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:pathData="M11,19C15.4183,19 19,15.4183 19,11C19,6.5817 15.4183,3 11,3C6.5817,3 3,6.5817 3,11C3,15.4183 6.5817,19 11,19Z" />
     <path
-        android:strokeColor="@color/white"
-        android:strokeWidth="1.5"
+        android:strokeColor="@color/grey"
+        android:strokeWidth="1.2"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
         android:pathData="M21,21L16.65,16.65" />

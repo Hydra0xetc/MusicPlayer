@@ -28,6 +28,7 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
         handler.post(() -> {
             musicFiles.clear();
             adapter.updateList(musicFiles);
+            activity.checkEmptyState();
             if (!swipeRefresh.isRefreshing()) {
                 swipeRefresh.setRefreshing(true);
             }
@@ -44,6 +45,7 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
         musicFiles.clear();
         musicFiles.addAll(files);
         adapter.updateList(musicFiles);
+        activity.checkEmptyState();
 
         swipeRefresh.setRefreshing(false);
 

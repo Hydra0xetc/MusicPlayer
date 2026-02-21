@@ -208,7 +208,7 @@
                 android:id="@+id/etSearch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Cari lagu..."
+                android:hint="@string/search_hint"
                 android:textColor="@color/white"
                 android:textColorHint="@color/grey"
                 android:padding="10dp"
@@ -225,18 +225,54 @@
                 android:textColor="@color/white"
                 android:textStyle="bold"
                 android:layout_marginBottom="6dp"/>
-            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-                android:id="@+id/swipeRefreshLayout"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1">
-                <ListView
-                    android:id="@+id/lvMusicFiles"
+                
+                <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                    android:id="@+id/swipeRefreshLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                    <ListView
+                        android:id="@+id/lvMusicFiles"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:dividerHeight="0dp"
+                        android:background="@color/black"/>
+                </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+                <LinearLayout
+                    android:id="@+id/llEmptySearch"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:dividerHeight="0dp"
-                    android:background="@color/black"/>
-            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    android:padding="20dp">
+                    <ImageView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:src="@drawable/ic_search_off"
+                        android:layout_marginBottom="12dp"
+                        android:alpha="0.5"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/no_results_found"
+                        android:textColor="@color/grey"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/try_another_keyword"
+                        android:textColor="@color/grey"
+                        android:textSize="13sp"
+                        android:layout_marginTop="4dp"/>
+                </LinearLayout>
+
+            </FrameLayout>
         </LinearLayout>
 
     </LinearLayout>

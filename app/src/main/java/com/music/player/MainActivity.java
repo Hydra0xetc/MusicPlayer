@@ -30,6 +30,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     final static String TAG = "MainActivity";
     private ListView lvMusicFiles;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private View llEmptySearch;
 
     private MusicService musicService;
     private boolean isBound = false;
@@ -89,6 +90,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private void initViews() {
         lvMusicFiles = findViewById(R.id.lvMusicFiles);
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        llEmptySearch = findViewById(R.id.llEmptySearch);
         swipeRefreshLayout.setOnRefreshListener(() -> {
             scanDirectory();
         });
@@ -104,6 +106,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 etSearch.setVisibility(View.GONE);
                 etSearch.setText("");
                 adapter.filter("");
+                checkEmptyState();
                 if (imm != null) imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
             } else {
                 // Toggle ON: Show search bar
@@ -123,9 +126,19 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 adapter.filter(s.toString());
+                checkEmptyState();
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
+    }
+
+    public void checkEmptyState() {
+        if (llEmptySearch == null || adapter == null) return;
+        if (adapter.getCount() == 0) {
+            llEmptySearch.setVisibility(View.VISIBLE);
+        } else {
+            llEmptySearch.setVisibility(View.GONE);
+        }
     }
 
     private void setupListView() {

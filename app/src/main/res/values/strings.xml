@@ -5,4 +5,7 @@
     <string name="idle">● Idle</string>
     <string name="no_song_selected">No song selected</string>
     <string name="time_format">00:00</string>
+    <string name="search_hint">Search songs...</string>
+    <string name="no_results_found">No songs found</string>
+    <string name="try_another_keyword">Try searching with a different keyword</string>
 </resources>
