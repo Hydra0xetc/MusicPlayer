@@ -84,10 +84,10 @@ A native Android music player application with a simple interface and high perfo
 
 ```bash
 # Build APK
-./gradlew assembleDebug
+./build.py assembleDebug
 
 # Install to device
-./gradlew installDebug
+./build.py installDebug
 ```
 
 ## 📂 Project Structure
@@ -155,7 +155,7 @@ Log files are stored at:
 /storage/emulated/0/Android/data/com.music.player/files/log.txt
 ```
 
-Log file format: `musicplayer_YYYYMMDD.log`
+Log file format: `YYYYMMDD HH:MM:SS LOG_LEVEL ACTIVITY: MSG`
 
 To view logs in real-time:
 ```bash
