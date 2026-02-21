@@ -20,6 +20,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.MotionEvent;
 import android.animation.ValueAnimator;
+import android.view.inputmethod.InputMethodManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import java.io.File;
 import java.util.ArrayList;
@@ -91,6 +92,40 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         swipeRefreshLayout.setOnRefreshListener(() -> {
             scanDirectory();
         });
+
+        ImageButton btnSearch = findViewById(R.id.btnSearch);
+        EditText etSearch = findViewById(R.id.etSearch);
+        
+        btnSearch.setOnClickListener(v -> {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            
+            if (etSearch.getVisibility() == View.VISIBLE) {
+                // Toggle OFF: Hide search bar
+                etSearch.setVisibility(View.GONE);
+                etSearch.setText("");
+                adapter.filter("");
+                if (imm != null) imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+            } else {
+                // Toggle ON: Show search bar
+                // First, collapse player to show more list
+                uiController.expandToTop();
+                
+                // Then show search bar and keyboard
+                etSearch.setVisibility(View.VISIBLE);
+                etSearch.requestFocus();
+                if (imm != null) {
+                    etSearch.postDelayed(() -> imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT), 300);
+                }
+            }
+        });
+
+        etSearch.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                adapter.filter(s.toString());
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
     }
 
     private void setupListView() {
@@ -110,7 +145,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
         lvMusicFiles.setOnItemClickListener((parent, view, position, id) -> {
             if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-                loadMusic(musicFiles.get(position));
+                loadMusic((MusicFile) adapter.getItem(position));
             }
         });
     }

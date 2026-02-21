@@ -70,7 +70,7 @@ def lint(build_mode):
     if os.path.exists(xml_path):
         os.remove(xml_path)
 
-    if build(build_mode) == 0:
+    if build(build_mode) != 0:
 
         tree = ET.parse(xml_path)
         root = tree.getroot()

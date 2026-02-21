@@ -21,8 +21,9 @@ public class PlaybackUIController {
 
     private TextView tvStatus, tvSongTitle, tvCurrentTime, tvTotalTime;
     private ImageView ivMainAlbumArt;
-    private ImageButton btnPlayPause, btnPrev, btnNext, btnShuffle, btnRepeat, btnSettings;
+    private ImageButton btnPlayPause, btnPrev, btnNext, btnShuffle, btnRepeat, btnSettings, btnSearch;
     private SeekBar seekBar;
+    private EditText etSearch;
 
     private LinearLayout topPane, bottomPane;
     private View dragHandle;
@@ -63,7 +64,9 @@ public class PlaybackUIController {
         btnNext = activity.findViewById(R.id.btnNext);
         btnShuffle = activity.findViewById(R.id.btnShuffle);
         btnRepeat = activity.findViewById(R.id.btnRepeat);
+        btnSearch = activity.findViewById(R.id.btnSearch);
         seekBar = activity.findViewById(R.id.seekBar);
+        etSearch = activity.findViewById(R.id.etSearch);
         tvCurrentTime = activity.findViewById(R.id.tvCurrentTime);
         tvTotalTime = activity.findViewById(R.id.tvTotalTime);
         blinkAnimation = AnimationUtils.loadAnimation(activity, R.anim.blink);
@@ -301,11 +304,52 @@ public class PlaybackUIController {
         animator.start();
     }
 
+    public void expandToTop() {
+        if (topPane == null || bottomPane == null) return;
+        
+        final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane.getLayoutParams();
+        final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane.getLayoutParams();
+        float currentTopWeight = topParams.weight;
+        float targetTopWeight = SNAP_TARGET_TOP_WEIGHTS[0]; // 10f
+        float totalWeight = currentTopWeight + bottomParams.weight;
+
+        ValueAnimator animator = ValueAnimator.ofFloat(currentTopWeight, targetTopWeight);
+        animator.setDuration(SNAP_ANIMATION_DURATION);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            float animatedWeight = (float) animation.getAnimatedValue();
+            topParams.weight = animatedWeight;
+            bottomParams.weight = totalWeight - animatedWeight;
+            topPane.setLayoutParams(topParams);
+            bottomPane.setLayoutParams(bottomParams);
+            updateTopPaneContentVisibility(animatedWeight);
+        });
+        animator.start();
+    }
+
     private void updateTopPaneContentVisibility(float currentTopWeight) {
-        int visibility = (currentTopWeight <= 20f) ? View.GONE : View.VISIBLE;
-        ivMainAlbumArt.setVisibility(visibility);
+        int contentVisibility = (currentTopWeight <= 20f) ? View.GONE : View.VISIBLE;
+        
+        // Search button should be visible when:
+        // 1. Player is NOT full screen (weight < 90)
+        // 2. We are NOT in full screen (weight > 90 hides list)
+        // We keep it visible even if search is shown so it acts as a toggle
+        int searchBtnVisibility = (currentTopWeight < 90f) ? View.VISIBLE : View.GONE;
+        
+        ivMainAlbumArt.setVisibility(contentVisibility);
         if (mainControlsLayout != null) {
-            mainControlsLayout.setVisibility(visibility);
+            mainControlsLayout.setVisibility(contentVisibility);
+        }
+        
+        if (btnSearch != null) {
+            btnSearch.setVisibility(searchBtnVisibility);
+        }
+        
+        // When player is expanded (weight > 20), make sure search bar is hidden
+        if (currentTopWeight > 25f && etSearch != null && etSearch.getVisibility() == View.VISIBLE) {
+            etSearch.setVisibility(View.GONE);
+            etSearch.setText("");
+            // Filter reset is handled by TextWatcher
         }
     }
 

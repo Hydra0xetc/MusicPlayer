@@ -19,10 +19,11 @@ import java.util.concurrent.Executors;
 public class MusicFileAdapter extends BaseAdapter {
 
     private Context context;
-    private List<MusicFile> musicFiles;
+    private List<MusicFile> allMusicFiles;
+    private List<MusicFile> filteredMusicFiles;
     private LayoutInflater inflater;
     private BitmapCache bitmapCache;
-    
+
     private ExecutorService executorService;
     private Handler mainHandler;
     private FileLogger fileLogger;
@@ -31,13 +32,54 @@ public class MusicFileAdapter extends BaseAdapter {
 
     public MusicFileAdapter(Context context, List<MusicFile> musicFiles) {
         this.context = context;
-        this.musicFiles = musicFiles;
+        this.allMusicFiles = musicFiles;
+        this.filteredMusicFiles = musicFiles;
         this.inflater = LayoutInflater.from(context);
         this.bitmapCache = BitmapCache.getInstance();
         
         executorService = Executors.newFixedThreadPool(2);
         mainHandler = new Handler(Looper.getMainLooper());
         fileLogger = FileLogger.getInstance(context);
+    }
+
+    public void filter(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            filteredMusicFiles = allMusicFiles;
+        } else {
+            String lowerQuery = query.toLowerCase().trim();
+            java.util.List<MusicFile> filtered = new java.util.ArrayList<>();
+            for (MusicFile file : allMusicFiles) {
+                if (isFuzzyMatch(file.getTitle().toLowerCase(), lowerQuery) || 
+                    isFuzzyMatch(file.getArtist().toLowerCase(), lowerQuery) ||
+                    isFuzzyMatch(file.getAlbum().toLowerCase(), lowerQuery)) {
+                    filtered.add(file);
+                }
+            }
+            filteredMusicFiles = filtered;
+        }
+        notifyDataSetChanged();
+    }
+
+    private boolean isFuzzyMatch(String text, String query) {
+        if (query.length() == 0) return true;
+        if (query.length() > text.length()) return false;
+        
+        int textIdx = 0;
+        int queryIdx = 0;
+        
+        while (textIdx < text.length() && queryIdx < query.length()) {
+            if (text.charAt(textIdx) == query.charAt(queryIdx)) {
+                queryIdx++;
+            }
+            textIdx++;
+        }
+        return queryIdx == query.length();
+    }
+
+    public void updateList(List<MusicFile> newList) {
+        this.allMusicFiles = newList;
+        this.filteredMusicFiles = newList;
+        notifyDataSetChanged();
     }
 
     public void setPlayingPath(String path) {
@@ -57,12 +99,12 @@ public class MusicFileAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return musicFiles.size();
+        return filteredMusicFiles.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return musicFiles.get(position);
+        return filteredMusicFiles.get(position);
     }
 
     @Override
@@ -93,7 +135,7 @@ public class MusicFileAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        final MusicFile music = musicFiles.get(position);
+        final MusicFile music = filteredMusicFiles.get(position);
         final ViewHolder finalHolder = holder;
 
         boolean isPlaying = music.getPath().equals(playingPath);
