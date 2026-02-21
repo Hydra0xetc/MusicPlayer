@@ -16,15 +16,14 @@ import android.view.animation.AnimationUtils;
 
 public class SettingsActivity extends Activity {
 
-    private EditText etMusicDir;
-    private Switch swAutoScan;
-    private Spinner spLogLevel;
-    private Button btnSaveSettings;
-    private Button btnBack;
-
+    private EditText      etMusicDir;
+    private Switch        swAutoScan;
+    private Spinner       spLogLevel;
+    private Button        btnSaveSettings;
+    private Button        btnBack;
     private ConfigManager configManager;
-    private FileLogger fileLogger;
-    private Animation blinkAnimation;
+    private FileLogger    fileLogger;
+    private Animation     blinkAnimation;
 
     private static final String TAG = "SettingsActivity";
 

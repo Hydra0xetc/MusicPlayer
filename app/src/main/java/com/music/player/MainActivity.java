@@ -158,7 +158,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             return;
         }
         
-        ScanResultHandler handler = new ScanResultHandler(this, mainHandler, musicFiles, adapter, swipeRefreshLayout);
+        ScanResultHandler handler = new ScanResultHandler(this, mainHandler, musicFiles,
+                adapter, swipeRefreshLayout);
         MusicScanner.scanDirectoryAsync(this, dirPath, handler);
     }
 
