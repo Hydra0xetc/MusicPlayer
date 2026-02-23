@@ -33,8 +33,22 @@
         android:textColorHint="#666666"
         android:background="@drawable/edittext_background"
         android:padding="12dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:inputType="textNoSuggestions" />
+
+    <Button
+        android:id="@+id/btnBrowse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Browse"
+        android:background="@drawable/btn_dark_round"
+        android:textColor="@color/white"
+        android:layout_marginBottom="16dp"
+        android:layout_gravity="start"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:drawableStart="@drawable/ic_folder"
+        android:drawablePadding="8dp" />
 
 
 

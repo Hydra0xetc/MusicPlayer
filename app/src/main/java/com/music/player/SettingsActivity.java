@@ -21,10 +21,12 @@ public class SettingsActivity extends Activity {
     private Spinner       spLogLevel;
     private Button        btnSaveSettings;
     private Button        btnBack;
+    private Button        btnBrowse;
     private ConfigManager configManager;
     private FileLogger    fileLogger;
     private Animation     blinkAnimation;
 
+    private static final int REQUEST_CODE_PICK_DIR = 1001;
     private static final String TAG = "SettingsActivity";
 
     @Override
@@ -49,6 +51,7 @@ public class SettingsActivity extends Activity {
         spLogLevel = findViewById(R.id.spLogLevel);
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
         btnBack = findViewById(R.id.btnBack);
+        btnBrowse = findViewById(R.id.btnBrowse);
         blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink);
         
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
@@ -90,6 +93,14 @@ public class SettingsActivity extends Activity {
                 finish(); // Go back to the previous activity
             }
         });
+
+        btnBrowse.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                view.startAnimation(blinkAnimation);
+                openDirectoryPicker();
+            }
+        });
         
         swAutoScan.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -97,6 +108,64 @@ public class SettingsActivity extends Activity {
                 updateAutoScanSwitchColor();
             }
         });
+    }
+
+    private void openDirectoryPicker() {
+        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT_TREE);
+        startActivityForResult(intent, REQUEST_CODE_PICK_DIR);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_PICK_DIR && resultCode == RESULT_OK) {
+            if (data != null) {
+                android.net.Uri uri = data.getData();
+                if (uri != null) {
+                    String path = getPathFromUri(uri);
+                    if (path != null) {
+                        etMusicDir.setText(path);
+                    } else {
+                        Toast.makeText(this, "Could not resolve path", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        }
+    }
+
+    private String getPathFromUri(android.net.Uri uri) {
+        String path = null;
+        try {
+            if ("com.android.externalstorage.documents".equals(uri.getHost())) {
+                String docId = android.provider.DocumentsContract.getTreeDocumentId(uri);
+                String[] split = docId.split(":");
+                String type = split[0];
+                if ("primary".equalsIgnoreCase(type)) {
+                    path = android.os.Environment.getExternalStorageDirectory() + "/" + (split.length > 1 ? split[1] : "");
+                } else {
+                    path = "/storage/" + type + "/" + (split.length > 1 ? split[1] : "");
+                }
+            } else if ("com.android.providers.downloads.documents".equals(uri.getHost())) {
+                String id = android.provider.DocumentsContract.getTreeDocumentId(uri);
+                if (id.startsWith("raw:")) {
+                    path = id.substring(4);
+                } else if (id.startsWith("msf:")) {
+                    // Handle msf: (Media Storage Framework) IDs if necessary, though tricky for directories
+                    fileLogger.w(TAG, "MSF ID found, may not resolve to absolute path: " + id);
+                }
+            }
+            
+            // Cleanup double slashes if any
+            if (path != null) {
+                path = path.replace("//", "/");
+                if (path.endsWith("/")) {
+                    path = path.substring(0, path.length() - 1);
+                }
+            }
+        } catch (Exception e) {
+            fileLogger.e(TAG, "Error resolving path: " + e.getMessage());
+        }
+        return path;
     }
 
     private void saveSettings() {

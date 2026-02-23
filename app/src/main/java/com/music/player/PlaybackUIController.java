@@ -25,9 +25,11 @@ public class PlaybackUIController {
     private SeekBar seekBar;
     private EditText etSearch;
 
-    private RelativeLayout topPane, bottomPane;
+    private LinearLayout topPane;
+    private RelativeLayout bottomPane;
     private View dragHandle;
     private LinearLayout mainControlsLayout;
+    private View headerLayout, playbackProgressLayout;
 
     private Animation blinkAnimation;
     private float initialTouchY, initialTopPaneWeight, initialBottomPaneWeight;
@@ -75,6 +77,8 @@ public class PlaybackUIController {
         bottomPane = activity.findViewById(R.id.bottom_pane);
         dragHandle = activity.findViewById(R.id.drag_handle);
         mainControlsLayout = activity.findViewById(R.id.main_controls_layout);
+        headerLayout = activity.findViewById(R.id.header_layout);
+        playbackProgressLayout = activity.findViewById(R.id.playback_progress_layout);
     }
 
     private void setupButtons() {
@@ -327,8 +331,37 @@ public class PlaybackUIController {
         animator.start();
     }
 
+    public boolean isPlayerExpanded() {
+        if (topPane == null) return false;
+        final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) topPane.getLayoutParams();
+        return params.weight > 50f;
+    }
+
+    public void collapsePlayer() {
+        if (topPane == null || bottomPane == null) return;
+        
+        final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane.getLayoutParams();
+        final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane.getLayoutParams();
+        float currentTopWeight = topParams.weight;
+        float targetTopWeight = SNAP_TARGET_TOP_WEIGHTS[1]; // 60f (Default middle snap)
+        float totalWeight = currentTopWeight + bottomParams.weight;
+
+        ValueAnimator animator = ValueAnimator.ofFloat(currentTopWeight, targetTopWeight);
+        animator.setDuration(SNAP_ANIMATION_DURATION);
+        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        animator.addUpdateListener(animation -> {
+            float animatedWeight = (float) animation.getAnimatedValue();
+            topParams.weight = animatedWeight;
+            bottomParams.weight = totalWeight - animatedWeight;
+            topPane.setLayoutParams(topParams);
+            bottomPane.setLayoutParams(bottomParams);
+            updateTopPaneContentVisibility(animatedWeight);
+        });
+        animator.start();
+    }
+
     private void updateTopPaneContentVisibility(float currentTopWeight) {
-        int contentVisibility = (currentTopWeight <= 20f) ? View.GONE : View.VISIBLE;
+        int contentVisibility = (currentTopWeight <= 25f) ? View.GONE : View.VISIBLE;
         
         // Search button should be visible when:
         // 1. Player is NOT full screen (weight < 90)
@@ -338,7 +371,17 @@ public class PlaybackUIController {
         
         ivMainAlbumArt.setVisibility(contentVisibility);
         if (mainControlsLayout != null) {
-            mainControlsLayout.setVisibility(contentVisibility);
+            // Keep controls visible for a mini-player feel or let them be covered
+            // We'll control their overlap via background in XML
+            mainControlsLayout.setVisibility(View.VISIBLE);
+        }
+        
+        if (headerLayout != null) {
+            headerLayout.setVisibility(View.VISIBLE);
+        }
+        
+        if (playbackProgressLayout != null) {
+            playbackProgressLayout.setVisibility(View.VISIBLE);
         }
         
         if (btnSearch != null) {
@@ -346,9 +389,9 @@ public class PlaybackUIController {
         }
         
         // When player is expanded (weight > 20), make sure search bar is hidden
-        if (currentTopWeight > 25f && etSearch != null && etSearch.getVisibility() == View.VISIBLE) {
+        if (currentTopWeight > 30f && etSearch != null && etSearch.getVisibility() == View.VISIBLE) {
             etSearch.setVisibility(View.GONE);
-            etSearch.setText("");
+            etSearch.setText(Constant.EMPTY_STRING);
             // Filter reset is handled by TextWatcher
         }
     }

@@ -104,8 +104,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             if (etSearch.getVisibility() == View.VISIBLE) {
                 // Toggle OFF: Hide search bar
                 etSearch.setVisibility(View.GONE);
-                etSearch.setText("");
-                adapter.filter("");
+                etSearch.setText(Constant.EMPTY_STRING);
+                adapter.filter(Constant.EMPTY_STRING);
                 checkEmptyState();
                 if (imm != null) imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
             } else {
