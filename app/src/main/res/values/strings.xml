@@ -8,4 +8,13 @@
     <string name="search_hint">Search songs...</string>
     <string name="no_results_found">No songs found</string>
     <string name="try_another_keyword">Try searching with a different keyword</string>
+
+    <string name="music_info">Music Information</string>
+    <string name="title">Title: %1$s</string>
+    <string name="artist">Artist: %1$s</string>
+    <string name="album">Album: %1$s</string>
+    <string name="duration">Duration: %1$s</string>
+    <string name="size">Size: %1$s</string>
+    <string name="path">Path: %1$s</string>
+    <string name="close">Close</string>
 </resources>

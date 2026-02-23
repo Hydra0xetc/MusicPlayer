@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tvDialogTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/music_info"
+        android:textColor="@color/turqoise"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fillViewport="true">
+        
+        <TextView 
+            android:id="@+id/tvMusicFullInfo" 
+            android:layout_width="match_parent" 
+            android:layout_height="wrap_content" 
+            android:textColor="@color/white" 
+            android:textSize="14sp" 
+            android:lineSpacingExtra="4dp"
+            android:padding="12dp"
+            android:textIsSelectable="true"
+            android:background="@android:color/transparent"/>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnDialogClose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/btn_dark_round"
+        android:text="@string/close"
+        android:textAllCaps="false"
+        android:textColor="@color/white" />
+
+</LinearLayout>
