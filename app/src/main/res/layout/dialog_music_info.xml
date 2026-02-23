@@ -28,21 +28,23 @@
             android:layout_height="wrap_content" 
             android:textColor="@color/white" 
             android:textSize="14sp" 
-            android:lineSpacingExtra="4dp"
-            android:padding="12dp"
-            android:textIsSelectable="true"
+            android:lineSpacingExtra="4dp" 
+            android:padding="12dp" 
+            android:textIsSelectable="true" 
             android:background="@android:color/transparent"/>
     </ScrollView>
-
+        
     <Button
         android:id="@+id/btnDialogClose"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="36dp"
         android:layout_gravity="end"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:background="@drawable/btn_dark_round"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
         android:text="@string/close"
         android:textAllCaps="false"
-        android:textColor="@color/white" />
-
+        android:textColor="@color/white"
+        android:textSize="12sp" />
 </LinearLayout>

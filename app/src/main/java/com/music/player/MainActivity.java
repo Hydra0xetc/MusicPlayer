@@ -24,6 +24,8 @@ import android.view.MotionEvent;
 import android.animation.ValueAnimator;
 import android.view.inputmethod.InputMethodManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import com.j256.simplemagic.ContentInfo;
+import com.j256.simplemagic.ContentInfoUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -279,16 +281,34 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         
         View view = getLayoutInflater().inflate(R.layout.dialog_music_info, null);
         TextView tvFullInfo = view.findViewById(R.id.tvMusicFullInfo);
-                Button btnClose = view.findViewById(R.id.btnDialogClose);
+        Button btnClose = view.findViewById(R.id.btnDialogClose);
         
-                // Use Spannable for neat formatting (Colored/Bold label, white value)
-                android.text.SpannableStringBuilder ssb = new android.text.SpannableStringBuilder();
-                appendFormattedInfo(ssb, "TITLE", music.getTitle());
+        // Use Spannable for neat formatting
+        android.text.SpannableStringBuilder ssb = new android.text.SpannableStringBuilder();
+        appendFormattedInfo(ssb, "TITLE", music.getTitle());
         appendFormattedInfo(ssb, "ARTIST", music.getArtist());
         appendFormattedInfo(ssb, "ALBUM", music.getAlbum());
         appendFormattedInfo(ssb, "DURATION", music.getDurationFormatted());
         appendFormattedInfo(ssb, "SIZE", music.getSizeFormatted());
         appendFormattedInfo(ssb, "PATH", music.getPath());
+
+        try {
+            ContentInfoUtil util = new ContentInfoUtil();
+            ContentInfo info = util.findMatch(new File(music.getPath()));
+            
+            String formatDescription;
+            if (info != null) {
+                formatDescription = info.getMessage();
+            } else {
+                String ext = music.getPath().substring(music.getPath().lastIndexOf(".")).toUpperCase();
+                formatDescription = "Unknown " + ext + " Audio";
+            }
+                
+            appendFormattedInfo(ssb, "FORMAT INFO",  formatDescription);
+        } catch (Exception e) {
+            appendFormattedInfo(ssb, "FORMAT INFO", "Unable to detect file header");
+            fileLogger.e(TAG, "SimpleMagic error: " + e);
+        }
 
         tvFullInfo.setText(ssb);
 

@@ -12,9 +12,9 @@ public class MusicFile {
     private String album;
     private long duration;
     private byte[] albumArt;
+    private String mimeType;
 
-    public MusicFile(String name, String path, long size, String title, String artist, String album, long duration, byte[] albumArt) {
-
+    public MusicFile(String name, String path, long size, String title, String artist, String album, long duration, byte[] albumArt, String mimeType) {
         this.name = name;
         this.path = path;
         this.size = size;
@@ -23,10 +23,11 @@ public class MusicFile {
         this.album = album;
         this.duration = duration;
         this.albumArt = albumArt;
+        this.mimeType = mimeType;
     }
 
     public MusicFile(String name, String path, long size) {
-        this(name, path, size, name, null, null, 0, null);
+        this(name, path, size, name, null, null, 0, null, null);
     }
     
     public byte[] extractAlbumArt(String path) {

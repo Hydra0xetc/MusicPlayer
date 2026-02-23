@@ -17,7 +17,7 @@ android {
         applicationId "com.music.player"
         minSdk 23
         targetSdk 34
-        versionName "2.5.7"
+        versionName "2.6.8"
 
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a"
@@ -75,4 +75,5 @@ dependencies {
     implementation "androidx.cardview:cardview:1.0.0"
     implementation "androidx.slidingpanelayout:slidingpanelayout:1.2.0"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0"
+    implementation 'com.j256.simplemagic:simplemagic:1.17'
 }

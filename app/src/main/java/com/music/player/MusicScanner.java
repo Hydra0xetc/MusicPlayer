@@ -91,6 +91,8 @@ public class MusicScanner {
                 duration = Long.parseLong(durationStr);
             }
 
+            String mimeType = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
+
             if (loadAlbumArt) {
                 albumArtBytes = mmr.getEmbeddedPicture();
             }
@@ -103,7 +105,8 @@ public class MusicScanner {
                     artist,
                     album,
                     duration,
-                    albumArtBytes
+                    albumArtBytes,
+                    mimeType
             );
 
         } catch (Exception e) {
