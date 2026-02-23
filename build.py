@@ -14,10 +14,12 @@ BOLD   = "\033[1m"
 def Todo(msg: str):
     print("TODO: " + msg)
 
-def build(build_mode: str):
+def build(build_mode: str, extra_args: list = []):
     build_command = [
         "./gradlew", build_mode
-    ]
+    ] + extra_args
+    
+    print(f"Executing {build_command}")
 
     return run(build_command).returncode
 
@@ -65,17 +67,15 @@ def generate_keystore(path, storepass, keypass, alias):
     run(cmd, check=True)
     print(f"[+] Keystore created at {path}")
 
-def lint(build_mode):
+def lint(build_mode, extra_args=[]):
     xml_path = "app/lint-baseline.xml"
     if os.path.exists(xml_path):
         os.remove(xml_path)
 
-    if build(build_mode) != 0:
+    if build(build_mode, extra_args) != 0:
 
         tree = ET.parse(xml_path)
         root = tree.getroot()
-
-        cwd = os.path.join(os.getcwd(), "app")
 
         for issue in root.findall("issue"):
             message = issue.attrib.get("message", "")
@@ -89,10 +89,10 @@ def lint(build_mode):
             column = location.attrib.get("column", "")
 
             # File:line:col red + bold
-            print(f"{BOLD}{RED}{cwd}/{file}:{line}:{column}{RESET}")
+            print(f"{BOLD}{RED}app/{file}:{line}:{column}{RESET}")
             print(message + "\n")
 
-def release(build_mode):
+def release(build_mode, extra_args=[]):
     keystore_path = require_env("KEYSTORE_PATH")
     keystore_password = require_env("KEYSTORE_PASSWORD")
     key_password = require_env("KEY_PASSWORD")
@@ -108,31 +108,34 @@ def release(build_mode):
     else:
         print("[+] Keystore already exists")
 
-    if build(build_mode) == 0:
+    if build(build_mode, extra_args) == 0:
         app_path = "app/build/outputs/apk/release/app-release.apk"
         open_apk(app_path)
 
-def debug(build_mode):
-   if build(build_mode) == 0:
+def debug(build_mode, extra_args=[]):
+   if build(build_mode, extra_args) == 0:
        app_path = "app/build/outputs/apk/debug/app-debug.apk"
        open_apk(app_path)
 
 def main():
-
     build_mode = argv[1]
+    extra_args = argv[2:]
     final: str = build_mode.upper()
 
     if "DEBUG" in final:
-        debug(build_mode)
+        print("Debug detected")
+        debug(build_mode, extra_args)
+        return 0
+
+    elif "LINT" in final:
+        print("Lint detected")
+        lint(build_mode, extra_args)
         return 0
 
     elif "RELEASE" in final:
         load_env()
-        release(build_mode)
-        return 0
-
-    elif "LINT" in final:
-        lint(build_mode)
+        print("Release detected")
+        release(build_mode, extra_args)
         return 0
 
     else:

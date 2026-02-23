@@ -21,11 +21,10 @@ public class PermissionHelper {
     public static boolean hasAllNecessaryPermissions(Activity a) {
         if (Build.VERSION.SDK_INT >= 33) {
             return a.checkSelfPermission(PERM_READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED;
-        } else if (Build.VERSION.SDK_INT >= 23) {
+        } else {
             // On older APIs, check both read and write external storage
             return a.checkSelfPermission(PERM_READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
         }
-        return true; // Permissions not needed for API < 23
     }
 
     /**
@@ -38,7 +37,7 @@ public class PermissionHelper {
 
         if (Build.VERSION.SDK_INT >= 33) {
             permissionsToRequest.add(PERM_READ_MEDIA_AUDIO);
-        } else if (Build.VERSION.SDK_INT >= 23) {
+        } else {
             permissionsToRequest.add(PERM_READ_EXTERNAL_STORAGE);
         }
 

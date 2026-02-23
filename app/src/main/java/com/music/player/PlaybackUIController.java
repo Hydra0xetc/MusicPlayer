@@ -25,7 +25,7 @@ public class PlaybackUIController {
     private SeekBar seekBar;
     private EditText etSearch;
 
-    private LinearLayout topPane, bottomPane;
+    private RelativeLayout topPane, bottomPane;
     private View dragHandle;
     private LinearLayout mainControlsLayout;
 
