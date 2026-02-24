@@ -15,15 +15,6 @@
 #define LOGE(...) printf("[ERROR] " __VA_ARGS__); printf("\n")
 #endif
 
-// Buffer queue callback (mark as used if needed)
-void SLAPIENTRY bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context) {
-    (void)bq; // Mark parameter as unused
-    (void)context; // Mark parameter as unused
-    // Callback for buffer queue (for streaming)
-    // Implemented as required
-    LOGI("Buffer queue callback called");
-}
-
 AudioPlayer* createAudioPlayer(const char* filePath) {
     (void)filePath; // Mark parameter as unused
     
@@ -168,16 +159,14 @@ void setupUriAudioPlayer(AudioPlayer* player, const char* filePath) {
     result = (*player->playerObject)->GetInterface(
         player->playerObject, SL_IID_SEEK, &player->playerSeek);
     if (result != SL_RESULT_SUCCESS) {
-    // Seek interface not available, continuing without seek
-        // Not a fatal error, continue
+        // Seek interface not available, continuing without seek
     }
     
     // Get volume interface
     result = (*player->playerObject)->GetInterface(
         player->playerObject, SL_IID_VOLUME, &player->playerVolume);
     if (result != SL_RESULT_SUCCESS) {
-    // Volume interface not available, continuing without volume control
-        // Not a fatal error, continue
+        // Volume interface not available, continuing without volume control
     }
     
     // Set callback for events

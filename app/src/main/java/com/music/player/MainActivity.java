@@ -6,22 +6,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.view.View;
 import android.widget.*;
-import android.widget.AbsListView;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.view.Window;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
-import android.view.MotionEvent;
-import android.animation.ValueAnimator;
 import android.view.inputmethod.InputMethodManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.j256.simplemagic.ContentInfo;
@@ -46,10 +38,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private List<MusicFile> musicFiles;
     private MusicFileAdapter adapter;
     private MusicFile currentMusic;
-    private int currentMusicIndex = -1;
     
     private PlaybackUIController uiController;
-    private int scrollState = AbsListView.OnScrollListener.SCROLL_STATE_IDLE;
 
     @Override
     public MusicService getService() { return musicService; }
@@ -148,22 +138,9 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private void setupListView() {
         adapter = new MusicFileAdapter(this, musicFiles);
         lvMusicFiles.setAdapter(adapter);
-        
-        // lvMusicFiles.setOnScrollListener(new AbsListView.OnScrollListener() {
-        //     @Override
-        //     public void onScrollStateChanged(AbsListView view, int state) {
-        //         scrollState = state;
-        //     }
-        //
-        //     @Override
-        //     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-        //     }
-        // });
 
         lvMusicFiles.setOnItemClickListener((parent, view, position, id) -> {
-            if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
-                loadMusic((MusicFile) adapter.getItem(position));
-            }
+            loadMusic((MusicFile) adapter.getItem(position));
         });
 
         lvMusicFiles.setOnItemLongClickListener((parent, view, position, id) -> {
@@ -227,12 +204,12 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     public void loadMusic(MusicFile musicFile) {
         if (!isBound) return;
         try {
-            currentMusicIndex = musicFiles.indexOf(musicFile);
             musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;
             adapter.setPlayingPath(musicFile.getPath());
         } catch (Exception e) {
             Toast.makeText(this, "Failed to load music", Toast.LENGTH_SHORT).show();
+            fileLogger.e(TAG, "Failed to load music: " + e);
         }
     }
 
@@ -260,7 +237,6 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     public void onMusicChanged(MusicFile musicFile, int index) {
         mainHandler.post(() -> {
             currentMusic = musicFile;
-            currentMusicIndex = index;
             adapter.setPlayingPath(musicFile.getPath());
             uiController.updateUI(musicFile, true);
         });

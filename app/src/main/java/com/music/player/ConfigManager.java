@@ -1,7 +1,6 @@
 package com.music.player;
 
 import android.content.Context;
-import android.os.FileObserver;
 import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -71,8 +70,6 @@ public class ConfigManager {
                 File dir = new File(musicDir);
                 if (!dir.exists() || !dir.isDirectory()) {
                     Toast.makeText(context, "Folder not found: " + musicDir, Toast.LENGTH_SHORT).show();
-                    // fileLogger.w(TAG, "Invalid music dir in config: " + musicDir + ", defaulting to " + Constant.DEFAULT_MUSIC_DIR);
-                    // musicDir = Constant.DEFAULT_MUSIC_DIR;
                 }
                 
                 fileLogger.i(TAG, "Config loaded from: " + configFile.getAbsolutePath() + ", MusicDir: " + musicDir + ", AutoScan: " + autoScan + ", LogLevel: " + logLevel);
@@ -114,7 +111,6 @@ public class ConfigManager {
             writer.close();
             
             fileLogger.i(TAG, "Config saved to: " + configFile.getAbsolutePath());
-            // Toast.makeText(context, "Settings saved to " + configFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
             
         } catch (IOException e) { 
             fileLogger.e(TAG, "I/O error saving config to " + configFile.getAbsolutePath() + ": " + e.getMessage());
@@ -157,10 +153,5 @@ public class ConfigManager {
 
     public void setLogLevel(String logLevel) {
         this.logLevel = logLevel;
-    }
-    
-    public boolean isValid() {
-        File dir = new File(musicDir);
-        return dir.exists() && dir.isDirectory();
     }
 }

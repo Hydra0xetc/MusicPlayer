@@ -91,8 +91,6 @@ public class MusicScanner {
                 duration = Long.parseLong(durationStr);
             }
 
-            String mimeType = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE);
-
             if (loadAlbumArt) {
                 albumArtBytes = mmr.getEmbeddedPicture();
             }
@@ -105,8 +103,7 @@ public class MusicScanner {
                     artist,
                     album,
                     duration,
-                    albumArtBytes,
-                    mimeType
+                    albumArtBytes
             );
 
         } catch (Exception e) {
@@ -132,31 +129,10 @@ public class MusicScanner {
                 
                 if (listener != null) listener.onScanCompleted(files);
             } catch (Exception e) {
+                FileLogger.getInstance(context).e(TAG, "Unexpected error: " + e);
                 if (listener != null) listener.onScanError(e.toString());
             }
         }).start();
-    }
-    
-    public static byte[] loadAlbumArt(Context context, String filePath) {
-        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        byte[] albumArt = null;
-        
-        try {
-            mmr.setDataSource(context, Uri.fromFile(new File(filePath)));
-            albumArt = mmr.getEmbeddedPicture();
-        } catch (Exception e) {
-            FileLogger fileLogger = FileLogger.getInstance(context);
-            fileLogger.e(TAG, "Unexpected error: " + e);
-        } finally {
-            try {
-                mmr.release();
-            } catch (Exception e) {
-                FileLogger fileLogger = FileLogger.getInstance(context);
-                fileLogger.e(TAG, "Unexpected error: " + e);
-            }
-        }
-        
-        return albumArt;
     }
 
     private static boolean isAudioFile(String name) {

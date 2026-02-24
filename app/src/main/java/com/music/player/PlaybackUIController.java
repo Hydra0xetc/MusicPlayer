@@ -36,7 +36,6 @@ public class PlaybackUIController {
     private int parentHeight;
 
     private static final float[] SNAP_TARGET_TOP_WEIGHTS = {10f, 60f, 100f};
-    private static final float SNAP_THRESHOLD_WEIGHT = 7f;
     private static final long SNAP_ANIMATION_DURATION = 200;
 
     public interface MusicServiceWrapper {
@@ -331,48 +330,13 @@ public class PlaybackUIController {
         animator.start();
     }
 
-    public boolean isPlayerExpanded() {
-        if (topPane == null) return false;
-        final LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) topPane.getLayoutParams();
-        return params.weight > 50f;
-    }
-
-    public void collapsePlayer() {
-        if (topPane == null || bottomPane == null) return;
-        
-        final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane.getLayoutParams();
-        final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane.getLayoutParams();
-        float currentTopWeight = topParams.weight;
-        float targetTopWeight = SNAP_TARGET_TOP_WEIGHTS[1]; // 60f (Default middle snap)
-        float totalWeight = currentTopWeight + bottomParams.weight;
-
-        ValueAnimator animator = ValueAnimator.ofFloat(currentTopWeight, targetTopWeight);
-        animator.setDuration(SNAP_ANIMATION_DURATION);
-        animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
-        animator.addUpdateListener(animation -> {
-            float animatedWeight = (float) animation.getAnimatedValue();
-            topParams.weight = animatedWeight;
-            bottomParams.weight = totalWeight - animatedWeight;
-            topPane.setLayoutParams(topParams);
-            bottomPane.setLayoutParams(bottomParams);
-            updateTopPaneContentVisibility(animatedWeight);
-        });
-        animator.start();
-    }
-
     private void updateTopPaneContentVisibility(float currentTopWeight) {
         int contentVisibility = (currentTopWeight <= 25f) ? View.GONE : View.VISIBLE;
         
-        // Search button should be visible when:
-        // 1. Player is NOT full screen (weight < 90)
-        // 2. We are NOT in full screen (weight > 90 hides list)
-        // We keep it visible even if search is shown so it acts as a toggle
         int searchBtnVisibility = (currentTopWeight < 90f) ? View.VISIBLE : View.GONE;
         
         ivMainAlbumArt.setVisibility(contentVisibility);
         if (mainControlsLayout != null) {
-            // Keep controls visible for a mini-player feel or let them be covered
-            // We'll control their overlap via background in XML
             mainControlsLayout.setVisibility(View.VISIBLE);
         }
         
@@ -388,7 +352,7 @@ public class PlaybackUIController {
             btnSearch.setVisibility(searchBtnVisibility);
         }
         
-        // When player is expanded (weight > 20), make sure search bar is hidden
+        // When player is expanded (weight > 30), make sure search bar is hidden
         if (currentTopWeight > 30f && etSearch != null && etSearch.getVisibility() == View.VISIBLE) {
             etSearch.setVisibility(View.GONE);
             etSearch.setText(Constant.EMPTY_STRING);
@@ -400,9 +364,5 @@ public class PlaybackUIController {
         seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
         seekBar.setProgress(0);
         tvCurrentTime.setText(formatDuration(0));
-    }
-
-    public void stop() {
-        seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
     }
 }

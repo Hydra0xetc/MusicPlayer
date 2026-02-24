@@ -24,7 +24,6 @@ public class PlayerController {
     private native boolean isFinished(long ptr);
     private native void setLoop(long ptr, boolean loop);
     private native long getCurrentPosition(long ptr);
-    private native long getDuration(long ptr);
     private native void seekTo(long ptr, int position);
     private native void destroyPlayer(long ptr);
     
@@ -48,7 +47,6 @@ public class PlayerController {
     public void setLoop(boolean loop) { setLoop(playerPtr, loop); }
 
     public long getCurrentPosition() { return getCurrentPosition(playerPtr); }
-    public long getDuration() { return getDuration(playerPtr); }
     public void seekTo(int position) { seekTo(playerPtr, position); }
 
     public void release() {

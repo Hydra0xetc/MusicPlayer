@@ -313,7 +313,7 @@ public class MusicService extends Service {
         mediaSession.setPlaybackState(stateBuilder.build());
     }
     
-    // MediaSession Callback for handeling seek from lock screen
+    // MediaSession Callback for handling seek from lock screen
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onPlay() {
@@ -376,14 +376,6 @@ public class MusicService extends Service {
         }
     }
 
-    public void loadAndPlay(int index) {
-        MusicFile musicFile = playlistManager.getMusicAt(index);
-        if (musicFile != null) {
-            loadMusic(musicFile);
-            play();
-        }
-    }
-
     private void loadMusic(MusicFile musicFile) {
         // Save reference to currently playing music
         currentPlayingMusic = musicFile;
@@ -399,10 +391,8 @@ public class MusicService extends Service {
             if (albumArt != null) {
                 Bitmap decodedBitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
                 if (decodedBitmap != null) {
-
                     BitmapCache.getInstance()
                         .addBitmapToMemoryCache(musicFile.getPath(), decodedBitmap);
-
                 }
             }
         }

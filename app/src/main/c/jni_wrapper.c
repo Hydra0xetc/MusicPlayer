@@ -206,24 +206,6 @@ Java_com_music_player_PlayerController_getCurrentPosition(
     return (jlong)getCurrentPosition(player);
 }
 
-// Get duration
-JNIEXPORT jlong JNICALL
-Java_com_music_player_PlayerController_getDuration(
-    JNIEnv *env,
-    jobject thiz,
-    jlong playerPtr
-) {
-    (void)env;
-    (void)thiz;
-
-    AudioPlayer* player = (AudioPlayer*)playerPtr;
-    if (player == NULL) {
-        LOGE("Player pointer is NULL in getDuration");
-        return 0;
-    }
-    return (jlong)getDuration(player);
-}
-
 // Seek to position
 JNIEXPORT void JNICALL
 Java_com_music_player_PlayerController_seekTo(

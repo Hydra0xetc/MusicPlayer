@@ -1,7 +1,6 @@
 package com.music.player;
 
 import android.os.Handler;
-import android.widget.Button;
 import android.widget.Toast;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import java.util.List;

@@ -38,18 +38,12 @@ public class PlaylistManager {
     public int getCurrentIndex() {
         return currentIndex;
     }
-    
-    public int getPlaylistSize(){
-        return playlist.size();
-    }
 
     public MusicFile getNextMusic() {
         if (playlist.isEmpty()) {
             return null;
         }
 
-        // NOTE: maybe is good if all this, like shuffle, repeat all, repeat one is natively in c not in the java
-        // i wanna focussed logic of the ui is in java and logic musicplayer is in the c
         int nextIndex = currentIndex;
         if (repeatMode == RepeatMode.ONE) {
             return getCurrentMusic();

@@ -2,6 +2,10 @@ plugins {
     id "com.android.application"
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:all']
+}
+
 def env = System.getenv();
 
 android {

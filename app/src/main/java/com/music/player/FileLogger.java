@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class FileLogger {
+    private final static String TAG = "FileLogger";
     private static FileLogger instance;
     private File logFile;
     private final SimpleDateFormat dateFormat;
@@ -35,7 +36,7 @@ public class FileLogger {
                     logFile.createNewFile();
                 }
             } catch (IOException e) {
-                android.util.Log.e("FileLogger", "Failed to create log file", e);
+                android.util.Log.e(TAG, "Failed to create log file", e);
             }
         }
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
@@ -53,9 +54,9 @@ public class FileLogger {
         Integer newThreshold = LOG_LEVEL_MAP.get(level.toUpperCase());
         if (newThreshold != null) {
             logLevelThreshold = newThreshold;
-            android.util.Log.i("FileLogger", "File logger level set to: " + level);
+            android.util.Log.i(TAG, "File logger level set to: " + level);
         } else {
-            android.util.Log.e("FileLogger", "Invalid log level: " + level + ". Keeping current level.");
+            android.util.Log.e(TAG, "Invalid log level: " + level + ". Keeping current level.");
         }
     }
     
@@ -74,7 +75,7 @@ public class FileLogger {
             try {
                 logFile.createNewFile();
             } catch (IOException e) {
-                android.util.Log.e("FileLogger", "Failed to create new log file", e);
+                android.util.Log.e(TAG, "Failed to create new log file", e);
                 logFile = null; 
             }
         }
@@ -103,7 +104,7 @@ public class FileLogger {
             pw.flush();
             
         } catch (IOException e) {
-            android.util.Log.e("FileLogger", "Failed to write log", e);
+            android.util.Log.e(TAG, "Failed to write log", e);
         }
     }
     
@@ -135,7 +136,7 @@ public class FileLogger {
             pw.flush();
             
         } catch (IOException e) {
-            android.util.Log.e("FileLogger", "Failed to write log with throwable", e);
+            android.util.Log.e(TAG, "Failed to write log with throwable", e);
         }
     }
     
@@ -174,7 +175,7 @@ public class FileLogger {
             try {
                 logFile.createNewFile();
             } catch (IOException e) {
-                android.util.Log.e("FileLogger", "Failed to recreate log file", e);
+                android.util.Log.e(TAG, "Failed to recreate log file", e);
             }
         }
     }
