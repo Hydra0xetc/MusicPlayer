@@ -8,9 +8,8 @@ public class MusicFile {
     private String artist;
     private String album;
     private long duration;
-    private byte[] albumArt;
 
-    public MusicFile(String name, String path, long size, String title, String artist, String album, long duration, byte[] albumArt) {
+    public MusicFile(String name, String path, long size, String title, String artist, String album, long duration) {
         this.name = name;
         this.path = path;
         this.size = size;
@@ -18,7 +17,6 @@ public class MusicFile {
         this.artist = artist;
         this.album = album;
         this.duration = duration;
-        this.albumArt = albumArt;
     }
 
     public String getPath() {
@@ -61,14 +59,14 @@ public class MusicFile {
         return String.format("%02d:%02d", minutes, seconds);
     }
 
-    public byte[] getAlbumArt() {
-        return albumArt;
-    }
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         MusicFile that = (MusicFile) o;
         return path != null ? path.equals(that.path) : that.path == null;
     }
@@ -81,6 +79,6 @@ public class MusicFile {
     @Override
     public String toString() {
         return (artist != null && !artist.isEmpty() ? artist + " - " : Constant.EMPTY_STRING) +
-               (title != null && !title.isEmpty() ? title : name);
+                (title != null && !title.isEmpty() ? title : name);
     }
 }

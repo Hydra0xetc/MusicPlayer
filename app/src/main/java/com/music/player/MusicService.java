@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -43,13 +42,15 @@ public class MusicService extends Service {
 
     private FileLogger fileLogger;
     private PlaylistManager playlistManager;
-    private MusicFile currentPlayingMusic = null;  // Track actual playing song
+    private MusicFile currentPlayingMusic = null; // Track actual playing song
     private MusicServiceListener listener;
     private MediaSessionCompat mediaSession;
 
     public interface MusicServiceListener {
         void onMusicChanged(MusicFile musicFile, int index);
+
         void onPlayStateChanged(boolean isPlaying);
+
         void onMusicFinished();
     }
 
@@ -68,11 +69,11 @@ public class MusicService extends Service {
         playlistManager = new PlaylistManager();
         autoNextHandler = new Handler(Looper.getMainLooper());
         notificationUpdateHandler = new Handler(Looper.getMainLooper());
-        
+
         // Initialize MediaSession with callback for seek
         mediaSession = new MediaSessionCompat(this, TAG);
         mediaSession.setCallback(new MediaSessionCallback());
-        
+
         createNotificationChannel();
         startAutoNextMonitoring();
         startNotificationUpdater();
@@ -120,10 +121,9 @@ public class MusicService extends Service {
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID,
-                "Music Player",
-                NotificationManager.IMPORTANCE_LOW
-            );
+                    CHANNEL_ID,
+                    "Music Player",
+                    NotificationManager.IMPORTANCE_LOW);
             channel.setDescription("Music playback controls");
             channel.setSound(null, null);
 
@@ -136,7 +136,7 @@ public class MusicService extends Service {
 
     private Bitmap getDefaultAlbumArt() {
         Bitmap bitmap = null;
-        
+
         try {
             Drawable drawable = ContextCompat.getDrawable(this, R.mipmap.ic_launcher);
             if (drawable != null) {
@@ -148,16 +148,16 @@ public class MusicService extends Service {
         } catch (Exception e) {
             fileLogger.e(TAG, "Unexpected error: " + e);
         }
-        
+
         return null;
     }
-    
+
     // Convert Drawable to Bitmap
     private Bitmap drawableToBitmap(Drawable drawable) {
         if (drawable == null) {
             return null;
         }
-        
+
         if (drawable instanceof BitmapDrawable) {
             BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
             if (bitmapDrawable.getBitmap() != null) {
@@ -170,10 +170,9 @@ public class MusicService extends Service {
             bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
         } else {
             bitmap = Bitmap.createBitmap(
-                drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(),
-                Bitmap.Config.ARGB_8888
-            );
+                    drawable.getIntrinsicWidth(),
+                    drawable.getIntrinsicHeight(),
+                    Bitmap.Config.ARGB_8888);
         }
 
         Canvas canvas = new Canvas(bitmap);
@@ -186,26 +185,23 @@ public class MusicService extends Service {
         String songTitle = Constant.NO_SONG;
         String songArtist = Constant.EMPTY_STRING;
         Bitmap albumArtBitmap = null;
-        
+
         // Use currentPlayingMusic instead of playlist.get(currentIndex)
         // This prevents bug when shuffle changes the playlist order
         if (currentPlayingMusic != null) {
             songTitle = currentPlayingMusic.getTitle();
             songArtist = currentPlayingMusic.getArtist();
-            
+
             albumArtBitmap = BitmapCache.getInstance().getBitmapFromMemCache(currentPlayingMusic.getPath());
             if (albumArtBitmap == null) {
-                byte[] albumArt = currentPlayingMusic.getAlbumArt();
-                if (albumArt != null) {
-                    Bitmap decodedBitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
-                    if (decodedBitmap != null) {
-                        BitmapCache.getInstance()
-                            .addBitmapToMemoryCache(currentPlayingMusic.getPath(), decodedBitmap);
-                    }
+                albumArtBitmap = AlbumArtManager.getInstance(this).loadAlbumArt(currentPlayingMusic.getPath());
+                if (albumArtBitmap != null) {
+                    BitmapCache.getInstance()
+                            .addBitmapToMemoryCache(currentPlayingMusic.getPath(), albumArtBitmap);
                 }
             }
         }
-        
+
         if (albumArtBitmap == null) {
             albumArtBitmap = getDefaultAlbumArt();
         }
@@ -213,52 +209,46 @@ public class MusicService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+                this, 0, notificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Action prevAction = new NotificationCompat.Action(
-            R.drawable.ic_notification_prev_black,
-            "Previous",
-            getPendingIntent(ACTION_PREV)
-        );
+                R.drawable.ic_notification_prev_black,
+                "Previous",
+                getPendingIntent(ACTION_PREV));
 
         NotificationCompat.Action playPauseAction;
         if (player.isPlaying()) {
             playPauseAction = new NotificationCompat.Action(
-                R.drawable.ic_notification_pause_black,
-                "Pause",
-                getPendingIntent(ACTION_PAUSE)
-            );
+                    R.drawable.ic_notification_pause_black,
+                    "Pause",
+                    getPendingIntent(ACTION_PAUSE));
         } else {
             playPauseAction = new NotificationCompat.Action(
-                R.drawable.ic_notification_play_black,
-                "Play",
-                getPendingIntent(ACTION_PLAY)
-            );
+                    R.drawable.ic_notification_play_black,
+                    "Play",
+                    getPendingIntent(ACTION_PLAY));
         }
 
         NotificationCompat.Action nextAction = new NotificationCompat.Action(
-            R.drawable.ic_notification_next_black,
-            "Next",
-            getPendingIntent(ACTION_NEXT)
-        );
+                R.drawable.ic_notification_next_black,
+                "Next",
+                getPendingIntent(ACTION_NEXT));
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(songTitle)
-            .setContentText(songArtist)
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentIntent(pendingIntent)
-            .addAction(prevAction)
-            .addAction(playPauseAction)
-            .addAction(nextAction)
-            .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSession.getSessionToken())
-                    .setShowActionsInCompactView(0, 1, 2)
-            )
-            .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                .setContentTitle(songTitle)
+                .setContentText(songArtist)
+                .setSmallIcon(android.R.drawable.ic_media_play)
+                .setContentIntent(pendingIntent)
+                .addAction(prevAction)
+                .addAction(playPauseAction)
+                .addAction(nextAction)
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(mediaSession.getSessionToken())
+                        .setShowActionsInCompactView(0, 1, 2))
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
         // Set large icon if exist
         if (albumArtBitmap != null) {
@@ -272,11 +262,10 @@ public class MusicService extends Service {
         Intent intent = new Intent(this, MusicService.class);
         intent.setAction(action);
         return PendingIntent.getService(
-            this,
-            action.hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+                this,
+                action.hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private void updateNotification() {
@@ -289,12 +278,12 @@ public class MusicService extends Service {
 
     private long getAvailableActions() {
         return PlaybackStateCompat.ACTION_PLAY |
-               PlaybackStateCompat.ACTION_PAUSE |
-               PlaybackStateCompat.ACTION_PLAY_PAUSE |
-               PlaybackStateCompat.ACTION_STOP |
-               PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-               PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-               PlaybackStateCompat.ACTION_SEEK_TO;  // Enable seek
+                PlaybackStateCompat.ACTION_PAUSE |
+                PlaybackStateCompat.ACTION_PLAY_PAUSE |
+                PlaybackStateCompat.ACTION_STOP |
+                PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                PlaybackStateCompat.ACTION_SEEK_TO; // Enable seek
     }
 
     private void updatePlaybackState() {
@@ -302,17 +291,15 @@ public class MusicService extends Service {
             return;
         }
 
-        int state = player.isPlaying() ? 
-            PlaybackStateCompat.STATE_PLAYING : 
-            PlaybackStateCompat.STATE_PAUSED;
+        int state = player.isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
 
         PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
-            .setActions(getAvailableActions())
-            .setState(state, player.getCurrentPosition(), 1.0f);
+                .setActions(getAvailableActions())
+                .setState(state, player.getCurrentPosition(), 1.0f);
 
         mediaSession.setPlaybackState(stateBuilder.build());
     }
-    
+
     // MediaSession Callback for handling seek from lock screen
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
@@ -342,11 +329,11 @@ public class MusicService extends Service {
 
         @Override
         public void onSeekTo(long pos) {
-            seekTo((int)pos);
+            seekTo((int) pos);
             updatePlaybackState();
         }
     }
-    
+
     private void startNotificationUpdater() {
         notificationUpdateHandler.postDelayed(new Runnable() {
             @Override
@@ -359,7 +346,7 @@ public class MusicService extends Service {
             }
         }, 1000);
     }
-    
+
     public void setPlaylist(List<MusicFile> files) {
         playlistManager.setPlaylist(files);
         // Sync index if music is playing
@@ -379,24 +366,21 @@ public class MusicService extends Service {
     private void loadMusic(MusicFile musicFile) {
         // Save reference to currently playing music
         currentPlayingMusic = musicFile;
-        
+
         player.load(musicFile.getPath());
-        
+
         syncPlayerLoopMode();
 
         Bitmap albumArtBitmap = BitmapCache.getInstance()
-            .getBitmapFromMemCache(musicFile.getPath());
+                .getBitmapFromMemCache(musicFile.getPath());
         if (albumArtBitmap == null) {
-            byte[] albumArt = musicFile.getAlbumArt();
-            if (albumArt != null) {
-                Bitmap decodedBitmap = BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length);
-                if (decodedBitmap != null) {
-                    BitmapCache.getInstance()
-                        .addBitmapToMemoryCache(musicFile.getPath(), decodedBitmap);
-                }
+            albumArtBitmap = AlbumArtManager.getInstance(this).loadAlbumArt(musicFile.getPath());
+            if (albumArtBitmap != null) {
+                BitmapCache.getInstance()
+                        .addBitmapToMemoryCache(musicFile.getPath(), albumArtBitmap);
             }
         }
-        
+
         if (albumArtBitmap == null) {
             albumArtBitmap = getDefaultAlbumArt();
         }
@@ -499,7 +483,7 @@ public class MusicService extends Service {
             player.setLoop(loop);
         }
     }
-    
+
     // Shuffle controls
     public void toggleShuffle() {
         playlistManager.toggleShuffle();
@@ -509,18 +493,18 @@ public class MusicService extends Service {
         }
         fileLogger.i(TAG, "Shuffle toggled. Enabled: " + playlistManager.isShuffleEnabled());
     }
-    
+
     public boolean isShuffleEnabled() {
         return playlistManager.isShuffleEnabled();
     }
-    
+
     // Repeat mode controls
     public void cycleRepeatMode() {
         playlistManager.cycleRepeatMode();
         syncPlayerLoopMode();
         fileLogger.i(TAG, "Repeat mode cycled to: " + playlistManager.getRepeatMode());
     }
-    
+
     public PlaylistManager.RepeatMode getRepeatMode() {
         return playlistManager.getRepeatMode();
     }

@@ -14,7 +14,8 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
     private SwipeRefreshLayout swipeRefresh;
     private FileLogger fileLogger;
 
-    public ScanResultHandler(MainActivity activity, Handler handler, List<MusicFile> musicFiles, MusicFileAdapter adapter, SwipeRefreshLayout swipeRefresh) {
+    public ScanResultHandler(MainActivity activity, Handler handler, List<MusicFile> musicFiles,
+            MusicFileAdapter adapter, SwipeRefreshLayout swipeRefresh) {
         this.activity = activity;
         this.handler = handler;
         this.musicFiles = musicFiles;
@@ -34,7 +35,8 @@ public class ScanResultHandler implements MusicScanner.ScanListener {
         });
     }
 
-    public void onFileFound(MusicFile file) { }
+    public void onFileFound(MusicFile file) {
+    }
 
     public void onScanCompleted(List<MusicFile> files) {
         handler.post(() -> handleScanCompletion(files));

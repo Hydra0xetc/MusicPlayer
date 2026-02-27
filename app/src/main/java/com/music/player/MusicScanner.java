@@ -20,13 +20,19 @@ public class MusicScanner {
 
     public interface ScanListener {
         void onScanStarted();
+
         void onFileFound(MusicFile file);
+
         void onScanCompleted(List<MusicFile> files);
+
         void onScanError(String error);
     }
 
-    public static List<MusicFile> scanDirectory(Context context, String dirPath, boolean loadAlbumArt) {
+    public static List<MusicFile> scanDirectory(Context context, String dirPath) {
         FileLogger fileLogger = FileLogger.getInstance(context);
+        MusicMetadataCache metaCache = MusicMetadataCache.getInstance(context);
+        AlbumArtManager artManager = AlbumArtManager.getInstance(context);
+
         List<MusicFile> musicFiles = new ArrayList<>();
 
         File dir = new File(dirPath);
@@ -41,96 +47,108 @@ public class MusicScanner {
             return musicFiles;
         }
 
-        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        List<String> currentPaths = new ArrayList<>();
+
         for (File file : files) {
-            if (file.isFile() && isAudioFile(file.getName())) {
-                MusicFile musicFile = extractMetadataFromFile(context, mmr, file, loadAlbumArt);
-                if (musicFile != null) {
-                    musicFiles.add(musicFile);
-                }
+            if (!file.isFile() || !isAudioFile(file.getName())) {
+                continue;
+            }
+
+            String path = file.getAbsolutePath();
+            long fileSize = file.length();
+            long lastModified = file.lastModified();
+
+            currentPaths.add(path);
+
+            MusicFile cached = metaCache.getCached(path, fileSize, lastModified);
+            if (cached != null) {
+                musicFiles.add(cached);
+                continue; // cache hit — skip MMR entirely
+            }
+            MusicFile fresh = extractMetadata(context, file, artManager);
+            if (fresh != null) {
+                boolean hasArt = artManager.hasAlbumArt(path);
+                metaCache.putCache(fresh, lastModified, hasArt);
+                musicFiles.add(fresh);
             }
         }
 
-        try {
-            mmr.release();
-        } catch (Exception e) {
-            fileLogger.e(TAG, "Unexpected error on MMR release: " + e);
-        }
+        metaCache.removeStaleEntries(currentPaths);
+        artManager.removeStaleArt(currentPaths);
 
         Collections.sort(musicFiles, new MusicComparator());
         return musicFiles;
     }
 
-    private static MusicFile extractMetadataFromFile(Context context, MediaMetadataRetriever mmr, File file, boolean loadAlbumArt) {
+    private static MusicFile extractMetadata(Context context, File file, AlbumArtManager artManager) {
+        FileLogger fileLogger = FileLogger.getInstance(context);
+
         String title = file.getName();
         String artist = "Unknown Artist";
         String album = "Unknown Album";
         long duration = 0;
-        byte[] albumArtBytes = null;
 
-        try {
+        try (MediaMetadataRetriever mmr = new MediaMetadataRetriever()) {
+
+            // Fresh instance per file: avoids stale values from previous file
             mmr.setDataSource(context, Uri.fromFile(file));
 
-            String extractedTitle = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-            if (extractedTitle != null && !extractedTitle.isEmpty()) {
-                title = extractedTitle;
+            String t = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
+            if (t != null && !t.isEmpty()) {
+                title = t;
             }
 
-            String extractedArtist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-            if (extractedArtist != null && !extractedArtist.isEmpty()) {
-                artist = cleanupArtistString(extractedArtist);
+            String ar = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            if (ar != null && !ar.isEmpty()) {
+                artist = cleanupArtistString(ar);
             }
 
-            String extractedAlbum = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
-            if (extractedAlbum != null && !extractedAlbum.isEmpty()) {
-                album = extractedAlbum;
+            String al = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM);
+            if (al != null && !al.isEmpty()) {
+                album = al;
             }
 
-            String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            if (durationStr != null) {
-                duration = Long.parseLong(durationStr);
+            String dur = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (dur != null && !dur.isEmpty()) {
+                try {
+                    duration = Long.parseLong(dur);
+                } catch (NumberFormatException e) {
+                    fileLogger.e(TAG, "NumberFormatException error: " + e);
+                }
             }
 
-            if (loadAlbumArt) {
-                albumArtBytes = mmr.getEmbeddedPicture();
+            if (!artManager.hasAlbumArt(file.getAbsolutePath())) {
+                byte[] artBytes = mmr.getEmbeddedPicture();
+                if (artBytes != null) {
+                    artManager.saveAlbumArt(file.getAbsolutePath(), artBytes);
+                }
             }
-
-            return new MusicFile(
-                    file.getName(),
-                    file.getAbsolutePath(),
-                    file.length(),
-                    title,
-                    artist,
-                    album,
-                    duration,
-                    albumArtBytes
-            );
-
         } catch (Exception e) {
-            FileLogger.getInstance(context).e(TAG, "Failed to extract metadata for " + file.getName() + ": " + e.getMessage());
-            return null;
+            fileLogger.e(TAG, "Failed to get metadata for: " + file.getName() + ": " + e.getMessage());
         }
-    }
-    
-    public static List<MusicFile> scanDirectory(Context context, String dirPath) {
-        return scanDirectory(context, dirPath, true);
+
+        return new MusicFile(
+                file.getName(),
+                file.getAbsolutePath(),
+                file.length(),
+                title, artist, album, duration);
     }
 
-    public static void scanDirectoryAsync(
-            Context context,
-            String dirPath,
-            ScanListener listener
-    ) {
+    public static void scanDirectoryAsync(Context context, String dirPath, ScanListener listener) {
         new Thread(() -> {
             try {
-                if (listener != null) listener.onScanStarted();
-                
-                List<MusicFile> files = scanDirectory(context, dirPath, true);
-                
-                if (listener != null) listener.onScanCompleted(files);
+                if (listener != null) {
+                    listener.onScanStarted();
+                }
+                List<MusicFile> files = scanDirectory(context, dirPath);
+                if (listener != null) {
+                    listener.onScanCompleted(files);
+                }
             } catch (Exception e) {
                 FileLogger.getInstance(context).e(TAG, "Unexpected error: " + e);
-                if (listener != null) listener.onScanError(e.toString());
+                if (listener != null) {
+                    listener.onScanError(e.toString());
+                }
             }
         }).start();
     }
@@ -138,18 +156,24 @@ public class MusicScanner {
     private static boolean isAudioFile(String name) {
         String lower = name.toLowerCase();
         for (String ext : AUDIO_EXTENSIONS) {
-            if (lower.endsWith(ext)) return true;
+            if (lower.endsWith(ext)) {
+                return true;
+            }
         }
         return false;
     }
 
     private static String cleanupArtistString(String s) {
-        if (s == null) return "Unknown Artist";
+        if (s == null) {
+            return "Unknown Artist";
+        }
         String[] parts = s.split(",\\s*");
         StringBuilder out = new StringBuilder();
         for (String p : parts) {
             if (!out.toString().contains(p)) {
-                if (out.length() > 0) out.append(", ");
+                if (out.length() > 0) {
+                    out.append(", ");
+                }
                 out.append(p);
             }
         }

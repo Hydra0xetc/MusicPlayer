@@ -16,15 +16,16 @@ import android.view.animation.AnimationUtils;
 
 public class SettingsActivity extends Activity {
 
-    private EditText      etMusicDir;
-    private Switch        swAutoScan;
-    private Spinner       spLogLevel;
-    private Button        btnSaveSettings;
-    private Button        btnBack;
-    private Button        btnBrowse;
+    private EditText etMusicDir;
+    private Switch swAutoScan;
+    private Spinner spLogLevel;
+    private Button btnSaveSettings;
+    private Button btnBack;
+    private Button btnBrowse;
     private ConfigManager configManager;
-    private FileLogger    fileLogger;
-    private Animation     blinkAnimation;
+    private FileLogger fileLogger;
+    private Animation blinkAnimation;
+    private ArrayAdapter<CharSequence> logLevelAdapter;
 
     private static final int REQUEST_CODE_PICK_DIR = 1001;
     private static final String TAG = "SettingsActivity";
@@ -36,7 +37,7 @@ public class SettingsActivity extends Activity {
 
         fileLogger = FileLogger.getInstance(this);
         configManager = new ConfigManager(this);
-        
+
         fileLogger.setLogLevel(configManager.getLogLevel());
 
         initViews();
@@ -53,27 +54,25 @@ public class SettingsActivity extends Activity {
         btnBack = findViewById(R.id.btnBack);
         btnBrowse = findViewById(R.id.btnBrowse);
         blinkAnimation = AnimationUtils.loadAnimation(this, R.anim.blink);
-        
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+
+        logLevelAdapter = ArrayAdapter.createFromResource(
                 this,
                 R.array.log_levels,
-                android.R.layout.simple_spinner_item
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spLogLevel.setAdapter(adapter);
+                android.R.layout.simple_spinner_item);
+        logLevelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spLogLevel.setAdapter(logLevelAdapter);
     }
 
     private void loadSettings() {
         configManager.loadConfig();
         etMusicDir.setText(configManager.getMusicDir());
         swAutoScan.setChecked(configManager.isAutoScan());
-        
-        ArrayAdapter<CharSequence> adapter = (ArrayAdapter<CharSequence>) spLogLevel.getAdapter();
-        if (adapter != null) {
-            int spinnerPosition = adapter.getPosition(configManager.getLogLevel());
+
+        if (logLevelAdapter != null) {
+            int spinnerPosition = logLevelAdapter.getPosition(configManager.getLogLevel());
             spLogLevel.setSelection(spinnerPosition);
         }
-        
+
         fileLogger.i(TAG, "Settings loaded and displayed.");
     }
 
@@ -101,7 +100,7 @@ public class SettingsActivity extends Activity {
                 openDirectoryPicker();
             }
         });
-        
+
         swAutoScan.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -141,7 +140,8 @@ public class SettingsActivity extends Activity {
                 String[] split = docId.split(":");
                 String type = split[0];
                 if ("primary".equalsIgnoreCase(type)) {
-                    path = android.os.Environment.getExternalStorageDirectory() + "/" + (split.length > 1 ? split[1] : "");
+                    path = android.os.Environment.getExternalStorageDirectory() + "/"
+                            + (split.length > 1 ? split[1] : "");
                 } else {
                     path = "/storage/" + type + "/" + (split.length > 1 ? split[1] : "");
                 }
@@ -150,11 +150,12 @@ public class SettingsActivity extends Activity {
                 if (id.startsWith("raw:")) {
                     path = id.substring(4);
                 } else if (id.startsWith("msf:")) {
-                    // Handle msf: (Media Storage Framework) IDs if necessary, though tricky for directories
+                    // Handle msf: (Media Storage Framework) IDs if necessary, though tricky for
+                    // directories
                     fileLogger.w(TAG, "MSF ID found, may not resolve to absolute path: " + id);
                 }
             }
-            
+
             // Cleanup double slashes if any
             if (path != null) {
                 path = path.replace("//", "/");
@@ -177,21 +178,26 @@ public class SettingsActivity extends Activity {
         configManager.setAutoScan(newAutoScan);
         configManager.setLogLevel(newLogLevel); // Save new log level
         configManager.saveConfig();
-        
+
         // Apply new log level to FileLogger immediately
         FileLogger.getInstance(this).setLogLevel(newLogLevel);
 
-        fileLogger.i(TAG, "Settings saved: MusicDir=" + newMusicDir + ", AutoScan=" + newAutoScan + ", LogLevel=" + newLogLevel);
+        fileLogger.i(TAG,
+                "Settings saved: MusicDir=" + newMusicDir + ", AutoScan=" + newAutoScan + ", LogLevel=" + newLogLevel);
         finish(); // Go back to MainActivity after saving
     }
 
     private void updateAutoScanSwitchColor() {
         if (swAutoScan.isChecked()) {
-            swAutoScan.getTrackDrawable().setColorFilter(getResources().getColor(R.color.switch_on), PorterDuff.Mode.SRC_IN);
-            swAutoScan.getThumbDrawable().setColorFilter(getResources().getColor(R.color.switch_on), PorterDuff.Mode.SRC_IN);
+            swAutoScan.getTrackDrawable().setColorFilter(getResources().getColor(R.color.switch_on),
+                    PorterDuff.Mode.SRC_IN);
+            swAutoScan.getThumbDrawable().setColorFilter(getResources().getColor(R.color.switch_on),
+                    PorterDuff.Mode.SRC_IN);
         } else {
-            swAutoScan.getTrackDrawable().setColorFilter(getResources().getColor(R.color.switch_off), PorterDuff.Mode.SRC_IN);
-            swAutoScan.getThumbDrawable().setColorFilter(getResources().getColor(R.color.switch_off), PorterDuff.Mode.SRC_IN);
+            swAutoScan.getTrackDrawable().setColorFilter(getResources().getColor(R.color.switch_off),
+                    PorterDuff.Mode.SRC_IN);
+            swAutoScan.getThumbDrawable().setColorFilter(getResources().getColor(R.color.switch_off),
+                    PorterDuff.Mode.SRC_IN);
         }
     }
 }

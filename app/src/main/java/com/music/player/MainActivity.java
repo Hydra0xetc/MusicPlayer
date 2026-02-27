@@ -6,12 +6,21 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.DisplayMetrics;
+import android.text.style.ForegroundColorSpan;
+import android.text.TextWatcher;
+import android.text.Editable;
 import android.os.Looper;
 import android.view.View;
 import android.widget.*;
+import android.text.SpannableStringBuilder;
 import android.app.AlertDialog;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
@@ -22,7 +31,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends Activity implements MusicService.MusicServiceListener, PlaybackUIController.MusicServiceWrapper {
+public class MainActivity extends Activity
+        implements MusicService.MusicServiceListener, PlaybackUIController.MusicServiceWrapper {
     final static String TAG = "MainActivity";
     private ListView lvMusicFiles;
     private SwipeRefreshLayout swipeRefreshLayout;
@@ -30,7 +40,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
     private MusicService musicService;
     private boolean isBound = false;
-    
+
     private FileLogger fileLogger;
     private Handler mainHandler;
     private ConfigManager configManager;
@@ -38,14 +48,18 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     private List<MusicFile> musicFiles;
     private MusicFileAdapter adapter;
     private MusicFile currentMusic;
-    
+
     private PlaybackUIController uiController;
 
     @Override
-    public MusicService getService() { return musicService; }
+    public MusicService getService() {
+        return musicService;
+    }
 
     @Override
-    public boolean isBound() { return isBound; }
+    public boolean isBound() {
+        return isBound;
+    }
 
     @Override
     public void onCreate(Bundle b) {
@@ -63,7 +77,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         setupListView();
         checkPermissions();
         bindMusicService();
-        
+
         if (configManager.isAutoScan()) {
             mainHandler.postDelayed(() -> {
                 scanDirectory();
@@ -91,22 +105,23 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
         ImageButton btnSearch = findViewById(R.id.btnSearch);
         EditText etSearch = findViewById(R.id.etSearch);
-        
+
         btnSearch.setOnClickListener(v -> {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            
+
             if (etSearch.getVisibility() == View.VISIBLE) {
                 // Toggle OFF: Hide search bar
                 etSearch.setVisibility(View.GONE);
                 etSearch.setText(Constant.EMPTY_STRING);
                 adapter.filter(Constant.EMPTY_STRING);
                 checkEmptyState();
-                if (imm != null) imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
+                if (imm != null)
+                    imm.hideSoftInputFromWindow(etSearch.getWindowToken(), 0);
             } else {
                 // Toggle ON: Show search bar
                 // First, collapse player to show more list
                 uiController.expandToTop();
-                
+
                 // Then show search bar and keyboard
                 etSearch.setVisibility(View.VISIBLE);
                 etSearch.requestFocus();
@@ -116,18 +131,26 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             }
         });
 
-        etSearch.addTextChangedListener(new android.text.TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+        etSearch.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 adapter.filter(s.toString());
                 checkEmptyState();
             }
-            @Override public void afterTextChanged(android.text.Editable s) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
     public void checkEmptyState() {
-        if (llEmptySearch == null || adapter == null) return;
+        if (llEmptySearch == null || adapter == null)
+            return;
         if (adapter.getCount() == 0) {
             llEmptySearch.setVisibility(View.VISIBLE);
         } else {
@@ -154,7 +177,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             PermissionHelper.request(this);
         }
     }
-    
+
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -169,15 +192,16 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             isBound = false;
         }
     };
-    
+
     private void bindMusicService() {
         Intent intent = new Intent(this, MusicService.class);
         startService(intent);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
-    
+
     private void updateUIFromService() {
-        if (!isBound || musicService == null) return;
+        if (!isBound || musicService == null)
+            return;
         currentMusic = musicService.getCurrentMusic();
         if (currentMusic != null) {
             adapter.setPlayingPath(currentMusic.getPath());
@@ -191,18 +215,22 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             swipeRefreshLayout.setRefreshing(false);
             return;
         }
-        
+
         ScanResultHandler handler = new ScanResultHandler(this, mainHandler, musicFiles,
                 adapter, swipeRefreshLayout);
         MusicScanner.scanDirectoryAsync(this, dirPath, handler);
     }
 
     public void updatePlaylist() {
-        if (isBound) musicService.setPlaylist(musicFiles);
+        if (isBound) {
+            musicService.setPlaylist(musicFiles);
+        }
     }
 
     public void loadMusic(MusicFile musicFile) {
-        if (!isBound) return;
+        if (!isBound) {
+            return;
+        }
         try {
             musicService.loadAndPlay(musicFile);
             currentMusic = musicFile;
@@ -217,9 +245,11 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
     protected void onResume() {
         super.onResume();
         configManager.loadConfig();
-        if (isBound) updateUIFromService();
+        if (isBound) {
+            updateUIFromService();
+        }
     }
-    
+
     @Override
     public void onRequestPermissionsResult(int req, String[] perms, int[] results) {
         super.onRequestPermissionsResult(req, perms, results);
@@ -241,26 +271,28 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
             uiController.updateUI(musicFile, true);
         });
     }
-    
+
     @Override
     public void onPlayStateChanged(boolean isPlaying) {
         mainHandler.post(() -> uiController.updatePlayState(isPlaying));
     }
-    
+
     @Override
     public void onMusicFinished() {
         mainHandler.post(() -> uiController.onMusicFinished());
     }
 
     private void showMusicInfoDialog(MusicFile music) {
-        if (music == null) return;
-        
+        if (music == null) {
+            return;
+        }
+
         View view = getLayoutInflater().inflate(R.layout.dialog_music_info, null);
         TextView tvFullInfo = view.findViewById(R.id.tvMusicFullInfo);
         Button btnClose = view.findViewById(R.id.btnDialogClose);
-        
+
         // Use Spannable for neat formatting
-        android.text.SpannableStringBuilder ssb = new android.text.SpannableStringBuilder();
+        SpannableStringBuilder ssb = new SpannableStringBuilder();
         appendFormattedInfo(ssb, "TITLE", music.getTitle());
         appendFormattedInfo(ssb, "ARTIST", music.getArtist());
         appendFormattedInfo(ssb, "ALBUM", music.getAlbum());
@@ -271,7 +303,7 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         try {
             ContentInfoUtil util = new ContentInfoUtil();
             ContentInfo info = util.findMatch(new File(music.getPath()));
-            
+
             String formatDescription;
             if (info != null) {
                 formatDescription = info.getMessage();
@@ -279,8 +311,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
                 String ext = music.getPath().substring(music.getPath().lastIndexOf(".")).toUpperCase();
                 formatDescription = "Unknown " + ext + " Audio";
             }
-                
-            appendFormattedInfo(ssb, "FORMAT INFO",  formatDescription);
+
+            appendFormattedInfo(ssb, "FORMAT INFO", formatDescription);
         } catch (Exception e) {
             appendFormattedInfo(ssb, "FORMAT INFO", "Unable to detect file header");
             fileLogger.e(TAG, "SimpleMagic error: " + e);
@@ -289,8 +321,8 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
         tvFullInfo.setText(ssb);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
-            .setView(view)
-            .create();
+                .setView(view)
+                .create();
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -301,30 +333,30 @@ public class MainActivity extends Activity implements MusicService.MusicServiceL
 
         // Adjust window size (Width & Height)
         if (dialog.getWindow() != null) {
-            android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
+            DisplayMetrics metrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(metrics);
-            
+
             int width = (int) (metrics.widthPixels * 0.85);
             int height = (int) (metrics.heightPixels * 0.60);
-            
+
             dialog.getWindow().setLayout(width, height);
         }
     }
 
-    private void appendFormattedInfo(android.text.SpannableStringBuilder ssb, String label, String value) {
+    private void appendFormattedInfo(SpannableStringBuilder ssb, String label, String value) {
         int start = ssb.length();
         ssb.append(label).append("\n");
-        
+
         // Turquoise color and Bold for Label
-        ssb.setSpan(new android.text.style.ForegroundColorSpan(getResources().getColor(R.color.turqoise)), 
-            start, start + label.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 
-            start, start + label.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.turqoise)),
+                start, start + label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new StyleSpan(Typeface.BOLD),
+                start, start + label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         // Content/Value in white color
         int valueStart = ssb.length();
         ssb.append(value != null ? value : "-").append("\n\n");
-        ssb.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.WHITE), 
-            valueStart, ssb.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new ForegroundColorSpan(Color.WHITE),
+                valueStart, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 }

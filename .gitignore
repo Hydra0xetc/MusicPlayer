@@ -7,3 +7,6 @@ app/.cxx/
 local.properties
 .env
 lint-baseline.xml
+app/.classpath
+app/.project
+app/.settings/

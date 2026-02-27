@@ -4,7 +4,6 @@ import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.MotionEvent;
@@ -35,11 +34,12 @@ public class PlaybackUIController {
     private float initialTouchY, initialTopPaneWeight, initialBottomPaneWeight;
     private int parentHeight;
 
-    private static final float[] SNAP_TARGET_TOP_WEIGHTS = {10f, 60f, 100f};
+    private static final float[] SNAP_TARGET_TOP_WEIGHTS = { 10f, 60f, 100f };
     private static final long SNAP_ANIMATION_DURATION = 200;
 
     public interface MusicServiceWrapper {
         MusicService getService();
+
         boolean isBound();
     }
 
@@ -47,7 +47,7 @@ public class PlaybackUIController {
         this.activity = activity;
         this.serviceWrapper = serviceWrapper;
         this.mainHandler = new Handler(Looper.getMainLooper());
-        
+
         initViews();
         setupButtons();
         setupSeekBar();
@@ -83,15 +83,18 @@ public class PlaybackUIController {
     private void setupButtons() {
         btnPlayPause.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
-            if (serviceWrapper.isBound()) serviceWrapper.getService().togglePlayPause();
+            if (serviceWrapper.isBound())
+                serviceWrapper.getService().togglePlayPause();
         });
         btnPrev.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
-            if (serviceWrapper.isBound()) serviceWrapper.getService().playPrevious();
+            if (serviceWrapper.isBound())
+                serviceWrapper.getService().playPrevious();
         });
         btnNext.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
-            if (serviceWrapper.isBound()) serviceWrapper.getService().playNext();
+            if (serviceWrapper.isBound())
+                serviceWrapper.getService().playNext();
         });
         btnShuffle.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
@@ -115,10 +118,12 @@ public class PlaybackUIController {
                     tvCurrentTime.setText(formatDuration(progress));
                 }
             }
+
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
                 seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
             }
+
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 if (serviceWrapper.isBound()) {
@@ -141,7 +146,7 @@ public class PlaybackUIController {
         updatePlayState(isPlaying);
         updateShuffleButton();
         updateRepeatButton();
-        
+
         if (serviceWrapper.isBound()) {
             long currentPos = serviceWrapper.getService().getCurrentPosition();
             seekBar.setProgress((int) currentPos);
@@ -166,8 +171,10 @@ public class PlaybackUIController {
 
     public void enableControls(boolean enable) {
         btnPlayPause.setEnabled(enable);
-        if (btnPrev != null) btnPrev.setEnabled(enable);
-        if (btnNext != null) btnNext.setEnabled(enable);
+        if (btnPrev != null)
+            btnPrev.setEnabled(enable);
+        if (btnNext != null)
+            btnNext.setEnabled(enable);
     }
 
     private void toggleShuffle() {
@@ -191,7 +198,8 @@ public class PlaybackUIController {
     }
 
     public void updateRepeatButton() {
-        if (!serviceWrapper.isBound() || btnRepeat == null) return;
+        if (!serviceWrapper.isBound() || btnRepeat == null)
+            return;
         switch (serviceWrapper.getService().getRepeatMode()) {
             case OFF:
                 btnRepeat.setImageResource(R.drawable.ic_repeat);
@@ -227,12 +235,23 @@ public class PlaybackUIController {
     };
 
     private void loadAlbumArtAsync(final MusicFile musicFile) {
+        Bitmap cached = BitmapCache.getInstance().getBitmapFromMemCache(musicFile.getPath());
+        if (cached != null) {
+            ivMainAlbumArt.setImageBitmap(cached);
+            return;
+        }
         new Thread(() -> {
-            byte[] albumArt = musicFile.getAlbumArt();
-            final Bitmap bitmap = (albumArt != null) ? BitmapFactory.decodeByteArray(albumArt, 0, albumArt.length) : null;
+            Bitmap bitmap = AlbumArtManager.getInstance(activity).loadAlbumArt(musicFile.getPath());
+            if (bitmap != null) {
+                BitmapCache.getInstance().addBitmapToMemoryCache(musicFile.getPath(), bitmap);
+            }
+            final Bitmap result = bitmap;
             mainHandler.post(() -> {
-                if (bitmap != null) ivMainAlbumArt.setImageBitmap(bitmap);
-                else ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
+                if (result != null) {
+                    ivMainAlbumArt.setImageBitmap(result);
+                } else {
+                    ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
+                }
             });
         }).start();
     }
@@ -249,8 +268,10 @@ public class PlaybackUIController {
                 dragHandle.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane.getLayoutParams();
-                        final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane.getLayoutParams();
+                        final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane
+                                .getLayoutParams();
+                        final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane
+                                .getLayoutParams();
                         switch (event.getAction()) {
                             case MotionEvent.ACTION_DOWN:
                                 initialTouchY = event.getRawY();
@@ -259,7 +280,8 @@ public class PlaybackUIController {
                                 return true;
                             case MotionEvent.ACTION_MOVE:
                                 float deltaY = event.getRawY() - initialTouchY;
-                                float weightChange = (deltaY / (float) parentHeight) * (initialTopPaneWeight + initialBottomPaneWeight);
+                                float weightChange = (deltaY / (float) parentHeight)
+                                        * (initialTopPaneWeight + initialBottomPaneWeight);
                                 float newTopWeight = Math.max(1f, Math.min(99f, initialTopPaneWeight + weightChange));
                                 topParams.weight = newTopWeight;
                                 bottomParams.weight = (initialTopPaneWeight + initialBottomPaneWeight) - newTopWeight;
@@ -279,7 +301,8 @@ public class PlaybackUIController {
         });
     }
 
-    private void snapToTarget(LinearLayout.LayoutParams topParams, LinearLayout.LayoutParams bottomParams, float totalWeight) {
+    private void snapToTarget(LinearLayout.LayoutParams topParams, LinearLayout.LayoutParams bottomParams,
+            float totalWeight) {
         float currentTopWeight = topParams.weight;
         float closestTargetWeight = SNAP_TARGET_TOP_WEIGHTS[0];
         float minDifference = Math.abs(currentTopWeight - closestTargetWeight);
@@ -308,8 +331,10 @@ public class PlaybackUIController {
     }
 
     public void expandToTop() {
-        if (topPane == null || bottomPane == null) return;
-        
+        if (topPane == null || bottomPane == null) {
+            return;
+        }
+
         final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane.getLayoutParams();
         final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane.getLayoutParams();
         float currentTopWeight = topParams.weight;
@@ -332,26 +357,26 @@ public class PlaybackUIController {
 
     private void updateTopPaneContentVisibility(float currentTopWeight) {
         int contentVisibility = (currentTopWeight <= 25f) ? View.GONE : View.VISIBLE;
-        
+
         int searchBtnVisibility = (currentTopWeight < 90f) ? View.VISIBLE : View.GONE;
-        
+
         ivMainAlbumArt.setVisibility(contentVisibility);
         if (mainControlsLayout != null) {
             mainControlsLayout.setVisibility(View.VISIBLE);
         }
-        
+
         if (headerLayout != null) {
             headerLayout.setVisibility(View.VISIBLE);
         }
-        
+
         if (playbackProgressLayout != null) {
             playbackProgressLayout.setVisibility(View.VISIBLE);
         }
-        
+
         if (btnSearch != null) {
             btnSearch.setVisibility(searchBtnVisibility);
         }
-        
+
         // When player is expanded (weight > 30), make sure search bar is hidden
         if (currentTopWeight > 30f && etSearch != null && etSearch.getVisibility() == View.VISIBLE) {
             etSearch.setVisibility(View.GONE);
