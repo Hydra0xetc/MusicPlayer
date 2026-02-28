@@ -1,16 +1,24 @@
 package com.music.player;
 
+import com.music.player.Visualizer.PcmVisualizerSource;
+import com.music.player.Visualizer.CircularVisualizerView;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.*;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 public class PlaybackUIController {
     private final Activity activity;
@@ -19,7 +27,11 @@ public class PlaybackUIController {
     private final Handler seekbarUpdateHandler = new Handler(Looper.getMainLooper());
 
     private TextView tvStatus, tvSongTitle, tvCurrentTime, tvTotalTime;
-    private ImageView ivMainAlbumArt;
+    private ImageView ivMainAlbumArt, ivVisualizerBg; // ivMainAlbumArt on page 0, ivVisualizerBg on page 1
+    private CircularVisualizerView visualizerView; // on page 1 of ViewPager
+    private Bitmap currentAlbumArt;
+    private ViewPager2 viewPagerAlbum;
+    private final PcmVisualizerSource pcmSource;
     private ImageButton btnPlayPause, btnPrev, btnNext, btnShuffle, btnRepeat, btnSettings, btnSearch;
     private SeekBar seekBar;
     private EditText etSearch;
@@ -48,6 +60,9 @@ public class PlaybackUIController {
         this.serviceWrapper = serviceWrapper;
         this.mainHandler = new Handler(Looper.getMainLooper());
 
+        FileLogger logger = FileLogger.getInstance(activity);
+        this.pcmSource = new PcmVisualizerSource(logger);
+
         initViews();
         setupButtons();
         setupSeekBar();
@@ -58,7 +73,6 @@ public class PlaybackUIController {
         tvStatus = activity.findViewById(R.id.tvStatus);
         tvSongTitle = activity.findViewById(R.id.tvSongTitle);
         tvSongTitle.setSelected(true);
-        ivMainAlbumArt = activity.findViewById(R.id.ivMainAlbumArt);
         btnSettings = activity.findViewById(R.id.btnSettings);
         btnPlayPause = activity.findViewById(R.id.btnPlayPause);
         btnPrev = activity.findViewById(R.id.btnPrev);
@@ -78,6 +92,92 @@ public class PlaybackUIController {
         mainControlsLayout = activity.findViewById(R.id.main_controls_layout);
         headerLayout = activity.findViewById(R.id.header_layout);
         playbackProgressLayout = activity.findViewById(R.id.playback_progress_layout);
+
+        // Setup ViewPager2
+        viewPagerAlbum = activity.findViewById(R.id.viewPagerAlbum);
+        setupAlbumPager();
+    }
+
+    private void setupAlbumPager() {
+        AlbumVisualizerAdapter adapter = new AlbumVisualizerAdapter();
+        viewPagerAlbum.setAdapter(adapter);
+        viewPagerAlbum.setOffscreenPageLimit(1);
+
+        viewPagerAlbum.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                // Sync playing state when switching to visualizer page
+                if (position == 1 && visualizerView != null && serviceWrapper.isBound()) {
+                    visualizerView.setPlaying(serviceWrapper.getService().isPlaying());
+                }
+            }
+        });
+    }
+
+    private class AlbumVisualizerAdapter extends RecyclerView.Adapter<AlbumVisualizerAdapter.PagerHolder> {
+
+        @NonNull
+        @Override
+        public PagerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(activity);
+            View v;
+            if (viewType == 0) {
+                v = inflater.inflate(R.layout.page_album_art, parent, false);
+                ivMainAlbumArt = v.findViewById(R.id.ivMainAlbumArt);
+            } else {
+                v = inflater.inflate(R.layout.page_visualizer, parent, false);
+                ivVisualizerBg = v.findViewById(R.id.ivVisualizerBg);
+                visualizerView = v.findViewById(R.id.visualizerView);
+                visualizerView.setLogger(FileLogger.getInstance(activity));
+            }
+            return new PagerHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull PagerHolder holder, int position) {
+            Bitmap art = currentAlbumArt;
+            if (position == 0) {
+                ImageView iv = holder.itemView.findViewById(R.id.ivMainAlbumArt);
+                if (iv != null) {
+                    if (art != null) iv.setImageBitmap(art);
+                    else iv.setImageResource(R.mipmap.ic_launcher);
+                    ivMainAlbumArt = iv;
+                }
+            } else if (position == 1) {
+                ImageView bg = holder.itemView.findViewById(R.id.ivVisualizerBg);
+                CircularVisualizerView viz = holder.itemView.findViewById(R.id.visualizerView);
+                
+                if (bg != null) {
+                    if (art != null) bg.setImageBitmap(art);
+                    else bg.setImageResource(R.mipmap.ic_launcher);
+                    ivVisualizerBg = bg;
+                }
+                
+                if (viz != null) {
+                    viz.setLogger(FileLogger.getInstance(activity));
+                    viz.setPcmSource(pcmSource);
+                    viz.setPlaying(serviceWrapper.isBound() && serviceWrapper.getService().isPlaying());
+                    viz.setAlbumArt(art);
+                    visualizerView = viz;
+                }
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return 2;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            return position;
+        }
+
+        class PagerHolder extends RecyclerView.ViewHolder {
+            PagerHolder(@NonNull View v) {
+                super(v);
+            }
+        }
     }
 
     private void setupButtons() {
@@ -140,8 +240,18 @@ public class PlaybackUIController {
             tvTotalTime.setText(formatDuration(currentMusic.getDuration()));
             seekBar.setMax((int) currentMusic.getDuration());
             loadAlbumArtAsync(currentMusic);
+
+            // Start decoding new PCM file for visualizer
+            pcmSource.setPositionProvider(() -> serviceWrapper.isBound()
+                    ? serviceWrapper.getService().getCurrentPosition()
+                    : 0L);
+            pcmSource.start(currentMusic.getPath());
+            if (visualizerView != null) {
+                visualizerView.setPcmSource(pcmSource);
+            }
         } else {
             tvSongTitle.setText(Constant.NO_SONG);
+            pcmSource.stop();
         }
         updatePlayState(isPlaying);
         updateShuffleButton();
@@ -165,6 +275,11 @@ public class PlaybackUIController {
             tvStatus.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_play_small, 0, 0, 0);
             btnPlayPause.setImageResource(R.drawable.ic_play);
             seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
+        }
+        // Sync state to visualizer
+        pcmSource.setPaused(!isPlaying);
+        if (visualizerView != null) {
+            visualizerView.setPlaying(isPlaying);
         }
         enableControls(serviceWrapper.isBound() && serviceWrapper.getService().isReady());
     }
@@ -237,7 +352,13 @@ public class PlaybackUIController {
     private void loadAlbumArtAsync(final MusicFile musicFile) {
         Bitmap cached = BitmapCache.getInstance().getBitmapFromMemCache(musicFile.getPath());
         if (cached != null) {
-            ivMainAlbumArt.setImageBitmap(cached);
+            currentAlbumArt = cached;
+            if (ivMainAlbumArt != null)
+                ivMainAlbumArt.setImageBitmap(cached);
+            if (ivVisualizerBg != null)
+                ivVisualizerBg.setImageBitmap(cached);
+            if (visualizerView != null)
+                visualizerView.setAlbumArt(cached);
             return;
         }
         new Thread(() -> {
@@ -247,10 +368,21 @@ public class PlaybackUIController {
             }
             final Bitmap result = bitmap;
             mainHandler.post(() -> {
+                currentAlbumArt = result;
                 if (result != null) {
-                    ivMainAlbumArt.setImageBitmap(result);
+                    if (ivMainAlbumArt != null)
+                        ivMainAlbumArt.setImageBitmap(result);
+                    if (ivVisualizerBg != null)
+                        ivVisualizerBg.setImageBitmap(result);
+                    if (visualizerView != null)
+                        visualizerView.setAlbumArt(result);
                 } else {
-                    ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
+                    if (ivMainAlbumArt != null)
+                        ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
+                    if (ivVisualizerBg != null)
+                        ivVisualizerBg.setImageResource(R.mipmap.ic_launcher);
+                    if (visualizerView != null)
+                        visualizerView.setAlbumArt(null);
                 }
             });
         }).start();
@@ -360,7 +492,9 @@ public class PlaybackUIController {
 
         int searchBtnVisibility = (currentTopWeight < 90f) ? View.VISIBLE : View.GONE;
 
-        ivMainAlbumArt.setVisibility(contentVisibility);
+        if (viewPagerAlbum != null) {
+            viewPagerAlbum.setVisibility(contentVisibility);
+        }
         if (mainControlsLayout != null) {
             mainControlsLayout.setVisibility(View.VISIBLE);
         }
@@ -383,6 +517,11 @@ public class PlaybackUIController {
             etSearch.setText(Constant.EMPTY_STRING);
             // Filter reset is handled by TextWatcher
         }
+    }
+
+    public void release() {
+        pcmSource.stop();
+        seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
     }
 
     public void onMusicFinished() {
