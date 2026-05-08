@@ -35,7 +35,7 @@ public class FftAnalyzer {
         return FFT_SIZE / 2;
     }
 
-    public void analyze(short[] pcm, float[] out) {
+    public void analyze(short[] pcm, float[] out, float noiseFloor) {
         if (pcm == null || out == null)
             return;
 
@@ -57,7 +57,7 @@ public class FftAnalyzer {
         fft(re, im, FFT_SIZE);
 
         // Calculate magnitude for each bin
-        float maxMag = 1e-6f; // avoid div-by-zero
+        float maxMag = noiseFloor; // noise floor to prevent jitter in silence
         for (int i = 0; i < FFT_SIZE / 2; i++) {
             // Approximation sqrt might be faster but Math.sqrt is fine here
             mag[i] = (float) Math.sqrt(re[i] * re[i] + im[i] * im[i]);

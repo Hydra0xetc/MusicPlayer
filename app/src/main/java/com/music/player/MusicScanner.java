@@ -93,10 +93,12 @@ public class MusicScanner {
             // Fresh instance per file: avoids stale values from previous file
             mmr.setDataSource(context, Uri.fromFile(file));
 
+            /*
             String t = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
             if (t != null && !t.isEmpty()) {
                 title = t;
             }
+            */
 
             String ar = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
             if (ar != null && !ar.isEmpty()) {
@@ -127,6 +129,7 @@ public class MusicScanner {
             fileLogger.e(TAG, "Failed to get metadata for: " + file.getName() + ": " + e.getMessage());
         }
 
+        fileLogger.i(TAG, "title: " + title);
         return new MusicFile(
                 file.getName(),
                 file.getAbsolutePath(),

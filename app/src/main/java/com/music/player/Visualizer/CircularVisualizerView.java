@@ -3,37 +3,34 @@ package com.music.player.Visualizer;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
-import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
+import android.view.TextureView;
+import android.graphics.SurfaceTexture;
 import android.graphics.PorterDuff.Mode;
 
 import com.music.player.FftAnalyzer;
 import com.music.player.FileLogger;
-
-import android.graphics.SurfaceTexture;
-import android.view.TextureView;
+import com.music.player.ConfigManager;
 
 public class CircularVisualizerView extends TextureView implements TextureView.SurfaceTextureListener {
     private final String TAG = "CircularVisualizerView";
 
-    private static final int BAR_COUNT = 80;
-    private static final float INNER_RATIO = 0.53f;
-    private static final float MAX_BAR_RATIO = 0.60f;
-    private static final float BAR_FILL_RATIO = 0.45f;
-    private static final float ALBUM_ART_SCALE = 1.25f;
-    private static final float SMOOTHING = 0.55f;
-    private static final float DECAY_SPEED = 0.12f;
+    private int barCount = 60;
+    private float innerRatio = 0.53f;
+    private float maxBarRatio = 0.60f;
+    private float barFillRatio = 0.45f;
+    private float albumArtScale = 1.25f;
+    private float smoothing = 0.60f;
+    private float decaySpeed = 0.15f;
+    private float noiseFloor = 5.0f;
+
     private static final int COLOR_LOW = 0xFF00BCD4; // Cyan
     private static final int COLOR_HIGH = 0xFF03DAC6; // Teal
 
-    // Pre-extracted color components
     private static final int R_LOW = (COLOR_LOW >> 16) & 0xFF;
     private static final int G_LOW = (COLOR_LOW >> 8) & 0xFF;
     private static final int B_LOW = COLOR_LOW & 0xFF;
@@ -45,61 +42,76 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
     private final FftAnalyzer fftAnalyzer = new FftAnalyzer();
     private final short[] pcmSnapshot = new short[512];
     private final float[] fftMagnitudes = new float[FftAnalyzer.getBinCount()];
-    private final float[] smoothedMagnitudes = new float[BAR_COUNT];
+    private float[] smoothedMagnitudes = new float[barCount];
 
-    // Pre-calculated values for performance
-    private final float[] cosAngles = new float[BAR_COUNT / 2];
-    private final float[] sinAngles = new float[BAR_COUNT / 2];
-    private final int[] binStarts = new int[BAR_COUNT / 2];
-    private final int[] binEnds = new int[BAR_COUNT / 2];
+    private float[] cosAngles = new float[barCount / 2];
+    private float[] sinAngles = new float[barCount / 2];
+    private int[] binStarts = new int[barCount / 2];
+    private int[] binEnds = new int[barCount / 2];
 
     private FileLogger fileLogger;
     private volatile boolean isPlaying = false;
     private volatile Bitmap albumArtBmp = null;
-
     private RenderThread renderThread;
 
     private final Paint barPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint bgCircle = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint imagePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-    public CircularVisualizerView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+    public CircularVisualizerView(Context context, AttributeSet attrs) {
+        super(context, attrs);
         init();
     }
 
-    public CircularVisualizerView(Context context, AttributeSet attrs) {
-        super(context, attrs);
+    public CircularVisualizerView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
         init();
     }
 
     private void init() {
         setSurfaceTextureListener(this);
         setOpaque(false);
-
         bgCircle.setColor(0xCC0D0D1A);
         bgCircle.setStyle(Paint.Style.FILL);
-
         barPaint.setStyle(Paint.Style.STROKE);
         barPaint.setStrokeCap(Paint.Cap.ROUND);
-
         precomputeValues();
     }
 
     private void precomputeValues() {
-        int half = BAR_COUNT / 2;
+        int half = barCount / 2;
+        if (cosAngles.length != half) {
+            cosAngles = new float[half];
+            sinAngles = new float[half];
+            binStarts = new int[half];
+            binEnds = new int[half];
+            smoothedMagnitudes = new float[barCount];
+        }
+
         int totalBins = FftAnalyzer.getBinCount();
         float step = (float) Math.log(totalBins + 1) / half;
 
         for (int i = 0; i < half; i++) {
-            // Precompute angles
             float angle = (float) (Math.PI / 2.0 + (i * Math.PI / half));
             cosAngles[i] = (float) Math.cos(angle);
             sinAngles[i] = (float) Math.sin(angle);
-
-            // Precompute bin mapping (logarithmic scale)
             binStarts[i] = (int) (Math.exp(i * step) - 1);
             binEnds[i] = Math.max(binStarts[i] + 1, (int) (Math.exp((i + 1) * step) - 1));
+        }
+    }
+
+    public void applyConfig(ConfigManager config) {
+        this.noiseFloor = config.getVisNoiseFloor();
+        this.smoothing = config.getVisSmoothing();
+        this.innerRatio = config.getVisInnerRadius();
+        this.maxBarRatio = config.getVisMaxBarLen();
+        this.decaySpeed = config.getVisDecaySpeed();
+        this.barFillRatio = config.getVisBarWidth();
+        
+        int newBarCount = config.getVisBarCount();
+        if (newBarCount != this.barCount) {
+            this.barCount = newBarCount;
+            precomputeValues();
         }
     }
 
@@ -109,8 +121,7 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
     }
 
     @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-    }
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
@@ -119,26 +130,15 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
     }
 
     @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-    }
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
 
-    public void setLogger(FileLogger fileLogger) {
-        this.fileLogger = fileLogger;
-    }
-
-    public void setPcmSource(PcmVisualizerSource source) {
-        this.pcmSource = source;
-    }
-
+    public void setLogger(FileLogger fileLogger) { this.fileLogger = fileLogger; }
+    public void setPcmSource(PcmVisualizerSource source) { this.pcmSource = source; }
     public void setPlaying(boolean playing) {
         this.isPlaying = playing;
-        if (pcmSource != null)
-            pcmSource.setPaused(!playing);
+        if (pcmSource != null) pcmSource.setPaused(!playing);
     }
-
-    public void setAlbumArt(Bitmap bmp) {
-        this.albumArtBmp = bmp;
-    }
+    public void setAlbumArt(Bitmap bmp) { this.albumArtBmp = bmp; }
 
     private void startRenderThread() {
         stopRenderThread();
@@ -149,10 +149,7 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
     private void stopRenderThread() {
         if (renderThread != null) {
             renderThread.quit();
-            try {
-                renderThread.join(400);
-            } catch (InterruptedException ignored) {
-            }
+            try { renderThread.join(400); } catch (InterruptedException ignored) {}
             renderThread = null;
         }
     }
@@ -160,10 +157,7 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
     private class RenderThread extends Thread {
         private static final long TARGET_FRAME_MS = 1000 / 60;
         private volatile boolean running = true;
-
-        void quit() {
-            running = false;
-        }
+        void quit() { running = false; }
 
         @Override
         public void run() {
@@ -177,23 +171,15 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
                         drawFrame(canvas);
                     }
                 } catch (Exception e) {
-                    fileLogger.e(TAG, "Render error: " + e);
+                    if (fileLogger != null) fileLogger.e(TAG, "Render error: " + e);
                 } finally {
                     if (canvas != null) {
-                        try {
-                            unlockCanvasAndPost(canvas);
-                        } catch (Exception e) {
-                            fileLogger.e(TAG, "Failed to unlockCanvasAndPost: " + e);
-                        }
+                        try { unlockCanvasAndPost(canvas); } catch (Exception ignored) {}
                     }
                 }
                 long sleep = TARGET_FRAME_MS - (System.currentTimeMillis() - frameStart);
                 if (sleep > 0) {
-                    try {
-                        Thread.sleep(sleep);
-                    } catch (InterruptedException e) {
-                        fileLogger.e(TAG, "Unexpected error: " + e);
-                    }
+                    try { Thread.sleep(sleep); } catch (InterruptedException ignored) {}
                 }
             }
         }
@@ -202,185 +188,109 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
     private void updateFftAndSmoothing() {
         if (isPlaying && pcmSource != null) {
             pcmSource.getLatestSamples(pcmSnapshot);
+            fftAnalyzer.analyze(pcmSnapshot, fftMagnitudes, noiseFloor);
 
-            fftAnalyzer.analyze(pcmSnapshot, fftMagnitudes);
-
-            int half = BAR_COUNT / 2;
+            int half = barCount / 2;
             int totalBins = fftMagnitudes.length;
 
             for (int i = 0; i < half; i++) {
                 int binStart = binStarts[i];
                 int binEnd = binEnds[i];
-
                 float sum = 0;
                 int count = 0;
                 for (int b = binStart; b < binEnd && b < totalBins; b++) {
                     sum += fftMagnitudes[b];
                     count++;
                 }
-
                 float target = count > 0 ? sum / count : 0;
-
-                if (i < half / 4) {
-                    target *= 1.3f;
-                }
-
+                if (i < half / 4) target *= 1.3f;
                 float boost = 1.0f + 0.5f * ((float) i / half);
                 target *= boost;
 
                 float current = smoothedMagnitudes[i];
-                float attackSpeed = SMOOTHING * 1.8f;
-                float releaseSpeed = SMOOTHING * 0.4f;
+                float attackSpeed = smoothing * 1.8f;
+                float releaseSpeed = smoothing * 0.4f;
                 float speed = target > current ? attackSpeed : releaseSpeed;
-
                 smoothedMagnitudes[i] = current + (target - current) * speed;
             }
 
             for (int i = 1; i < half - 1; i++) {
-                smoothedMagnitudes[i] = (smoothedMagnitudes[i - 1] + 2f * smoothedMagnitudes[i]
-                        + smoothedMagnitudes[i + 1]) / 4f;
+                smoothedMagnitudes[i] = (smoothedMagnitudes[i - 1] + 2f * smoothedMagnitudes[i] + smoothedMagnitudes[i + 1]) / 4f;
             }
         } else {
-            for (int i = 0; i < BAR_COUNT; i++) {
-                smoothedMagnitudes[i] *= (1f - DECAY_SPEED);
+            for (int i = 0; i < barCount; i++) {
+                smoothedMagnitudes[i] *= (1f - decaySpeed);
             }
         }
     }
 
     private void drawFrame(Canvas canvas) {
         canvas.drawColor(0, Mode.CLEAR);
-
         final float w = canvas.getWidth();
         final float h = canvas.getHeight();
         final float cx = w / 2f;
         final float cy = h / 2f;
-
         final float halfMin = Math.min(w, h) / 2f;
-        final float innerRadius = halfMin * INNER_RATIO;
-        final float maxBarLen = halfMin * MAX_BAR_RATIO;
-
-        final float barWidth = (float) (2 * Math.PI * (innerRadius + maxBarLen * 0.5f) / BAR_COUNT)
-                * BAR_FILL_RATIO;
+        final float innerRadius = halfMin * innerRatio;
+        final float maxBarLen = halfMin * maxBarRatio;
+        final float barWidth = (float) (2 * Math.PI * (innerRadius + maxBarLen * 0.5f) / barCount) * barFillRatio;
         barPaint.setStrokeWidth(Math.max(barWidth, 3f));
 
-        int half = BAR_COUNT / 2;
+        int half = barCount / 2;
         for (int i = 0; i < half; i++) {
             float height = smoothedMagnitudes[i];
-            float outerR = innerRadius + Math.max(height * maxBarLen, 4f);
-            int color = lerpColor(COLOR_LOW, COLOR_HIGH, height);
-            barPaint.setColor(color);
-
+            if (height < 0.01f) continue;
+            float outerR = innerRadius + (height * maxBarLen);
+            barPaint.setColor(lerpColor(COLOR_LOW, COLOR_HIGH, height));
             float cosA = cosAngles[i];
             float sinA = sinAngles[i];
-
-            // Right side
-            float x1 = cx + cosA * innerRadius;
-            float y1 = cy + sinA * innerRadius;
-            float x2 = cx + cosA * outerR;
-            float y2 = cy + sinA * outerR;
-            canvas.drawLine(x1, y1, x2, y2, barPaint);
-
-            // Left side (symmetry)
+            canvas.drawLine(cx + cosA * innerRadius, cy + sinA * innerRadius, cx + cosA * outerR, cy + sinA * outerR, barPaint);
             if (i > 0) {
-                float x1L = cx - cosA * innerRadius;
-                float x2L = cx - cosA * outerR;
-                canvas.drawLine(x1L, y1, x2L, y2, barPaint);
+                canvas.drawLine(cx - cosA * innerRadius, cy + sinA * innerRadius, cx - cosA * outerR, cy + sinA * outerR, barPaint);
             }
         }
 
         canvas.drawCircle(cx, cy, innerRadius + 2f, bgCircle);
-
         float artRadius = innerRadius - 4f;
         Bitmap bmp = albumArtBmp;
-        if (bmp != null && !bmp.isRecycled()) {
-            drawCircularBitmap(canvas, bmp, cx, cy, artRadius);
-        } else {
-            drawDefaultMusicIcon(canvas, cx, cy, artRadius);
-        }
+        if (bmp != null && !bmp.isRecycled()) drawCircularBitmap(canvas, bmp, cx, cy, artRadius);
+        else drawDefaultMusicIcon(canvas, cx, cy, artRadius);
     }
 
     private void drawCircularBitmap(Canvas canvas, Bitmap bmp, float cx, float cy, float radius) {
-        int saveCount = canvas.save();
-
+        int sc = canvas.save();
         Path clip = new Path();
         clip.addCircle(cx, cy, radius, Path.Direction.CW);
         canvas.clipPath(clip);
-
-        float bmpW = bmp.getWidth();
-        float bmpH = bmp.getHeight();
-        float diameter = radius * 2f;
-        float scale = Math.max(diameter / bmpW, diameter / bmpH) * ALBUM_ART_SCALE;
-        float drawW = bmpW * scale;
-        float drawH = bmpH * scale;
-
-        RectF dst = new RectF(
-                cx - drawW / 2f,
-                cy - drawH / 2f,
-                cx + drawW / 2f,
-                cy + drawH / 2f);
-        canvas.drawBitmap(bmp, null, dst, imagePaint);
-
-        canvas.restoreToCount(saveCount);
-
-        Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        ringPaint.setStyle(Paint.Style.STROKE);
-        ringPaint.setStrokeWidth(2f);
-        ringPaint.setColor(0x66FFFFFF);
-        canvas.drawCircle(cx, cy, radius, ringPaint);
+        float scale = Math.max(radius * 2f / bmp.getWidth(), radius * 2f / bmp.getHeight()) * albumArtScale;
+        float dw = bmp.getWidth() * scale;
+        float dh = bmp.getHeight() * scale;
+        canvas.drawBitmap(bmp, null, new RectF(cx - dw / 2f, cy - dh / 2f, cx + dw / 2f, cy + dh / 2f), imagePaint);
+        canvas.restoreToCount(sc);
     }
 
     private void drawDefaultMusicIcon(Canvas canvas, float cx, float cy, float radius) {
-        Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        bgPaint.setColor(0xFF161630);
-        canvas.drawCircle(cx, cy, radius, bgPaint);
-
-        Drawable drawable = getContext().getDrawable(com.music.player.R.mipmap.ic_launcher);
-        if (drawable != null) {
-            int saveCount = canvas.save();
-
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setColor(0xFF161630);
+        canvas.drawCircle(cx, cy, radius, p);
+        Drawable d = getContext().getDrawable(com.music.player.R.mipmap.ic_launcher);
+        if (d != null) {
+            int sc = canvas.save();
             Path clip = new Path();
             clip.addCircle(cx, cy, radius, Path.Direction.CW);
             canvas.clipPath(clip);
-
-            float intrinsicW = drawable.getIntrinsicWidth();
-            float intrinsicH = drawable.getIntrinsicHeight();
-            if (intrinsicW <= 0) {
-                intrinsicW = radius * 2;
-            }
-
-            if (intrinsicH <= 0) {
-                intrinsicH = radius * 2;
-            }
-
-            float diameter = radius * 2f;
-            float scale = Math.max(diameter / intrinsicW, diameter / intrinsicH) * ALBUM_ART_SCALE;
-            int drawW = (int) (intrinsicW * scale);
-            int drawH = (int) (intrinsicH * scale);
-
-            int left = (int) (cx - drawW / 2f);
-            int top = (int) (cy - drawH / 2f);
-
-            drawable.setBounds(left, top, left + drawW, top + drawH);
-            drawable.draw(canvas);
-
-            canvas.restoreToCount(saveCount);
+            float scale = Math.max(radius * 2f / d.getIntrinsicWidth(), radius * 2f / d.getIntrinsicHeight()) * albumArtScale;
+            int dw = (int) (d.getIntrinsicWidth() * scale);
+            int dh = (int) (d.getIntrinsicHeight() * scale);
+            d.setBounds((int) cx - dw / 2, (int) cy - dh / 2, (int) cx + dw / 2, (int) cy + dh / 2);
+            d.draw(canvas);
+            canvas.restoreToCount(sc);
         }
-
-        Paint ringPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        ringPaint.setStyle(Paint.Style.STROKE);
-        ringPaint.setStrokeWidth(2f);
-        ringPaint.setColor(0x44FFFFFF);
-        canvas.drawCircle(cx, cy, radius, ringPaint);
     }
 
     private static int lerpColor(int a, int b, float t) {
-        if (t <= 0f)
-            return a;
-        if (t >= 1f)
-            return b;
-        return 0xFF000000
-                | ((int) (R_LOW + R_DIFF * t) << 16)
-                | ((int) (G_LOW + G_DIFF * t) << 8)
-                | ((int) (B_LOW + B_DIFF * t));
+        if (t <= 0f) return a;
+        if (t >= 1f) return b;
+        return 0xFF000000 | ((int) (R_LOW + R_DIFF * t) << 16) | ((int) (G_LOW + G_DIFF * t) << 8) | ((int) (B_LOW + B_DIFF * t));
     }
 }

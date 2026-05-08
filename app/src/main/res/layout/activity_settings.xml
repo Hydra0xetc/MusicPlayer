@@ -1,135 +1,237 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
     android:background="@color/black">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Settings"
-        android:textColor="@color/white"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp"
-        android:gravity="center_horizontal" />
-
-    <!-- Music Directory Setting -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Music Directory"
-        android:textColor="@color/black"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp"/>
-
-    <EditText
-        android:id="@+id/etMusicDir"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:textColorHint="#666666"
-        android:background="@drawable/edittext_background"
-        android:padding="12dp"
-        android:layout_marginBottom="8dp"
-        android:inputType="textNoSuggestions" />
-
-    <Button
-        android:id="@+id/btnBrowse"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Browse"
-        android:background="@drawable/btn_dark_round"
-        android:textColor="@color/white"
-        android:layout_marginBottom="16dp"
-        android:layout_gravity="start"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:drawableStart="@drawable/ic_folder"
-        android:drawablePadding="8dp" />
-
-
-
-    <!-- Auto Scan Music Setting -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="24dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Auto Scan Music on Startup Change"
-            android:textColor="@color/soft_grey"
-            android:textSize="16sp"/>
-
-        <Switch
-            android:id="@+id/swAutoScan"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:thumbTint="@color/switch_on"
-            android:trackTint="@color/switch_off"/>
-
-    </LinearLayout>
-
-    <!-- Log Level Setting -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="24dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Log Level"
-            android:textColor="@color/soft_grey"
-            android:textSize="16sp"/>
-
-        <Spinner
-            android:id="@+id/spLogLevel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:entries="@array/log_levels"
-            android:spinnerMode="dropdown"
-            android:backgroundTint="@color/soft_grey"/>
-    </LinearLayout>
-
-    <!-- Buttons -->
-    <LinearLayout
-        style="?android:attr/buttonBarStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_horizontal">
-
-        <Button
-            style="?android:attr/buttonBarButtonStyle"
-            android:id="@+id/btnBack"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Back"
-            android:background="@drawable/btn_back"
+            android:text="General Settings"
             android:textColor="@color/white"
-            android:layout_marginEnd="8dp" />
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Music Directory"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+
+        <EditText
+            android:id="@+id/etMusicDir"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:background="@drawable/edittext_background"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"
+            android:inputType="textNoSuggestions" />
 
         <Button
-            android:id="@+id/btnSaveSettings"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="0dp"
+            android:id="@+id/btnBrowse"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Save"
-            android:background="@drawable/btn_save"
-            android:textColor="@color/black" />
-    </LinearLayout>
+            android:text="Browse"
+            android:background="@drawable/btn_dark_round"
+            android:textColor="@color/white"
+            android:layout_marginBottom="20dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:drawableStart="@drawable/ic_folder"
+            android:drawablePadding="8dp" />
 
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Auto Scan Music"
+                android:textColor="@color/soft_grey"
+                android:textSize="16sp"/>
+            <Switch
+                android:id="@+id/swAutoScan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="30dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Log Level"
+                android:textColor="@color/soft_grey"
+                android:textSize="16sp"/>
+            <Spinner
+                android:id="@+id/spLogLevel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/soft_grey"/>
+        </LinearLayout>
+
+        <!-- Visualizer Section -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#333333"
+            android:layout_marginBottom="20dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Visualizer Appearance"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp" />
+
+        <TextView
+            android:id="@+id/label_sensitivity"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sensitivity (Noise Floor)"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp" />
+        <SeekBar
+            android:id="@+id/seek_sensitivity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:max="200" />
+
+        <TextView
+            android:id="@+id/label_smoothing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Smoothing (Movement)"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp" />
+        <SeekBar
+            android:id="@+id/seek_smoothing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:max="95" />
+
+        <TextView
+            android:id="@+id/label_bar_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bar Count"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp" />
+        <SeekBar
+            android:id="@+id/seek_bar_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:max="100" />
+
+        <TextView
+            android:id="@+id/label_inner_radius"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Inner Circle Size"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp" />
+        <SeekBar
+            android:id="@+id/seek_inner_radius"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:max="80" />
+
+        <TextView
+            android:id="@+id/label_max_bar_len"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Max Bar Length"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp" />
+        <SeekBar
+            android:id="@+id/seek_max_bar_len"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:max="100" />
+
+        <TextView
+            android:id="@+id/label_decay_speed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Decay Speed (Falloff)"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp" />
+        <SeekBar
+            android:id="@+id/seek_decay_speed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:max="40" />
+
+        <TextView
+            android:id="@+id/label_bar_width"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bar Thickness"
+            android:textColor="@color/soft_grey"
+            android:textSize="14sp" />
+        <SeekBar
+            android:id="@+id/seek_bar_width"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="40dp"
+            android:max="90" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnBack"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Back"
+                android:background="@drawable/btn_back"
+                android:textColor="@color/white"
+                android:layout_marginEnd="8dp" />
+            <Button
+                android:id="@+id/btnSaveSettings"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Save"
+                android:background="@drawable/btn_save"
+                android:textColor="@color/black" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

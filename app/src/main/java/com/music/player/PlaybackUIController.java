@@ -106,8 +106,9 @@ public class PlaybackUIController {
         viewPagerAlbum.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
-                // Sync playing state when switching to visualizer page
+                // Sync playing state and config when switching to visualizer page
                 if (position == 1 && visualizerView != null && serviceWrapper.isBound()) {
+                    visualizerView.applyConfig(new ConfigManager(activity));
                     visualizerView.setPlaying(serviceWrapper.getService().isPlaying());
                 }
             }
@@ -156,6 +157,7 @@ public class PlaybackUIController {
                 if (viz != null) {
                     viz.setLogger(FileLogger.getInstance(activity));
                     viz.setPcmSource(pcmSource);
+                    viz.applyConfig(new ConfigManager(activity));
                     viz.setPlaying(serviceWrapper.isBound() && serviceWrapper.getService().isPlaying());
                     viz.setAlbumArt(art);
                     visualizerView = viz;
