@@ -1,4 +1,5 @@
 package com.music.player.player.visualizer;
+
 import com.music.player.model.*;
 import com.music.player.utils.*;
 import com.music.player.R;

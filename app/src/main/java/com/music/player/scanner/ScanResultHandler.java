@@ -1,4 +1,5 @@
 package com.music.player.scanner;
+
 import com.music.player.ui.MainActivity;
 import com.music.player.ui.MusicFileAdapter;
 import com.music.player.ui.*;

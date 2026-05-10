@@ -1,4 +1,5 @@
 package com.music.player.manager;
+
 import com.music.player.model.*;
 import com.music.player.utils.*;
 
@@ -60,11 +61,11 @@ public class PlaylistManager {
                 return null; // End of playlist
             }
         }
-        
+
         currentIndex = nextIndex;
         return playlist.get(currentIndex);
     }
-    
+
     public MusicFile getMusicAt(int index) {
         if (index >= 0 && index < playlist.size()) {
             currentIndex = index;
@@ -87,7 +88,7 @@ public class PlaylistManager {
                 return null; // Start of playlist
             }
         }
-        
+
         currentIndex = prevIndex;
         return playlist.get(currentIndex);
     }
@@ -116,7 +117,7 @@ public class PlaylistManager {
             currentIndex = playlist.indexOf(currentMusic);
         }
     }
-    
+
     public void setCurrentMusic(MusicFile musicFile) {
         currentIndex = playlist.indexOf(musicFile);
     }

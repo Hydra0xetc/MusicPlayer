@@ -1,4 +1,5 @@
 package com.music.player.service;
+
 import com.music.player.R;
 
 import android.app.Notification;
@@ -92,7 +93,7 @@ public class MediaNotificationManager {
         if (art == null) art = getDefaultAlbumArt();
 
         Intent intent = new Intent(service, MainActivity.class);
-        PendingIntent contentIntent = PendingIntent.getActivity(service, 0, intent, 
+        PendingIntent contentIntent = PendingIntent.getActivity(service, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(service, CHANNEL_ID)
@@ -102,7 +103,7 @@ public class MediaNotificationManager {
                 .setContentIntent(contentIntent)
                 .setLargeIcon(art != null ? zoomIn(art, Constant.NOTIFICATION_IMG_ZOOM) : null)
                 .addAction(R.drawable.ic_notification_prev_black, "Prev", getActionIntent(MusicService.ACTION_PREV))
-                .addAction(isPlaying ? R.drawable.ic_notification_pause_black : R.drawable.ic_notification_play_black, 
+                .addAction(isPlaying ? R.drawable.ic_notification_pause_black : R.drawable.ic_notification_play_black,
                         isPlaying ? "Pause" : "Play", getActionIntent(isPlaying ? MusicService.ACTION_PAUSE : MusicService.ACTION_PLAY))
                 .addAction(R.drawable.ic_notification_next_black, "Next", getActionIntent(MusicService.ACTION_NEXT))
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
@@ -129,7 +130,7 @@ public class MediaNotificationManager {
     public void updatePlaybackState(boolean isPlaying, long position) {
         int state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
         mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE | 
+                .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PAUSE |
                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
                            PlaybackStateCompat.ACTION_STOP | PlaybackStateCompat.ACTION_SEEK_TO)
                 .setState(state, position, 1.0f).build());
@@ -137,7 +138,7 @@ public class MediaNotificationManager {
 
     private PendingIntent getActionIntent(String action) {
         Intent intent = new Intent(service, MusicService.class).setAction(action);
-        return PendingIntent.getService(service, action.hashCode(), intent, 
+        return PendingIntent.getService(service, action.hashCode(), intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 

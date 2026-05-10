@@ -1,4 +1,5 @@
 package com.music.player.service;
+
 import com.music.player.R;
 
 import com.music.player.model.*;
@@ -118,7 +119,7 @@ public class MusicService extends Service {
         syncPlayerLoopMode();
 
         notificationManager.updateMetadata(musicFile);
-        startForeground(MediaNotificationManager.NOTIFICATION_ID, 
+        startForeground(MediaNotificationManager.NOTIFICATION_ID,
                 notificationManager.buildNotification(musicFile, true));
 
         if (listener != null) {

@@ -1,4 +1,5 @@
 package com.music.player.ui;
+
 import com.music.player.R;
 import com.music.player.model.*;
 import com.music.player.manager.*;
@@ -29,13 +30,13 @@ public class SettingsActivity extends Activity {
     private Switch swAutoScan;
     private Spinner spLogLevel;
     private Button btnSaveSettings, btnBack, btnBrowse;
-    
+
     private SeekBar seekSensitivity, seekSmoothing, seekBarCount;
     private SeekBar seekInnerRadius, seekMaxBarLen, seekDecaySpeed, seekBarWidth;
-    
+
     private TextView labelSensitivity, labelSmoothing, labelBarCount;
     private TextView labelInnerRadius, labelMaxBarLen, labelDecaySpeed, labelBarWidth;
-    
+
     private ConfigManager configManager;
     private FileLogger fileLogger;
     private Animation blinkAnimation;
@@ -65,7 +66,7 @@ public class SettingsActivity extends Activity {
         btnSaveSettings = findViewById(R.id.btnSaveSettings);
         btnBack = findViewById(R.id.btnBack);
         btnBrowse = findViewById(R.id.btnBrowse);
-        
+
         seekSensitivity = findViewById(R.id.seek_sensitivity);
         seekSmoothing = findViewById(R.id.seek_smoothing);
         seekBarCount = findViewById(R.id.seek_bar_count);
@@ -201,7 +202,7 @@ public class SettingsActivity extends Activity {
         configManager.setMusicDir(etMusicDir.getText().toString());
         configManager.setAutoScan(swAutoScan.isChecked());
         configManager.setLogLevel(spLogLevel.getSelectedItem().toString());
-        
+
         configManager.setVisNoiseFloor(Math.max(0.1f, seekSensitivity.getProgress() / 10.0f));
         configManager.setVisSmoothing(0.10f + (seekSmoothing.getProgress() / 100.0f));
         int bars = 20 + seekBarCount.getProgress();
@@ -211,7 +212,7 @@ public class SettingsActivity extends Activity {
         configManager.setVisMaxBarLen(seekMaxBarLen.getProgress() / 100.0f);
         configManager.setVisDecaySpeed(0.05f + (seekDecaySpeed.getProgress() / 100.0f));
         configManager.setVisBarWidth(0.10f + (seekBarWidth.getProgress() / 100.0f));
-        
+
         configManager.saveConfig();
         FileLogger.getInstance(this).setLogLevel(configManager.getLogLevel());
         Toast.makeText(this, "Settings Saved", Toast.LENGTH_SHORT).show();

@@ -1,6 +1,6 @@
 package com.music.player.ui;
-import com.music.player.R;
 
+import com.music.player.R;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
@@ -51,7 +51,7 @@ public class MusicInfoDialog {
 
         try {
             ContentInfo info = new ContentInfoUtil().findMatch(new File(music.getPath()));
-            String formatDescription = (info != null) ? info.getMessage() : 
+            String formatDescription = (info != null) ? info.getMessage() :
                 "Unknown " + music.getPath().substring(music.getPath().lastIndexOf(".")).toUpperCase() + " Audio";
             appendInfo(ssb, "FORMAT INFO", formatDescription);
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class MusicInfoDialog {
     private void appendInfo(SpannableStringBuilder ssb, String label, String value) {
         int start = ssb.length();
         ssb.append(label).append("\n");
-        ssb.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.turqoise)), 
+        ssb.setSpan(new ForegroundColorSpan(context.getResources().getColor(R.color.turqoise)),
                 start, start + label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         ssb.setSpan(new StyleSpan(Typeface.BOLD), start, start + label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 

@@ -1,4 +1,5 @@
 package com.music.player.player.visualizer;
+
 import com.music.player.model.*;
 import com.music.player.utils.*;
 import com.music.player.R;
@@ -113,7 +114,7 @@ public class CircularVisualizerView extends TextureView implements TextureView.S
         this.maxBarRatio = config.getVisMaxBarLen();
         this.decaySpeed = config.getVisDecaySpeed();
         this.barFillRatio = config.getVisBarWidth();
-        
+
         int newBarCount = config.getVisBarCount();
         if (newBarCount != this.barCount) {
             this.barCount = newBarCount;
