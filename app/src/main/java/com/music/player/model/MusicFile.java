@@ -1,4 +1,6 @@
-package com.music.player;
+package com.music.player.model;
+import com.music.player.utils.Constant;
+import com.music.player.utils.*;
 
 public class MusicFile {
     private String name;

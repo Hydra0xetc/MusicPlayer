@@ -1,4 +1,11 @@
-package com.music.player;
+package com.music.player.ui;
+import com.music.player.R;
+import com.music.player.model.*;
+import com.music.player.manager.*;
+import com.music.player.service.*;
+import com.music.player.player.*;
+import com.music.player.utils.*;
+import com.music.player.scanner.*;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
@@ -283,80 +290,6 @@ public class MainActivity extends Activity
     }
 
     private void showMusicInfoDialog(MusicFile music) {
-        if (music == null) {
-            return;
-        }
-
-        View view = getLayoutInflater().inflate(R.layout.dialog_music_info, null);
-        TextView tvFullInfo = view.findViewById(R.id.tvMusicFullInfo);
-        Button btnClose = view.findViewById(R.id.btnDialogClose);
-
-        // Use Spannable for neat formatting
-        SpannableStringBuilder ssb = new SpannableStringBuilder();
-        appendFormattedInfo(ssb, "TITLE", music.getTitle());
-        appendFormattedInfo(ssb, "ARTIST", music.getArtist());
-        appendFormattedInfo(ssb, "ALBUM", music.getAlbum());
-        appendFormattedInfo(ssb, "DURATION", music.getDurationFormatted());
-        appendFormattedInfo(ssb, "SIZE", music.getSizeFormatted());
-        appendFormattedInfo(ssb, "PATH", music.getPath());
-
-        try {
-            ContentInfoUtil util = new ContentInfoUtil();
-            ContentInfo info = util.findMatch(new File(music.getPath()));
-
-            String formatDescription;
-            if (info != null) {
-                formatDescription = info.getMessage();
-            } else {
-                String ext = music.getPath().substring(music.getPath().lastIndexOf(".")).toUpperCase();
-                formatDescription = "Unknown " + ext + " Audio";
-            }
-
-            appendFormattedInfo(ssb, "FORMAT INFO", formatDescription);
-        } catch (Exception e) {
-            appendFormattedInfo(ssb, "FORMAT INFO", "Unable to detect file header");
-            fileLogger.e(TAG, "SimpleMagic error: " + e);
-        }
-
-        tvFullInfo.setText(ssb);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(view)
-                .create();
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        }
-
-        btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-
-        // Adjust window size (Width & Height)
-        if (dialog.getWindow() != null) {
-            DisplayMetrics metrics = new DisplayMetrics();
-            getWindowManager().getDefaultDisplay().getMetrics(metrics);
-
-            int width = (int) (metrics.widthPixels * 0.85);
-            int height = (int) (metrics.heightPixels * 0.60);
-
-            dialog.getWindow().setLayout(width, height);
-        }
-    }
-
-    private void appendFormattedInfo(SpannableStringBuilder ssb, String label, String value) {
-        int start = ssb.length();
-        ssb.append(label).append("\n");
-
-        // Turquoise color and Bold for Label
-        ssb.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.turqoise)),
-                start, start + label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        ssb.setSpan(new StyleSpan(Typeface.BOLD),
-                start, start + label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        // Content/Value in white color
-        int valueStart = ssb.length();
-        ssb.append(value != null ? value : "-").append("\n\n");
-        ssb.setSpan(new ForegroundColorSpan(Color.WHITE),
-                valueStart, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        new MusicInfoDialog(this).show(music);
     }
 }

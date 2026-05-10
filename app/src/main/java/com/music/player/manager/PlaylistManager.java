@@ -1,4 +1,6 @@
-package com.music.player;
+package com.music.player.manager;
+import com.music.player.model.*;
+import com.music.player.utils.*;
 
 import java.util.ArrayList;
 import java.util.Collections;

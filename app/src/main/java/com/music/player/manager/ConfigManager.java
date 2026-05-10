@@ -1,4 +1,7 @@
-package com.music.player;
+package com.music.player.manager;
+
+import com.music.player.model.*;
+import com.music.player.utils.*;
 
 import android.content.Context;
 import android.widget.Toast;
@@ -79,7 +82,7 @@ public class ConfigManager {
                 musicDir = config.optString(KEY_MUSIC_DIR, Constant.DEFAULT_MUSIC_DIR);
                 autoScan = config.optBoolean(KEY_AUTO_SCAN, false);
                 logLevel = config.optString(KEY_LOG_LEVEL, "INFO");
-                
+
                 visNoiseFloor = (float) config.optDouble(KEY_VIS_NOISE_FLOOR, 5.0f);
                 visSmoothing = (float) config.optDouble(KEY_VIS_SMOOTHING, 0.60f);
                 visBarCount = config.optInt(KEY_VIS_BAR_COUNT, 60);

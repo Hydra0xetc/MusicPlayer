@@ -20,7 +20,7 @@
             android:alpha="0.4"
             android:src="@mipmap/ic_launcher"/>
 
-        <com.music.player.Visualizer.CircularVisualizerView
+        <com.music.player.player.visualizer.CircularVisualizerView
             android:id="@+id/visualizerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

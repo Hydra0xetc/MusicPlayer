@@ -1,4 +1,11 @@
-package com.music.player;
+package com.music.player.ui;
+import com.music.player.R;
+import com.music.player.model.*;
+import com.music.player.manager.*;
+import com.music.player.service.*;
+import com.music.player.player.*;
+import com.music.player.utils.*;
+import com.music.player.scanner.*;
 
 import android.app.Activity;
 import android.graphics.PorterDuff;

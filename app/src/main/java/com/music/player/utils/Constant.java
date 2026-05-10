@@ -1,4 +1,4 @@
-package com.music.player;
+package com.music.player.utils;
 
 public class Constant {
     public final static String NO_SONG = "No song playing";

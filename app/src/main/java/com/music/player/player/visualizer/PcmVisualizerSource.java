@@ -1,6 +1,12 @@
-package com.music.player.Visualizer;
+package com.music.player.player.visualizer;
+import com.music.player.model.*;
+import com.music.player.utils.*;
+import com.music.player.R;
+import com.music.player.model.*;
+import com.music.player.utils.*;
+import com.music.player.R;
 
-import com.music.player.FileLogger;
+import com.music.player.utils.FileLogger;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;

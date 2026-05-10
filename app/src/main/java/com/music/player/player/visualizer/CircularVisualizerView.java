@@ -1,4 +1,10 @@
-package com.music.player.Visualizer;
+package com.music.player.player.visualizer;
+import com.music.player.model.*;
+import com.music.player.utils.*;
+import com.music.player.R;
+import com.music.player.model.*;
+import com.music.player.utils.*;
+import com.music.player.R;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -12,9 +18,9 @@ import android.view.TextureView;
 import android.graphics.SurfaceTexture;
 import android.graphics.PorterDuff.Mode;
 
-import com.music.player.FftAnalyzer;
-import com.music.player.FileLogger;
-import com.music.player.ConfigManager;
+import com.music.player.player.FftAnalyzer;
+import com.music.player.utils.FileLogger;
+import com.music.player.manager.ConfigManager;
 
 public class CircularVisualizerView extends TextureView implements TextureView.SurfaceTextureListener {
     private final String TAG = "CircularVisualizerView";

@@ -1,4 +1,11 @@
-package com.music.player;
+package com.music.player.scanner;
+import com.music.player.manager.AlbumArtManager;
+import com.music.player.ui.*;
+import com.music.player.manager.*;
+import com.music.player.model.*;
+import com.music.player.utils.*;
+import com.music.player.model.*;
+import com.music.player.utils.*;
 
 import android.content.Context;
 import android.media.MediaMetadataRetriever;

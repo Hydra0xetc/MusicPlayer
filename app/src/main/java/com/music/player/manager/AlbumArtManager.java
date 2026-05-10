@@ -1,4 +1,7 @@
-package com.music.player;
+package com.music.player.manager;
+
+import com.music.player.model.*;
+import com.music.player.utils.*;
 
 import android.content.Context;
 import android.graphics.Bitmap;

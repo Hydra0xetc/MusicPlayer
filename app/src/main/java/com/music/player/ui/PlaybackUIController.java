@@ -1,7 +1,15 @@
-package com.music.player;
+package com.music.player.ui;
 
-import com.music.player.Visualizer.PcmVisualizerSource;
-import com.music.player.Visualizer.CircularVisualizerView;
+import com.music.player.R;
+import com.music.player.model.*;
+import com.music.player.manager.*;
+import com.music.player.service.*;
+import com.music.player.player.*;
+import com.music.player.utils.*;
+import com.music.player.scanner.*;
+import com.music.player.player.visualizer.PcmVisualizerSource;
+import com.music.player.player.visualizer.CircularVisualizerView;
+
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
@@ -27,8 +35,8 @@ public class PlaybackUIController {
     private final Handler seekbarUpdateHandler = new Handler(Looper.getMainLooper());
 
     private TextView tvStatus, tvSongTitle, tvCurrentTime, tvTotalTime;
-    private ImageView ivMainAlbumArt, ivVisualizerBg; // ivMainAlbumArt on page 0, ivVisualizerBg on page 1
-    private CircularVisualizerView visualizerView; // on page 1 of ViewPager
+    private ImageView ivMainAlbumArt, ivVisualizerBg;
+    private CircularVisualizerView visualizerView;
     private Bitmap currentAlbumArt;
     private ViewPager2 viewPagerAlbum;
     private final PcmVisualizerSource pcmSource;
@@ -51,7 +59,6 @@ public class PlaybackUIController {
 
     public interface MusicServiceWrapper {
         MusicService getService();
-
         boolean isBound();
     }
 
@@ -93,7 +100,6 @@ public class PlaybackUIController {
         headerLayout = activity.findViewById(R.id.header_layout);
         playbackProgressLayout = activity.findViewById(R.id.playback_progress_layout);
 
-        // Setup ViewPager2
         viewPagerAlbum = activity.findViewById(R.id.viewPagerAlbum);
         setupAlbumPager();
     }
@@ -106,7 +112,6 @@ public class PlaybackUIController {
         viewPagerAlbum.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
-                // Sync playing state and config when switching to visualizer page
                 if (position == 1 && visualizerView != null && serviceWrapper.isBound()) {
                     visualizerView.applyConfig(new ConfigManager(activity));
                     visualizerView.setPlaying(serviceWrapper.getService().isPlaying());
@@ -116,7 +121,6 @@ public class PlaybackUIController {
     }
 
     private class AlbumVisualizerAdapter extends RecyclerView.Adapter<AlbumVisualizerAdapter.PagerHolder> {
-
         @NonNull
         @Override
         public PagerHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -147,13 +151,11 @@ public class PlaybackUIController {
             } else if (position == 1) {
                 ImageView bg = holder.itemView.findViewById(R.id.ivVisualizerBg);
                 CircularVisualizerView viz = holder.itemView.findViewById(R.id.visualizerView);
-                
                 if (bg != null) {
                     if (art != null) bg.setImageBitmap(art);
                     else bg.setImageResource(R.mipmap.ic_launcher);
                     ivVisualizerBg = bg;
                 }
-                
                 if (viz != null) {
                     viz.setLogger(FileLogger.getInstance(activity));
                     viz.setPcmSource(pcmSource);
@@ -166,37 +168,28 @@ public class PlaybackUIController {
         }
 
         @Override
-        public int getItemCount() {
-            return 2;
-        }
+        public int getItemCount() { return 2; }
 
         @Override
-        public int getItemViewType(int position) {
-            return position;
-        }
+        public int getItemViewType(int position) { return position; }
 
         class PagerHolder extends RecyclerView.ViewHolder {
-            PagerHolder(@NonNull View v) {
-                super(v);
-            }
+            PagerHolder(@NonNull View v) { super(v); }
         }
     }
 
     private void setupButtons() {
         btnPlayPause.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
-            if (serviceWrapper.isBound())
-                serviceWrapper.getService().togglePlayPause();
+            if (serviceWrapper.isBound()) serviceWrapper.getService().togglePlayPause();
         });
         btnPrev.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
-            if (serviceWrapper.isBound())
-                serviceWrapper.getService().playPrevious();
+            if (serviceWrapper.isBound()) serviceWrapper.getService().playPrevious();
         });
         btnNext.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
-            if (serviceWrapper.isBound())
-                serviceWrapper.getService().playNext();
+            if (serviceWrapper.isBound()) serviceWrapper.getService().playNext();
         });
         btnShuffle.setOnClickListener(v -> {
             v.startAnimation(blinkAnimation);
@@ -216,21 +209,15 @@ public class PlaybackUIController {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser && serviceWrapper.isBound()) {
-                    tvCurrentTime.setText(formatDuration(progress));
-                }
+                if (fromUser && serviceWrapper.isBound()) tvCurrentTime.setText(formatDuration(progress));
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
                 seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
             }
-
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                if (serviceWrapper.isBound()) {
-                    serviceWrapper.getService().seekTo(seekBar.getProgress());
-                }
+                if (serviceWrapper.isBound()) serviceWrapper.getService().seekTo(seekBar.getProgress());
                 seekbarUpdateHandler.post(updateSeekBarRunnable);
             }
         });
@@ -242,15 +229,9 @@ public class PlaybackUIController {
             tvTotalTime.setText(formatDuration(currentMusic.getDuration()));
             seekBar.setMax((int) currentMusic.getDuration());
             loadAlbumArtAsync(currentMusic);
-
-            // Start decoding new PCM file for visualizer
-            pcmSource.setPositionProvider(() -> serviceWrapper.isBound()
-                    ? serviceWrapper.getService().getCurrentPosition()
-                    : 0L);
+            pcmSource.setPositionProvider(() -> serviceWrapper.isBound() ? serviceWrapper.getService().getCurrentPosition() : 0L);
             pcmSource.start(currentMusic.getPath());
-            if (visualizerView != null) {
-                visualizerView.setPcmSource(pcmSource);
-            }
+            if (visualizerView != null) visualizerView.setPcmSource(pcmSource);
         } else {
             tvSongTitle.setText(Constant.NO_SONG);
             pcmSource.stop();
@@ -258,7 +239,6 @@ public class PlaybackUIController {
         updatePlayState(isPlaying);
         updateShuffleButton();
         updateRepeatButton();
-
         if (serviceWrapper.isBound()) {
             long currentPos = serviceWrapper.getService().getCurrentPosition();
             seekBar.setProgress((int) currentPos);
@@ -278,20 +258,15 @@ public class PlaybackUIController {
             btnPlayPause.setImageResource(R.drawable.ic_play);
             seekbarUpdateHandler.removeCallbacks(updateSeekBarRunnable);
         }
-        // Sync state to visualizer
         pcmSource.setPaused(!isPlaying);
-        if (visualizerView != null) {
-            visualizerView.setPlaying(isPlaying);
-        }
+        if (visualizerView != null) visualizerView.setPlaying(isPlaying);
         enableControls(serviceWrapper.isBound() && serviceWrapper.getService().isReady());
     }
 
     public void enableControls(boolean enable) {
         btnPlayPause.setEnabled(enable);
-        if (btnPrev != null)
-            btnPrev.setEnabled(enable);
-        if (btnNext != null)
-            btnNext.setEnabled(enable);
+        if (btnPrev != null) btnPrev.setEnabled(enable);
+        if (btnNext != null) btnNext.setEnabled(enable);
     }
 
     private void toggleShuffle() {
@@ -315,8 +290,7 @@ public class PlaybackUIController {
     }
 
     public void updateRepeatButton() {
-        if (!serviceWrapper.isBound() || btnRepeat == null)
-            return;
+        if (!serviceWrapper.isBound() || btnRepeat == null) return;
         switch (serviceWrapper.getService().getRepeatMode()) {
             case OFF:
                 btnRepeat.setImageResource(R.drawable.ic_repeat);
@@ -355,36 +329,25 @@ public class PlaybackUIController {
         Bitmap cached = BitmapCache.getInstance().getBitmapFromMemCache(musicFile.getPath());
         if (cached != null) {
             currentAlbumArt = cached;
-            if (ivMainAlbumArt != null)
-                ivMainAlbumArt.setImageBitmap(cached);
-            if (ivVisualizerBg != null)
-                ivVisualizerBg.setImageBitmap(cached);
-            if (visualizerView != null)
-                visualizerView.setAlbumArt(cached);
+            if (ivMainAlbumArt != null) ivMainAlbumArt.setImageBitmap(cached);
+            if (ivVisualizerBg != null) ivVisualizerBg.setImageBitmap(cached);
+            if (visualizerView != null) visualizerView.setAlbumArt(cached);
             return;
         }
         new Thread(() -> {
             Bitmap bitmap = AlbumArtManager.getInstance(activity).loadAlbumArt(musicFile.getPath());
-            if (bitmap != null) {
-                BitmapCache.getInstance().addBitmapToMemoryCache(musicFile.getPath(), bitmap);
-            }
+            if (bitmap != null) BitmapCache.getInstance().addBitmapToMemoryCache(musicFile.getPath(), bitmap);
             final Bitmap result = bitmap;
             mainHandler.post(() -> {
                 currentAlbumArt = result;
                 if (result != null) {
-                    if (ivMainAlbumArt != null)
-                        ivMainAlbumArt.setImageBitmap(result);
-                    if (ivVisualizerBg != null)
-                        ivVisualizerBg.setImageBitmap(result);
-                    if (visualizerView != null)
-                        visualizerView.setAlbumArt(result);
+                    if (ivMainAlbumArt != null) ivMainAlbumArt.setImageBitmap(result);
+                    if (ivVisualizerBg != null) ivVisualizerBg.setImageBitmap(result);
+                    if (visualizerView != null) visualizerView.setAlbumArt(result);
                 } else {
-                    if (ivMainAlbumArt != null)
-                        ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
-                    if (ivVisualizerBg != null)
-                        ivVisualizerBg.setImageResource(R.mipmap.ic_launcher);
-                    if (visualizerView != null)
-                        visualizerView.setAlbumArt(null);
+                    if (ivMainAlbumArt != null) ivMainAlbumArt.setImageResource(R.mipmap.ic_launcher);
+                    if (ivVisualizerBg != null) ivVisualizerBg.setImageResource(R.mipmap.ic_launcher);
+                    if (visualizerView != null) visualizerView.setAlbumArt(null);
                 }
             });
         }).start();
@@ -402,10 +365,8 @@ public class PlaybackUIController {
                 dragHandle.setOnTouchListener(new View.OnTouchListener() {
                     @Override
                     public boolean onTouch(View v, MotionEvent event) {
-                        final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane
-                                .getLayoutParams();
-                        final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane
-                                .getLayoutParams();
+                        final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane.getLayoutParams();
+                        final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane.getLayoutParams();
                         switch (event.getAction()) {
                             case MotionEvent.ACTION_DOWN:
                                 initialTouchY = event.getRawY();
@@ -414,8 +375,7 @@ public class PlaybackUIController {
                                 return true;
                             case MotionEvent.ACTION_MOVE:
                                 float deltaY = event.getRawY() - initialTouchY;
-                                float weightChange = (deltaY / (float) parentHeight)
-                                        * (initialTopPaneWeight + initialBottomPaneWeight);
+                                float weightChange = (deltaY / (float) parentHeight) * (initialTopPaneWeight + initialBottomPaneWeight);
                                 float newTopWeight = Math.max(1f, Math.min(99f, initialTopPaneWeight + weightChange));
                                 topParams.weight = newTopWeight;
                                 bottomParams.weight = (initialTopPaneWeight + initialBottomPaneWeight) - newTopWeight;
@@ -435,12 +395,10 @@ public class PlaybackUIController {
         });
     }
 
-    private void snapToTarget(LinearLayout.LayoutParams topParams, LinearLayout.LayoutParams bottomParams,
-            float totalWeight) {
+    private void snapToTarget(LinearLayout.LayoutParams topParams, LinearLayout.LayoutParams bottomParams, float totalWeight) {
         float currentTopWeight = topParams.weight;
         float closestTargetWeight = SNAP_TARGET_TOP_WEIGHTS[0];
         float minDifference = Math.abs(currentTopWeight - closestTargetWeight);
-
         for (int i = 1; i < SNAP_TARGET_TOP_WEIGHTS.length; i++) {
             float target = SNAP_TARGET_TOP_WEIGHTS[i];
             float diff = Math.abs(currentTopWeight - target);
@@ -449,7 +407,6 @@ public class PlaybackUIController {
                 closestTargetWeight = target;
             }
         }
-
         ValueAnimator animator = ValueAnimator.ofFloat(currentTopWeight, closestTargetWeight);
         animator.setDuration(SNAP_ANIMATION_DURATION);
         animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
@@ -465,16 +422,12 @@ public class PlaybackUIController {
     }
 
     public void expandToTop() {
-        if (topPane == null || bottomPane == null) {
-            return;
-        }
-
+        if (topPane == null || bottomPane == null) return;
         final LinearLayout.LayoutParams topParams = (LinearLayout.LayoutParams) topPane.getLayoutParams();
         final LinearLayout.LayoutParams bottomParams = (LinearLayout.LayoutParams) bottomPane.getLayoutParams();
         float currentTopWeight = topParams.weight;
-        float targetTopWeight = SNAP_TARGET_TOP_WEIGHTS[0]; // 10f
+        float targetTopWeight = SNAP_TARGET_TOP_WEIGHTS[0];
         float totalWeight = currentTopWeight + bottomParams.weight;
-
         ValueAnimator animator = ValueAnimator.ofFloat(currentTopWeight, targetTopWeight);
         animator.setDuration(SNAP_ANIMATION_DURATION);
         animator.setInterpolator(new android.view.animation.DecelerateInterpolator());
@@ -491,33 +444,15 @@ public class PlaybackUIController {
 
     private void updateTopPaneContentVisibility(float currentTopWeight) {
         int contentVisibility = (currentTopWeight <= 25f) ? View.GONE : View.VISIBLE;
-
         int searchBtnVisibility = (currentTopWeight < 90f) ? View.VISIBLE : View.GONE;
-
-        if (viewPagerAlbum != null) {
-            viewPagerAlbum.setVisibility(contentVisibility);
-        }
-        if (mainControlsLayout != null) {
-            mainControlsLayout.setVisibility(View.VISIBLE);
-        }
-
-        if (headerLayout != null) {
-            headerLayout.setVisibility(View.VISIBLE);
-        }
-
-        if (playbackProgressLayout != null) {
-            playbackProgressLayout.setVisibility(View.VISIBLE);
-        }
-
-        if (btnSearch != null) {
-            btnSearch.setVisibility(searchBtnVisibility);
-        }
-
-        // When player is expanded (weight > 30), make sure search bar is hidden
+        if (viewPagerAlbum != null) viewPagerAlbum.setVisibility(contentVisibility);
+        if (mainControlsLayout != null) mainControlsLayout.setVisibility(View.VISIBLE);
+        if (headerLayout != null) headerLayout.setVisibility(View.VISIBLE);
+        if (playbackProgressLayout != null) playbackProgressLayout.setVisibility(View.VISIBLE);
+        if (btnSearch != null) btnSearch.setVisibility(searchBtnVisibility);
         if (currentTopWeight > 30f && etSearch != null && etSearch.getVisibility() == View.VISIBLE) {
             etSearch.setVisibility(View.GONE);
             etSearch.setText(Constant.EMPTY_STRING);
-            // Filter reset is handled by TextWatcher
         }
     }
 
